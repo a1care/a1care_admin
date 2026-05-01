@@ -25,7 +25,7 @@ import {
     XCircle,
     CreditCard as WalletIcon,
     ArrowUpCircle,
-    ArrowDownCircle
+    ArrowDownCircle, CalendarClock
 } from "lucide-react";
 
 function InfoCard({ icon, label, value, color }: { icon: any, label: string, value: string, color?: string }) {
@@ -47,7 +47,8 @@ interface Doctor {
     gender: string;
     startExperience: string;
     specialization: string[];
-    status: "Pending" | "Active" | "Inactive";
+    status: "Pending" | "Active" | "Rejected";
+    rejectionReason?: string;
     consultationFee: number;
     documents?: { type: string; url: string }[];
 }
@@ -62,6 +63,11 @@ export function DoctorStaffManagementPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [slotDoctor, setSlotDoctor] = useState<Doctor | null>(null);
+    const [weekDays, setWeekDays] = useState<number[]>([1,2,3,4,5,6]);
+    const [startingTime, setStartingTime] = useState("09:00");
+    const [endingTime, setEndingTime] = useState("18:00");
+    const [slotDuration, setSlotDuration] = useState("30");
 
     // Add Provider Form
     const [newName, setNewName] = useState("");
@@ -107,8 +113,8 @@ export function DoctorStaffManagementPage() {
     }, [searchQuery]);
 
     const updateStatusMutation = useMutation({
-        mutationFn: async ({ id, status }: { id: string, status: string }) => {
-            return api.put(`/admin/users/doctor/${id}/status`, { status, isRegistered: status === 'Active' });
+        mutationFn: async ({ id, status, rejectionReason }: { id: string, status: string, rejectionReason?: string }) => {
+            return api.put(`/admin/users/doctor/${id}/status`, { status, isRegistered: status === 'Active', rejectionReason });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_staff"] });
@@ -139,6 +145,49 @@ export function DoctorStaffManagementPage() {
         e.preventDefault();
         if (!newName || !newMobile) return toast.error("Required fields missing.");
         createMutation.mutate({ name: newName, mobileNumber: newMobile, email: newEmail });
+    };
+    const availabilityMutation = useMutation({
+        mutationFn: async () => {
+            if (!slotDoctor?._id) throw new Error("Doctor is required");
+            const res = await api.post(`/admin/doctors/${slotDoctor._id}/availability`, {
+                weekDays,
+                startingTime,
+                endingTime,
+                slotDuration,
+            });
+            return res.data?.data;
+        },
+        onSuccess: () => {
+            toast.success("Doctor slots saved successfully.");
+            setSlotDoctor(null);
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.message || "Failed to save slots.");
+        }
+    });
+
+    const openSlotModal = async (doctor: Doctor) => {
+        setSlotDoctor(doctor);
+        setWeekDays([1, 2, 3, 4, 5, 6]);
+        setStartingTime("09:00");
+        setEndingTime("18:00");
+        setSlotDuration("30");
+        try {
+            const res = await api.get(`/admin/doctors/${doctor._id}/availability`);
+            const existing = res?.data?.data;
+            if (existing) {
+                if (Array.isArray(existing.weekDays)) setWeekDays(existing.weekDays);
+                if (existing.startingTime) setStartingTime(existing.startingTime);
+                if (existing.endingTime) setEndingTime(existing.endingTime);
+                if (existing.slotDuration) setSlotDuration(String(existing.slotDuration));
+            }
+        } catch {
+            // keep defaults
+        }
+    };
+
+    const toggleWeekDay = (day: number) => {
+        setWeekDays((prev) => prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b));
     };
 
     // Removed early return to prevent blinking
@@ -245,7 +294,7 @@ export function DoctorStaffManagementPage() {
                         </button>
                     ) : (
                         <button
-                            onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Inactive' })}
+                            onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Rejected' })}
                             disabled={updateStatusMutation.isPending}
                             className="button secondary h-14 flex-1 border-none bg-rose-50 text-rose-600 hover:bg-rose-100 gap-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all"
                         >
@@ -256,7 +305,14 @@ export function DoctorStaffManagementPage() {
                     
                     {doctor.status === 'Pending' && (
                         <button
-                            onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Inactive' })}
+                            onClick={() => {
+                                const reason = window.prompt("Reason for rejection (required):", "");
+                                if (!reason || !reason.trim()) {
+                                    toast.error("Rejection reason is required.");
+                                    return;
+                                }
+                                updateStatusMutation.mutate({ id: doctor._id, status: 'Rejected', rejectionReason: reason.trim() });
+                            }}
                             disabled={updateStatusMutation.isPending}
                             className="button secondary h-14 flex-1 border-none bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 hover:bg-red-100 gap-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all"
                         >
@@ -399,9 +455,7 @@ export function DoctorStaffManagementPage() {
                                                 `}
                                             >
                                                 {doc.status === 'Pending' ? 'Review Application' : 'Open Profile'}
-                                            </button>
-                                        </div>
-                                    </td>
+                                            </button><button onClick={() => openSlotModal(doc)} className="h-9 ml-2 px-4 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] bg-blue-50 text-blue-700 hover:bg-blue-100"><CalendarClock size={14} className="inline mr-1" />Manage Slots</button></div></td>
                                 </tr>
                             ))
                         ) : (
@@ -443,7 +497,33 @@ export function DoctorStaffManagementPage() {
                 </div>
             </div>
             {/* Add Provider Modal */}
-            {isAddModalOpen && (
+                        {slotDoctor && (
+                <div className="fixed inset-0 z-[160] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md" onClick={() => setSlotDoctor(null)}>
+                    <div className="bg-[var(--card-bg)] border border-[var(--border-color)] w-full max-w-lg p-8 rounded-[28px] shadow-3xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-black text-[var(--text-main)] mb-1">Manage Slots</h3>
+                        <p className="text-xs text-[var(--text-muted)] mb-5">{slotDoctor.name}</p>
+                        <div className="mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Working Days</p>
+                            <div className="flex flex-wrap gap-2">
+                                {[0,1,2,3,4,5,6].map((d) => (
+                                    <button key={d} type="button" onClick={() => toggleWeekDay(d)} className={`px-3 py-2 rounded-lg text-xs font-black ${weekDays.includes(d) ? 'bg-blue-600 text-white' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
+                                        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <input type="time" value={startingTime} onChange={e => setStartingTime(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-[var(--bg-main)]" />
+                            <input type="time" value={endingTime} onChange={e => setEndingTime(e.target.value)} className="w-full h-11 px-3 rounded-xl bg-[var(--bg-main)]" />
+                        </div>
+                        <input type="number" min="5" step="5" value={slotDuration} onChange={e => setSlotDuration(e.target.value)} placeholder="Slot duration (minutes)" className="w-full h-11 px-3 rounded-xl bg-[var(--bg-main)] mb-5" />
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => setSlotDoctor(null)} className="flex-1 h-11 rounded-xl bg-[var(--bg-main)] font-black text-xs">Cancel</button>
+                            <button type="button" onClick={() => availabilityMutation.mutate()} disabled={availabilityMutation.isPending} className="flex-1 h-11 rounded-xl bg-blue-600 text-white font-black text-xs">{availabilityMutation.isPending ? 'Saving...' : 'Save Slots'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}{isAddModalOpen && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md" onClick={() => setIsAddModalOpen(false)}>
                     <div className="bg-[var(--card-bg)] border border-[var(--border-color)] w-full max-w-lg p-10 rounded-[40px] shadow-3xl flex flex-col items-center gap-8" onClick={e => e.stopPropagation()}>
                         <div className="w-20 h-20 rounded-3xl bg-blue-500/10 flex items-center justify-center text-blue-600">
@@ -635,3 +715,7 @@ function ChevronDownIcon(props: any) {
 
 import { CreditCard as LucideCreditCard } from "lucide-react";
 const CreditCard = LucideCreditCard;
+
+
+
+
