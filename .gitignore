@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env
 .env.*
+!.env.production
 
 # Editor directories and files
 .vscode/*
@@ -41,6 +42,7 @@ dist*.zip
 *.cjs
 .env
 .env.*
+!.env.production
 .idea/
 .vscode/
 node_modules/
