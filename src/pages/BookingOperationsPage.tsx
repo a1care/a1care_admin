@@ -32,6 +32,12 @@ interface HospitalBooking extends BaseBooking {
     serviceName: string;
 }
 
+interface DoctorListItem {
+    _id: string;
+    name: string;
+    mobileNumber?: string;
+}
+
 export function BookingOperationsPage() {
     const [searchParams] = useSearchParams();
     const queryClient = useQueryClient();
@@ -146,12 +152,12 @@ export function BookingOperationsPage() {
         queryFn: async () => {
             const res = await api.get("/admin/doctors");
             const payload = res.data?.data;
-            if (Array.isArray(payload)) return payload as { _id: string; name: string; mobileNumber?: string }[];
-            if (Array.isArray(payload?.items)) return payload.items as { _id: string; name: string; mobileNumber?: string }[];
+            if (Array.isArray(payload)) return payload as DoctorListItem[];
+            if (Array.isArray(payload?.items)) return payload.items as DoctorListItem[];
             return [];
         }
     });
-    const normalizedDoctorsList = Array.isArray(doctorsList)
+    const normalizedDoctorsList: DoctorListItem[] = Array.isArray(doctorsList)
         ? doctorsList
         : Array.isArray((doctorsList as any)?.items)
             ? (doctorsList as any).items
