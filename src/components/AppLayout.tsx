@@ -325,7 +325,7 @@ export function AppLayout() {
       </aside>
 
       <main className="content">
-        <header className="content-header h-16 backdrop-blur-xl border-b px-8 flex items-center justify-between sticky top-0 z-50">
+        <header className="content-header h-16 backdrop-blur-xl border-b flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-6">
               <div
@@ -430,7 +430,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <div className="page-body p-6 lg:p-8">
+        <div className="page-body">
           <Outlet />
         </div>
 

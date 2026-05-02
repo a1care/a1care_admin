@@ -26,7 +26,7 @@ export function LoginPage() {
   };
 
   const [displayText, setDisplayText] = useState("");
-  const fullText = "A1care Administrative Gateway";
+  const fullText = "Please enter your credentials to continue";
 
   useEffect(() => {
     let i = 0;
@@ -55,8 +55,8 @@ export function LoginPage() {
           </div>
           <div className="space-y-2">
             <h1 className="text-5xl font-black tracking-tight text-white flex items-center justify-center gap-3">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-blue-400">System</span>
-              <span className="text-blue-500">Access</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-blue-400">Admin</span>
+              <span className="text-blue-500">Portal</span>
             </h1>
             <p className="text-slate-400 font-semibold tracking-[0.2em] text-xs uppercase opacity-80 h-4">
               {displayText}
@@ -78,7 +78,7 @@ export function LoginPage() {
 
             <div className="space-y-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Secure Identity</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Email Address</label>
                 <div className="relative group">
                   <Mail size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors z-10" />
                   <input
@@ -95,7 +95,7 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Access Credentials</label>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Password</label>
                 <div className="relative group">
                   <Lock size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors z-10" />
                   <input
@@ -126,7 +126,7 @@ export function LoginPage() {
                 <Loader2 className="animate-spin" size={24} />
               ) : (
                 <>
-                  <span className="tracking-wide">Authorize Session</span>
+                  <span className="tracking-wide">Sign In</span>
                   <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}

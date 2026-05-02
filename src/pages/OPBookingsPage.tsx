@@ -466,14 +466,14 @@ export function OPBookingsPage() {
                             <span className="bg-[var(--card-bg)] px-4 py-2 rounded-xl border border-[var(--border-color)]">Page <span className="text-[var(--text-main)] ml-2">{page} / {totalPages}</span></span>
                         </div>
                         <div className="flex gap-2">
-                            <button 
+                            <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
                                 className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronDown size={18} className="rotate-90" />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
                                 className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { 
-  Star, 
-  MessageSquare, 
-  User, 
-  CheckCircle, 
-  XSquare, 
+import {
+  Star,
+  MessageSquare,
+  User,
+  CheckCircle,
+  XSquare,
   Filter,
   Search,
   MoreVertical,
@@ -71,10 +71,10 @@ export default function ReviewsPage() {
         <div className="relative z-10 flex flex-wrap items-center gap-4">
           <div className="relative group w-full md:w-80">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                <Search className="text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+              <Search className="text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
             </div>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Filter by comment or user..."
               className="w-full pl-12 pr-4 h-12 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-100/50 focus:border-blue-300 transition-all shadow-sm font-medium"
               value={searchTerm}
@@ -82,7 +82,7 @@ export default function ReviewsPage() {
             />
           </div>
           <div className="relative">
-            <select 
+            <select
               className="appearance-none bg-white border border-slate-200 rounded-2xl pl-5 pr-12 h-12 text-[10px] font-black uppercase tracking-widest text-slate-700 outline-none focus:ring-4 focus:ring-blue-100/50 transition-all shadow-sm cursor-pointer"
               value={filterStatus}
               onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
@@ -92,7 +92,7 @@ export default function ReviewsPage() {
               <option value="Hidden">Hidden Only</option>
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                <Filter size={14} />
+              <Filter size={14} />
             </div>
           </div>
         </div>
@@ -102,12 +102,12 @@ export default function ReviewsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-            <div className="col-span-full py-20 text-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Moderating Feedback...</p>
-                </div>
+          <div className="col-span-full py-20 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Moderating Feedback...</p>
             </div>
+          </div>
         ) : reviews?.map((review: any) => (
           <div key={review._id} className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
             <div className="p-6 space-y-4">
@@ -123,19 +123,18 @@ export default function ReviewsPage() {
                     </p>
                   </div>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                  review.status === "Active" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                }`}>
+                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${review.status === "Active" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                  }`}>
                   {review.status}
                 </div>
               </div>
 
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star} 
-                    size={16} 
-                    className={star <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"} 
+                  <Star
+                    key={star}
+                    size={16}
+                    className={star <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}
                   />
                 ))}
               </div>
@@ -152,7 +151,7 @@ export default function ReviewsPage() {
                 </div>
                 <div className="flex gap-2">
                   {review.status === "Active" ? (
-                    <button 
+                    <button
                       onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Hidden" })}
                       className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
                       title="Hide Review"
@@ -160,7 +159,7 @@ export default function ReviewsPage() {
                       <EyeOff size={18} />
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Active" })}
                       className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors"
                       title="Show Review"
@@ -184,25 +183,25 @@ export default function ReviewsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-          <div className="flex justify-between items-center bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-100/50">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page} of {totalPages}</p>
-              <div className="flex gap-4">
-                  <button 
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="px-6 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 hover:bg-slate-200 transition-colors"
-                  >
-                      Prev
-                  </button>
-                  <button 
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-30 hover:bg-black transition-colors"
-                  >
-                      Next
-                  </button>
-              </div>
+        <div className="flex justify-between items-center bg-white p-8 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-100/50">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page} of {totalPages}</p>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 hover:bg-slate-200 transition-colors"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-30 hover:bg-black transition-colors"
+            >
+              Next
+            </button>
           </div>
+        </div>
       )}
     </div>
   );

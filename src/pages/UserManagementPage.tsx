@@ -141,9 +141,9 @@ export function UserManagementPage({ category }: { category: string }) {
     const handleAddUser = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newName || !newMobile) return toast.error("Required fields missing.");
-        createMutation.mutate({ 
-            name: newName, 
-            mobileNumber: newMobile, 
+        createMutation.mutate({
+            name: newName,
+            mobileNumber: newMobile,
             email: newEmail,
             specialization: newSpecialization ? [newSpecialization] : []
         });
@@ -186,15 +186,15 @@ export function UserManagementPage({ category }: { category: string }) {
 
     return (
         <div className="flex flex-col gap-4">
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left" style={{ marginBottom: '4px' }}>
-                <div className="relative z-10 text-left items-start">
+            <header className="flex flex-row items-center justify-between gap-4 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left" style={{ marginBottom: '4px' }}>
+                <div className="relative z-10 text-left">
                     <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">{title} Registry</h1>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • User Directory • {title}</p>
                     </div>
                 </div>
-                <button className="relative z-10 button primary shadow-2xl h-12 px-8 rounded-2xl group active:scale-95 transition-all uppercase tracking-widest text-[10px] font-black" onClick={() => setIsAddModalOpen(true)}>
+                <button className="relative z-10 button primary shadow-2xl h-12 px-8 rounded-2xl group active:scale-95 transition-all uppercase tracking-widest text-[10px] font-black shrink-0" onClick={() => setIsAddModalOpen(true)}>
                     <UserPlus size={18} className="group-hover:rotate-12 transition-transform" />
                     <span>Add {title.slice(0, -1)}</span>
                 </button>
@@ -252,7 +252,7 @@ export function UserManagementPage({ category }: { category: string }) {
                                     </>
                                 )}
                             </select>
-                             <button className="button secondary h-14 px-6 text-[10px] font-black uppercase tracking-[0.2em] gap-2 border border-[var(--border-color)] group hover:border-blue-500/50" style={{ borderRadius: '18px' }} onClick={() => toast.info("Advanced filters are enabled automatically based on search criteria.")}>
+                            <button className="button secondary h-14 px-6 text-[10px] font-black uppercase tracking-[0.2em] gap-2 border border-[var(--border-color)] group hover:border-blue-500/50" style={{ borderRadius: '18px' }} onClick={() => toast.info("Advanced filters are enabled automatically based on search criteria.")}>
                                 <Filter size={18} className="group-hover:text-blue-500 transition-colors" />
                                 <span>Advanced Filters</span>
                             </button>
@@ -272,7 +272,7 @@ export function UserManagementPage({ category }: { category: string }) {
                                     <th className="text-center !bg-transparent !text-[var(--text-muted)] pr-8">ACTIONS</th>
                                 </tr>
                             </thead>
-                             <tbody>
+                            <tbody>
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan={7} className="p-20 text-center">
@@ -324,9 +324,9 @@ export function UserManagementPage({ category }: { category: string }) {
                                             )}
                                             <td>
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest
-                                                    ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10' : 
-                                                    user.status === 'Pending' ? 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10' : 
-                                                    'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10'}`}>
+                                                    ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10' :
+                                                        user.status === 'Pending' ? 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10' :
+                                                            'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'bg-emerald-500' : user.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
                                                     {category === 'patient' ? (user.isRegistered ? 'Verified' : 'Pending') : user.status}
                                                 </span>
@@ -375,14 +375,14 @@ export function UserManagementPage({ category }: { category: string }) {
                             <span className="bg-[var(--card-bg)] px-4 py-2 rounded-xl border border-[var(--border-color)]">Total Entries: <span className="text-[var(--text-main)] ml-2">{usersData?.total || 0}</span></span>
                         </div>
                         <div className="flex gap-2">
-                            <button 
+                            <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
                                 className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft size={18} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
                                 className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -397,9 +397,9 @@ export function UserManagementPage({ category }: { category: string }) {
             {/* User Detail Modal */}
             {selectedUser && (
                 <div className="modal-overlay fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 md:p-8 overflow-y-auto" onClick={() => setSelectedUser(null)}>
-                    <div 
-                        className="modal-content !bg-slate-950/90 backdrop-blur-[60px] w-full !max-w-6xl max-h-[92vh] overflow-y-auto overflow-x-hidden flex flex-col gap-0 relative shadow-[0_0_200px_-50px_rgba(0,0,0,1)] transition-all animate-in border border-white/10 !p-0" 
-                        onClick={e => e.stopPropagation()} 
+                    <div
+                        className="modal-content !bg-slate-950/90 backdrop-blur-[60px] w-full !max-w-6xl max-h-[92vh] overflow-y-auto overflow-x-hidden flex flex-col gap-0 relative shadow-[0_0_200px_-50px_rgba(0,0,0,1)] transition-all animate-in border border-white/10 !p-0"
+                        onClick={e => e.stopPropagation()}
                         style={{ borderRadius: '48px' }}
                     >
                         <header className="px-8 md:px-12 py-8 border-b border-white/5 bg-gradient-to-r from-indigo-500/10 via-transparent to-transparent flex items-center justify-between gap-6">
@@ -459,7 +459,7 @@ export function UserManagementPage({ category }: { category: string }) {
                                     </div>
                                     <div className="bg-white/5 rounded-[32px] p-7 border border-white/10">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-6">Account Management</h3>
-                                        <button 
+                                        <button
                                             className="w-full h-12 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest border border-rose-500/20 transition-all"
                                             onClick={() => {
                                                 toast.error("Confirm Account Deletion", {
@@ -500,7 +500,7 @@ export function UserManagementPage({ category }: { category: string }) {
                             ].map(field => (
                                 <div className="space-y-2" key={field.label}>
                                     <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">{field.label}</label>
-                                    <input 
+                                    <input
                                         type={field.type}
                                         className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner"
                                         value={field.value}
@@ -514,7 +514,7 @@ export function UserManagementPage({ category }: { category: string }) {
                             {category === 'service' && (
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Service Specialization</label>
-                                    <select 
+                                    <select
                                         className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner"
                                         value={newSpecialization}
                                         onChange={e => setNewSpecialization(e.target.value)}
@@ -631,7 +631,7 @@ function WalletSection({ user, category }: { user: any, category: string }) {
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Available Balance</p>
                     <h4 className="text-5xl font-black text-white">{isLoading ? "---" : `₹${wallet?.balance || 0}`}</h4>
                 </div>
-                
+
                 {!isAdjusting ? (
                     <button onClick={() => setIsAdjusting(true)} className="h-14 px-10 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Adjust Balance</button>
                 ) : (

@@ -88,19 +88,21 @@ export function PaymentLogsPage() {
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1 className="brand-name" style={{ fontSize: "1.8rem" }}>Payment Logs</h1>
-          <p className="text-xs muted font-extrabold uppercase tracking-widest mt-1">
-            Transaction Audit Trail - Easebuzz Gateway
-          </p>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-row items-center justify-between gap-4 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left">
+        <div className="relative z-10 text-left">
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Payment Logs</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • System Configuration • Payment Logs</p>
+          </div>
         </div>
-        <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase"
+        <button className="relative z-10 button secondary shadow-sm h-12 px-6 rounded-2xl group active:scale-95 transition-all uppercase tracking-widest text-[10px] font-black gap-2 border border-[var(--border-color)]"
           onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCcw size={16} className={isFetching ? "animate-spin" : ""} />
-          Refresh
+          <RefreshCcw size={16} className={isFetching ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
+          <span>Refresh Trace</span>
         </button>
+        <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
       </header>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, alignItems: "start" }}>
@@ -197,24 +199,31 @@ export function PaymentLogsPage() {
             })
           )}
 
-          <div className="card" style={{ padding: 12, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)]">
-              Page {page} of {totalPages}  |  Total {total}
-            </span>
-            <div style={{ display: "flex", gap: 8 }}>
+          <div className="card" style={{ padding: '20px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--card-bg)', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', fontSize: '10px', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Page <span style={{ color: 'var(--text-main)', marginLeft: '4px' }}>{page} / {totalPages}</span>
+              </div>
+              <div style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', fontSize: '10px', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Total Records <span style={{ color: 'var(--text-main)', marginLeft: '4px' }}>{total}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button
-                className="button secondary h-10 px-4 rounded-xl gap-2 text-xs font-black uppercase"
+                className="button secondary"
+                style={{ height: '44px', width: '44px', padding: 0, borderRadius: '14px', border: '1px solid var(--border-color)' }}
                 onClick={() => setPage(prev => Math.max(1, prev - 1))}
                 disabled={page === 1 || isFetching}
               >
-                <ChevronLeft size={14} /> Prev
+                <ChevronLeft size={18} />
               </button>
               <button
-                className="button secondary h-10 px-4 rounded-xl gap-2 text-xs font-black uppercase"
+                className="button secondary"
+                style={{ height: '44px', width: '44px', padding: 0, borderRadius: '14px', border: '1px solid var(--border-color)' }}
                 onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={page >= totalPages || isFetching}
               >
-                Next <ChevronRight size={14} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>

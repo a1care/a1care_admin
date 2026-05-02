@@ -16,7 +16,7 @@ import {
   ArrowUpDown,
   Filter,
   CreditCard,
-  Ticket,
+  LayoutGrid,
   ChevronLeft,
   ChevronRight,
   XCircle,
@@ -119,9 +119,9 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-12 px-4 md:px-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-2 pb-2">
+      <header className="flex items-center justify-between gap-6 pt-2 pb-2">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-md">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -153,224 +153,62 @@ export function DashboardPage() {
         <StatCard title="Total Assets" value={kpis?.revenue?.total ? `₹${kpis.revenue.total.toLocaleString()}` : "₹0"} icon={Activity} color="slate" onClick={() => navigate("/payment-logs")} />
       </section>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column: Bookings Overview & Activity */}
-        <div className="lg:col-span-2 space-y-4">
+      <div className="space-y-4">
 
-          {/* Booking Overview */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Booking Overview */}
+        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-500">
+          <div className="px-10 py-8 border-b border-slate-100 flex flex-col xl:flex-row xl:items-center justify-between gap-8 bg-gradient-to-br from-white via-white to-blue-50/30">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-200 rotate-3 transition-transform hover:rotate-0">
+                <LayoutGrid size={28} strokeWidth={2.5} />
+              </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Booking Overview</h2>
-                <p className="text-sm text-slate-500 mt-0.5">Real-time status distribution</p>
-              </div>
-              <div className="flex p-1 bg-slate-100 rounded-lg">
-                <button
-                  onClick={() => setActiveTab("appointments")}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'appointments' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Appointments
-                </button>
-                <button
-                  onClick={() => setActiveTab("services")}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === 'services' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Services
-                </button>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">Booking Intelligence</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                  <p className="text-[10px] font-black text-blue-600/60 uppercase tracking-[0.2em]">Real-time Status Feed</p>
+                </div>
               </div>
             </div>
-            <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {((activeTab === "appointments" ? bookings?.appointments : bookings?.services) || [])?.map((status: any) => (
-                <div
-                  key={status._id}
-                  onClick={() => navigate(activeTab === "appointments" ? `/op-bookings?status=${status._id}` : `/bookings?status=${status._id}`)}
-                  className="p-5 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group"
-                >
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 group-hover:text-blue-600 transition-colors">{status._id || "NEW"}</div>
-                  <div className="text-2xl font-bold text-slate-900">{status.count}</div>
-                </div>
-              ))}
-              {(!(activeTab === "appointments" ? bookings?.appointments : bookings?.services)?.length) && (
-                <div className="col-span-full py-8 text-center">
-                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <FileText size={20} className="text-slate-300" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-500">No data available at this time.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Activity Logs */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    Recent Activity
-                    {isActivityFetching && <div className="w-3.5 h-3.5 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>}
-                  </h2>
-                  <p className="text-sm text-slate-500 mt-0.5">Latest network transactions</p>
-                </div>
-              </div>
+            
+            <div className="flex p-2 bg-slate-100/60 backdrop-blur-xl rounded-2xl border border-slate-200/40 self-start xl:self-center shadow-inner">
               <button
-                onClick={() => navigate("/audit-logs")}
-                className="px-4 py-2 bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 rounded-lg text-xs font-semibold transition-all"
+                onClick={() => setActiveTab("appointments")}
+                className={`px-8 py-3 text-[11px] font-black rounded-xl transition-all duration-500 uppercase tracking-[0.15em] ${activeTab === 'appointments' ? 'bg-white shadow-xl text-blue-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}
               >
-                View All
+                Appointments
+              </button>
+              <button
+                onClick={() => setActiveTab("services")}
+                className={`px-8 py-3 text-[11px] font-black rounded-xl transition-all duration-500 uppercase tracking-[0.15em] ${activeTab === 'services' ? 'bg-white shadow-xl text-blue-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Services
               </button>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left whitespace-nowrap">
-                <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Stakeholder</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Time</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {Array.isArray(activity) && activity.map((act: any) => (
-                    <tr key={act.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-slate-900">
-                          {act.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-semibold text-slate-900">{act.patient}</div>
-                        <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[150px]">{act.provider}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-semibold text-slate-900">₹{act.amount?.toLocaleString() || 0}</div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusLabel(act.status)}`}>
-                          {act.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="text-sm text-slate-900">{new Date(act.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{new Date(act.createdAt).toLocaleDateString()}</div>
-                      </td>
-                    </tr>
-                  ))}
-                  {activity?.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-500">No recent activity found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
-            {activityTotalPages > 1 && (
-              <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 mt-auto">
-                <p className="text-xs font-medium text-slate-500">
-                  Page {activityPage} of {activityTotalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
-                    disabled={activityPage === 1}
-                    className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    onClick={() => setActivityPage((p) => Math.min(activityTotalPages, p + 1))}
-                    disabled={activityPage === activityTotalPages}
-                    className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {((activeTab === "appointments" ? bookings?.appointments : bookings?.services) || [])?.map((status: any) => (
+              <div
+                key={status._id}
+                onClick={() => navigate(activeTab === "appointments" ? `/op-bookings?status=${status._id}` : `/bookings?status=${status._id}`)}
+                className="p-5 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group"
+              >
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 group-hover:text-blue-600 transition-colors">{status._id || "NEW"}</div>
+                <div className="text-2xl font-bold text-slate-900">{status.count}</div>
+              </div>
+            ))}
+            {(!(activeTab === "appointments" ? bookings?.appointments : bookings?.services)?.length) && (
+              <div className="col-span-full py-8 text-center">
+                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <FileText size={20} className="text-slate-300" />
                 </div>
+                <p className="text-sm font-medium text-slate-500">No data available at this time.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Alerts & Quick Insights */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <AlertCircle size={20} className="text-slate-900" />
-              <h3 className="text-lg font-bold text-slate-900">Critical Alerts</h3>
-            </div>
-            <div className="space-y-3">
-              <AlertItem
-                title="Provider Verification"
-                count={alerts?.pendingVerifications || 0}
-                icon={ShieldCheck}
-                description="Providers awaiting security clearance."
-                color="amber"
-                link="/kyc-verification"
-              />
-              <AlertItem
-                title="Support Intervention"
-                count={alerts?.openTickets || 0}
-                icon={Ticket}
-                description="High priority tickets active now."
-                color="blue"
-                link="/tickets"
-              />
-              <AlertItem
-                title="Failed Transactions"
-                count={alerts?.failedPayments || 0}
-                icon={XCircle}
-                description="Payment reconciliation required."
-                color="red"
-                link="/payment-logs"
-              />
-              <AlertItem
-                title="Payout Requests"
-                count={overview?.pendingPayouts || 0}
-                icon={CreditCard}
-                description="Partner withdrawal requests."
-                color="slate"
-                link="/payouts"
-              />
-            </div>
-          </div>
 
-          <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
-
-            <div className="relative z-10">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">System Health</h4>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-300">Success Probability</span>
-                    <span className="text-white">98.4%</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '98.4%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm font-medium mb-2">
-                    <span className="text-slate-300">Provider Availability</span>
-                    <span className="text-white">94.2%</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: '94.2%' }}></div>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate("/audit-health-vault")}
-                className="w-full mt-8 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold transition-all"
-              >
-                View Health Vault
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Doctor Performance Productivity Table */}

@@ -228,64 +228,67 @@ export function BookingOperationsPage() {
     const ITEMS_PER_PAGE = 55;
 
     return (
-        <div className="space-y-6 animate-in text-left items-start">
-            <header className="w-full flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)] text-left items-start">
-                <div className="space-y-2 text-left items-start">
-                    <h1 className="text-3xl font-black tracking-tight text-[var(--text-main)]">Service Orders</h1>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-50 dark:bg-green-500/100 rounded-full animate-pulse"></span>
-                        <p className="text-sm font-medium text-[var(--text-muted)] tracking-wide">LIVE OPERATIONS MONITOR</p>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center bg-[var(--bg-main)] p-1 rounded-2xl border border-[var(--border-color)]">
-                        <div className="relative group min-w-[320px]">
-                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-blue-500 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search Patient name, ID or Mobile..."
-                                className="w-full bg-transparent border-none text-sm font-semibold pl-12 pr-4 h-12 outline-none focus:ring-0"
-                                value={searchQuery}
-                                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                            />
+        <div className="w-full space-y-6 animate-in text-left items-start px-4">
+            <header className="w-full bg-[var(--card-bg)] p-10 rounded-[32px] shadow-sm border border-[var(--border-color)]">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                    <div className="flex flex-col items-start text-left gap-3">
+                        <h1 className="text-5xl font-black tracking-tighter text-[var(--text-main)]">Service Orders</h1>
+                        <div className="flex items-center gap-2.5 px-4 py-1.5 bg-green-50 dark:bg-green-500/10 rounded-full border border-green-100 dark:border-green-500/20">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></span>
+                            <p className="text-[11px] font-black text-green-700 dark:text-green-400 uppercase tracking-[0.25em]">Live Operations Desk</p>
                         </div>
-                        <button 
-                            className="h-9 px-4 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all mr-1 shadow-sm"
-                            onClick={() => toast.success(`Search telemetry synchronized for "${searchQuery}"`)}
-                        >
-                            Search
-                        </button>
                     </div>
 
-                    <div className="flex bg-[var(--bg-main)] p-1.5 rounded-2xl">
+                    <div className="flex items-center gap-4 flex-nowrap overflow-x-auto pb-2 lg:pb-0 custom-scrollbar">
+                        <div className="flex items-center bg-[var(--bg-main)] p-1.5 rounded-[20px] border border-[var(--border-color)] shadow-inner shrink-0">
+                            <div className="relative group min-w-[300px]">
+                                <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-blue-600 transition-all duration-300 z-10" />
+                                <input
+                                    type="text"
+                                    placeholder="Search Patient name, ID or Mobile..."
+                                    className="w-full bg-transparent border-none text-sm font-bold pr-6 h-12 outline-none focus:ring-0 text-[var(--text-main)] placeholder:text-slate-400"
+                                    style={{ paddingLeft: '80px' }}
+                                    value={searchQuery}
+                                    onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                                />
+                            </div>
+                            <button 
+                                className="h-10 px-5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 shrink-0"
+                                onClick={() => toast.success(`Intelligence scan: "${searchQuery}"`)}
+                            >
+                                Search
+                            </button>
+                        </div>
+
+                        <div className="flex bg-[var(--bg-main)] p-1.5 rounded-[20px] shadow-inner shrink-0">
+                            <button
+                                onClick={() => { setActiveTab("doctors"); setPage(1); }}
+                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "doctors" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
+                            >
+                                Doctor Consults
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab("services"); setPage(1); }}
+                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "services" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
+                            >
+                                Service Requests
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab("hospital"); setPage(1); }}
+                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "hospital" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
+                            >
+                                Hospital Bookings
+                            </button>
+                        </div>
+
                         <button
-                            onClick={() => { setActiveTab("doctors"); setPage(1); }}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === "doctors" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm scale-100" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`h-14 px-6 flex items-center justify-center gap-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${showFilters ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-[var(--bg-main)] text-[var(--text-main)] hover:bg-[var(--border-color)]'}`}
                         >
-                            Doctor Consults
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab("services"); setPage(1); }}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === "services" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm scale-100" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                        >
-                            Service Requests
-                        </button>
-                        <button
-                            onClick={() => { setActiveTab("hospital"); setPage(1); }}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === "hospital" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm scale-100" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                        >
-                            Hospital Bookings
+                            <Filter size={18} />
+                            <span>Filters</span>
                         </button>
                     </div>
-
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`h-12 px-5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all shadow-sm ${showFilters ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--bg-main)] border border-transparent text-[var(--text-main)] hover:border-[var(--border-color)]'}`}
-                    >
-                        <Filter size={16} />
-                        <span className="hidden sm:inline">Filters</span>
-                    </button>
                 </div>
             </header>
 
