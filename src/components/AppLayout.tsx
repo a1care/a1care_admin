@@ -248,7 +248,7 @@ export function AppLayout() {
                     { to: "/service-categories", label: "Master Categories", icon: LayoutGrid },
                     { to: "/service-subcategories", label: "Sub-Categories", icon: Layers },
                     { to: "/service-child-services", label: "Catalog Offerings", icon: Tag },
-                    { to: "/health-packages", label: "Service Bundles", icon: Package }
+                    { to: "/health-packages", label: "Health Packages", icon: Package }
                   ].map(link => (
                     <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active text-primary font-bold" : ""}`}>
                       <link.icon size={13} /> {link.label}

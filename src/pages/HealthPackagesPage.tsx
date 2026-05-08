@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
     Plus, Trash2, Star, X, Package, ToggleLeft, ToggleRight,
-    Loader2, Pencil, Sparkles, CheckCircle2, CircleDashed
+    Loader2, Pencil, Sparkles, CheckCircle2, ChevronDown, Check
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,11 +51,13 @@ export function HealthPackagesPage() {
     const [editTarget, setEditTarget] = useState<HealthPackage | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+    const servicesDropdownRef = useRef<HTMLDivElement | null>(null);
 
     const field = (key: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setForm(f => ({ ...f, [key]: e.target.value }));
 
-    const openCreate = () => { setEditTarget(null); setForm({ ...emptyForm }); setSelectedRoleIds([]); setIsModalOpen(true); };
+    const openCreate = () => { setEditTarget(null); setForm({ ...emptyForm }); setSelectedRoleIds([]); setServicesDropdownOpen(false); setIsModalOpen(true); };
     const openEdit = (pkg: HealthPackage) => {
         setEditTarget(pkg);
         setSelectedRoleIds(Array.isArray(pkg.allowedRoleIds) ? pkg.allowedRoleIds : []);
@@ -66,6 +68,7 @@ export function HealthPackagesPage() {
             testsIncluded: pkg.testsIncluded.join(", "),
             validityDays: String(pkg.validityDays), order: String(pkg.order),
         });
+        setServicesDropdownOpen(false);
         setIsModalOpen(true);
     };
     const toggleRole = (roleId: string) => {
@@ -201,6 +204,18 @@ export function HealthPackagesPage() {
     };
 
     const discount = (orig: number, price: number) => orig > price ? Math.round(((orig - price) / orig) * 100) : 0;
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (!servicesDropdownRef.current) return;
+            if (!servicesDropdownRef.current.contains(event.target as Node)) {
+                setServicesDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleOutsideClick);
+        return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }, []);
 
     return (
         <div className="flex-col gap-4">
@@ -417,23 +432,42 @@ export function HealthPackagesPage() {
                             </div>
                             <div className="input-group">
                                 <label>Applicable Services *</label>
-                                <select
-                                    multiple
-                                    value={selectedRoleIds}
-                                    onChange={(e) => {
-                                        const values = Array.from(e.target.selectedOptions).map((option) => option.value);
-                                        setSelectedRoleIds(values);
-                                    }}
-                                    style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "1px solid #e2e8f0", minHeight: "120px", fontFamily: "inherit" }}
-                                >
-                                    {(roles || []).map((role) => (
-                                        <option key={role._id} value={role._id}>
-                                            {role.title || role.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div ref={servicesDropdownRef} style={{ position: "relative" }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setServicesDropdownOpen((v) => !v)}
+                                        style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "1px solid #e2e8f0", fontFamily: "inherit", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}
+                                    >
+                                        <span style={{ color: selectedRoleIds.length ? "#0f172a" : "#94a3b8", fontSize: "0.95rem" }}>
+                                            {selectedRoleIds.length
+                                                ? `${selectedRoleIds.length} service${selectedRoleIds.length > 1 ? "s" : ""} selected`
+                                                : "Select services"}
+                                        </span>
+                                        <ChevronDown size={16} style={{ color: "#64748b", transform: servicesDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} />
+                                    </button>
+                                    {servicesDropdownOpen && (
+                                        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", maxHeight: "220px", overflowY: "auto", zIndex: 30, boxShadow: "0 8px 24px rgba(15,23,42,0.08)" }}>
+                                            {(roles || []).map((role) => {
+                                                const checked = selectedRoleIds.includes(role._id);
+                                                return (
+                                                    <button
+                                                        key={role._id}
+                                                        type="button"
+                                                        onClick={() => toggleRole(role._id)}
+                                                        style={{ width: "100%", border: "none", background: checked ? "#eff6ff" : "#fff", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textAlign: "left" }}
+                                                    >
+                                                        <span style={{ width: "18px", height: "18px", borderRadius: "4px", border: checked ? "1px solid #2563eb" : "1px solid #cbd5e1", background: checked ? "#2563eb" : "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                                            {checked && <Check size={13} color="#fff" />}
+                                                        </span>
+                                                        <span style={{ fontSize: "0.9rem", color: "#0f172a" }}>{role.title || role.name}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                                 <p className="text-xs muted" style={{ marginTop: "6px" }}>
-                                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple services.
+                                    Click to open and tick multiple services.
                                 </p>
                             </div>
 
