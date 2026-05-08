@@ -57,7 +57,7 @@ export function DashboardPage() {
     placeholderData: keepPreviousData
   });
 
-  const performance = performanceData?.items || [];
+  const performance = Array.isArray(performanceData) ? performanceData : (performanceData?.items || []);
   const performanceTotalPages = performanceData?.totalPages || 1;
 
   const { data: activityData, isLoading: isActivityLoading, isFetching: isActivityFetching } = useQuery({
@@ -72,7 +72,7 @@ export function DashboardPage() {
     placeholderData: keepPreviousData
   });
 
-  const activity = activityData?.items || [];
+  const activity = Array.isArray(activityData) ? activityData : (activityData?.items || []);
   const activityTotalPages = activityData?.totalPages || 1;
 
   if (isOverviewLoading || isPerformanceLoading || (!activityData && isActivityLoading)) {

@@ -71,7 +71,7 @@ export default function ReviewsPage() {
         <div className="relative z-10 flex flex-wrap items-center gap-4">
           <div className="relative group w-full md:w-80">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-              <Search className="text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+              {/* <Search className="text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} /> */}
             </div>
             <input
               type="text"

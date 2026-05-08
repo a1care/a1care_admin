@@ -2,7 +2,7 @@ import { useState, useDeferredValue } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Clock, CheckCircle2, XCircle, User, Calendar, MapPin, CreditCard, Briefcase, ChevronLeft, ChevronRight, Search, Filter, Eye, Check, CheckCheck, X, RefreshCw, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, User, Calendar, MapPin, CreditCard, Briefcase, ChevronLeft, ChevronRight, Search, Filter, Eye, Check, CheckCheck, X, RefreshCw, Loader2, Stethoscope, Truck, Package } from "lucide-react";
 import { toast } from "sonner";
 
 interface BaseBooking {
@@ -42,6 +42,7 @@ export function BookingOperationsPage() {
     const [searchParams] = useSearchParams();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<"doctors" | "services" | "hospital">("services");
+    const [serviceCategory, setServiceCategory] = useState<string>("All");
     const [searchQuery, setSearchQuery] = useState("");
 
     const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All");
@@ -106,7 +107,7 @@ export function BookingOperationsPage() {
     });
 
     const { data: serviceData, isLoading: loadingServices } = useQuery({
-        queryKey: ["admin_service_bookings", page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, serviceFilter, departmentFilter],
+        queryKey: ["admin_service_bookings", page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, serviceFilter, departmentFilter, serviceCategory],
         queryFn: async () => {
             if (activeTab !== "services") return null;
             const params = new URLSearchParams({ page: page.toString(), limit: "55" });
@@ -117,6 +118,7 @@ export function BookingOperationsPage() {
             if (paymentFilter !== "All") params.append("payment", paymentFilter);
             if (serviceFilter !== "All") params.append("service", serviceFilter);
             if (departmentFilter !== "All") params.append("department", departmentFilter);
+            if (serviceCategory !== "All") params.append("serviceType", serviceCategory.toLowerCase());
             const res = await api.get(`/admin/bookings/services?${params.toString()}`);
             return normalizeBookingPayload(res.data.data);
         },
@@ -214,7 +216,20 @@ export function BookingOperationsPage() {
     };
 
     const activeDataset = activeTab === "doctors" ? doctorData : activeTab === "services" ? serviceData : hospitalData;
-    const paginatedData = activeDataset?.items || [];
+    const rawItems = activeDataset?.items || [];
+    
+    // Frontend Filter Fallback (Ensures tabs work even if backend hasn't been deployed/updated)
+    const paginatedData = activeTab === "services" && serviceCategory !== "All"
+        ? rawItems.filter((item: any) => {
+            const serviceName = (item.serviceId?.name || "").toLowerCase();
+            const category = serviceCategory.toLowerCase();
+            if (category === "nurse") return serviceName.includes("nurse") || serviceName.includes("shift") || serviceName.includes("care");
+            if (category === "ambulance") return serviceName.includes("ambulance");
+            if (category === "rental") return serviceName.includes("rental") || serviceName.includes("equipment") || serviceName.includes("medical");
+            return true;
+        })
+        : rawItems;
+    
     const totalPages = activeDataset?.totalPages || 1;
     const stats = activeDataset?.stats || { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
 
@@ -261,12 +276,6 @@ export function BookingOperationsPage() {
                         </div>
 
                         <div className="flex bg-[var(--bg-main)] p-1.5 rounded-[20px] shadow-inner shrink-0">
-                            <button
-                                onClick={() => { setActiveTab("doctors"); setPage(1); }}
-                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "doctors" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                            >
-                                Doctor Consults
-                            </button>
                             <button
                                 onClick={() => { setActiveTab("services"); setPage(1); }}
                                 className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "services" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
@@ -380,6 +389,28 @@ export function BookingOperationsPage() {
                     </button>
                 ))}
             </div>
+
+            {activeTab === "services" && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                    {[
+                        { id: "All", label: "All Services", icon: <Filter size={14} /> },
+                        { id: "Nurse", label: "Nursing Services", icon: <Stethoscope size={14} /> },
+                        { id: "Ambulance", label: "Ambulance", icon: <Truck size={14} /> },
+                        { id: "Rental", label: "Medical Equipment", icon: <Package size={14} /> }
+                    ].map((cat) => (
+                        <button
+                            key={cat.id}
+                            onClick={() => { setServiceCategory(cat.id); setPage(1); }}
+                            className={`h-11 px-5 flex items-center gap-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border ${serviceCategory === cat.id 
+                                ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20 scale-105" 
+                                : "bg-[var(--card-bg)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/50"}`}
+                        >
+                            {cat.icon}
+                            <span>{cat.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">

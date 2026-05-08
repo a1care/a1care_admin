@@ -18,10 +18,16 @@ interface HealthPackage {
     color: string;
     testsIncluded: string[];
     validityDays: number;
+    allowedRoleIds?: string[];
     isActive: boolean;
     isFeatured: boolean;
     order: number;
     createdAt: string;
+}
+interface RoleOption {
+    _id: string;
+    name: string;
+    title?: string;
 }
 
 const PRESET_COLORS = [
@@ -44,13 +50,15 @@ export function HealthPackagesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<HealthPackage | null>(null);
     const [form, setForm] = useState({ ...emptyForm });
+    const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
     const field = (key: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setForm(f => ({ ...f, [key]: e.target.value }));
 
-    const openCreate = () => { setEditTarget(null); setForm({ ...emptyForm }); setIsModalOpen(true); };
+    const openCreate = () => { setEditTarget(null); setForm({ ...emptyForm }); setSelectedRoleIds([]); setIsModalOpen(true); };
     const openEdit = (pkg: HealthPackage) => {
         setEditTarget(pkg);
+        setSelectedRoleIds(Array.isArray(pkg.allowedRoleIds) ? pkg.allowedRoleIds : []);
         setForm({
             name: pkg.name, description: pkg.description,
             price: String(pkg.price), originalPrice: String(pkg.originalPrice),
@@ -60,6 +68,9 @@ export function HealthPackagesPage() {
         });
         setIsModalOpen(true);
     };
+    const toggleRole = (roleId: string) => {
+        setSelectedRoleIds((prev) => prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]);
+    };
 
     // ── Fetch ──
     const { data: packages, isLoading } = useQuery({
@@ -67,6 +78,13 @@ export function HealthPackagesPage() {
         queryFn: async () => {
             const res = await api.get("/health-packages/admin/all");
             return res.data.data as HealthPackage[];
+        },
+    });
+    const { data: roles } = useQuery({
+        queryKey: ["admin_services_for_packages"],
+        queryFn: async () => {
+            const res = await api.get("/services");
+            return (res.data?.data || []) as RoleOption[];
         },
     });
 
@@ -122,13 +140,56 @@ export function HealthPackagesPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const price = Number(form.price);
+        const originalPrice = Number(form.originalPrice);
+        const validityDays = Number(form.validityDays);
+        const order = Number(form.order);
+        const testsIncluded = form.testsIncluded.split(",").map(t => t.trim()).filter(Boolean);
+
+        if (!form.name.trim() || !form.description.trim()) {
+            toast.error("Package name and description are required");
+            return;
+        }
+        if (!Number.isFinite(price) || price <= 0) {
+            toast.error("Sale price must be greater than 0");
+            return;
+        }
+        if (!Number.isFinite(originalPrice) || originalPrice <= 0) {
+            toast.error("Original price must be greater than 0");
+            return;
+        }
+        if (originalPrice < price) {
+            toast.error("Original price cannot be less than sale price");
+            return;
+        }
+        if (!Number.isFinite(validityDays) || validityDays <= 0) {
+            toast.error("Validity days must be greater than 0");
+            return;
+        }
+        if (testsIncluded.length === 0) {
+            toast.error("Add at least one test for this health service package");
+            return;
+        }
+        if (selectedRoleIds.length === 0) {
+            toast.error("Select at least one applicable service");
+            return;
+        }
+        if (!Number.isFinite(order) || order < 0) {
+            toast.error("Display order cannot be negative");
+            return;
+        }
+
         saveMutation.mutate({
             ...form,
-            price: Number(form.price),
-            originalPrice: Number(form.originalPrice),
-            validityDays: Number(form.validityDays),
-            order: Number(form.order),
-            testsIncluded: form.testsIncluded.split(",").map(t => t.trim()).filter(Boolean),
+            name: form.name.trim(),
+            description: form.description.trim(),
+            badge: form.badge.trim(),
+            price,
+            originalPrice,
+            validityDays,
+            order,
+            testsIncluded,
+            allowedRoleIds: selectedRoleIds,
         });
     };
 
@@ -353,6 +414,27 @@ export function HealthPackagesPage() {
                                     placeholder="CBC, Blood Sugar, ECG, Urine Routine..."
                                     style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "none", minHeight: "70px", fontFamily: "inherit" }}
                                 />
+                            </div>
+                            <div className="input-group">
+                                <label>Applicable Services *</label>
+                                <select
+                                    multiple
+                                    value={selectedRoleIds}
+                                    onChange={(e) => {
+                                        const values = Array.from(e.target.selectedOptions).map((option) => option.value);
+                                        setSelectedRoleIds(values);
+                                    }}
+                                    style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "1px solid #e2e8f0", minHeight: "120px", fontFamily: "inherit" }}
+                                >
+                                    {(roles || []).map((role) => (
+                                        <option key={role._id} value={role._id}>
+                                            {role.title || role.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs muted" style={{ marginTop: "6px" }}>
+                                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple services.
+                                </p>
                             </div>
 
                             <div className="input-group">
