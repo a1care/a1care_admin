@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
@@ -33,6 +33,7 @@ interface SubService {
 interface Category {
     _id: string;
     name: string;
+    title?: string;
 }
 
 export function ServiceSubServicesPage() {
@@ -40,6 +41,7 @@ export function ServiceSubServicesPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const initialCatId = searchParams.get("categoryId") || "";
+    const initialCatName = searchParams.get("category") || "";
 
     const [selectedCatId, setSelectedCatId] = useState(initialCatId);
     const [searchTerm, setSearchTerm] = useState("");
@@ -60,6 +62,24 @@ export function ServiceSubServicesPage() {
             return res.data.data as Category[];
         }
     });
+
+    const cleanName = (name: string) => name.replace(/SELECT|ASSIGN/g, "").trim();
+
+    useEffect(() => {
+        if (selectedCatId || !initialCatName || !categories?.length) return;
+
+        const normalizedParam = initialCatName.trim().toLowerCase();
+        const matchedCategory = categories.find((cat) => {
+            const categoryNames = [cat.name, cat.title, cleanName(cat.name)]
+                .filter(Boolean)
+                .map((value) => String(value).trim().toLowerCase());
+            return categoryNames.includes(normalizedParam);
+        });
+
+        if (matchedCategory) {
+            setSelectedCatId(matchedCategory._id);
+        }
+    }, [categories, initialCatName, selectedCatId]);
 
     const { data: subServices, isLoading } = useQuery({
         queryKey: ["admin_subservices", selectedCatId],
@@ -113,7 +133,6 @@ export function ServiceSubServicesPage() {
         s.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const cleanName = (name: string) => name.replace(/SELECT|ASSIGN/g, "").trim();
     const currentCategory = categories?.find(c => c._id === selectedCatId);
 
     const getSubIcon = (sub: SubService) => {

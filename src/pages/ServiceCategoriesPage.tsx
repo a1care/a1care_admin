@@ -206,7 +206,7 @@ export function ServiceCategoriesPage() {
                         <article
                             key={c._id}
                             className="group bg-[var(--card-bg)] border border-[var(--border-color)] rounded-[32px] p-6 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer overflow-hidden relative flex flex-col text-left items-start"
-                            onClick={() => navigate(`/service-subcategories?category=${c.name}`)}
+                            onClick={() => navigate(`/service-subcategories?categoryId=${c._id}`)}
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                                 <button
