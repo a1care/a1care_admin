@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/auth";
-import { ShieldCheck, Lock, Mail, Loader2, ChevronRight } from "lucide-react";
+import { ShieldCheck, Lock, Mail, Loader2, ChevronRight, Eye, EyeOff } from "lucide-react";
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,13 +101,21 @@ export function LoginPage() {
                   <Lock size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors z-10" />
                   <input
                     placeholder="Enter your key"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', color: 'white' }}
-                    className="w-full h-14 !bg-white/5 border border-white/5 rounded-2xl !pl-[60px] pr-5 text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all placeholder:text-slate-500 outline-none font-medium"
+                    className="w-full h-14 !bg-white/5 border border-white/5 rounded-2xl !pl-[60px] !pr-[56px] text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all placeholder:text-slate-500 outline-none font-medium"
                     required
                   />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-400 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all z-10"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
             </div>
