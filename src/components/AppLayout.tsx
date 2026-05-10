@@ -148,7 +148,13 @@ export function AppLayout() {
     () =>
       location.pathname.startsWith("/manage-customer") ||
       location.pathname.startsWith("/manage-provider") ||
-      location.pathname.startsWith("/manage-system-config"),
+      location.pathname.startsWith("/manage-system-config") ||
+      location.pathname.startsWith("/app-banners"),
+    [location.pathname]
+  );
+
+  const customerAppActive = useMemo(
+    () => location.pathname.startsWith("/app-banners"),
     [location.pathname]
   );
 
@@ -276,8 +282,12 @@ export function AppLayout() {
 
               {appsOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>User Apps</NavLink>
-                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Provider Apps</NavLink>
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners Customer</NavLink>
+                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promo Banners</NavLink>
+                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Banners</NavLink>
+                  <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>User Apps Config</NavLink>
+                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Provider Apps Config</NavLink>
                   <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Health Vault Audit</NavLink>
                   <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <Receipt size={13} />

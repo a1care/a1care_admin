@@ -26,6 +26,7 @@ import { HealthVaultAuditPage } from "./pages/HealthVaultAuditPage";
 import { PaymentLogsPage } from "./pages/PaymentLogsPage";
 import { HealthPackagesPage } from "./pages/HealthPackagesPage";
 import { ServiceVerticalsPage } from "./pages/ServiceVerticalsPage";
+import { AppBannerManagementPage } from "./pages/AppBannerManagementPage";
 import DeletionRequestsPage from "./pages/DeletionRequestsPage";
 
 export default function App() {
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="/manage-customer-app" element={<AppManagementPage appKey="user_app" />} />
               <Route path="/manage-provider-app" element={<AppManagementPage appKey="provider_app" />} />
               <Route path="/manage-system-config" element={<SystemSettingsPage />} />
+              <Route path="/app-banners/:type" element={<AppBannerManagementPage />} />
               <Route path="/payment-logs" element={<PaymentLogsPage />} />
               <Route path="/deletion-requests" element={<DeletionRequestsPage />} />
             </Route>

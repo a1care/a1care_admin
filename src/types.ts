@@ -70,6 +70,9 @@ export interface ManagedAppConfig {
     playStoreUrl: string;
     appStoreUrl: string;
     festivalBanners: FestivalBanner[];
+    mainBanners?: FestivalBanner[];
+    promotionalBanners?: FestivalBanner[];
+    knowledgeBanners?: FestivalBanner[];
   };
   updatedAt: string;
 }

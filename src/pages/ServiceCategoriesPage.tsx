@@ -27,6 +27,7 @@ interface Category {
     title: string;
     type?: string;
     imageUrl?: string;
+    bannerUrl?: string;
 }
 
 export function ServiceCategoriesPage() {
@@ -65,6 +66,8 @@ export function ServiceCategoriesPage() {
     const [type, setType] = useState(filterType || "doctor");
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -77,6 +80,16 @@ export function ServiceCategoriesPage() {
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
     }, [file]);
+
+    useEffect(() => {
+        if (!bannerFile) {
+            setBannerPreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(bannerFile);
+        setBannerPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [bannerFile]);
 
     const { data: categories, isLoading } = useQuery({
         queryKey: ["admin_categories"],
@@ -127,6 +140,7 @@ export function ServiceCategoriesPage() {
         setTitle("");
         setType(filterType || "doctor");
         setFile(null);
+        setBannerFile(null);
         setEditingCategory(null);
     };
 
@@ -246,7 +260,7 @@ export function ServiceCategoriesPage() {
             {/* Create Modal */}
             {isModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '500px' }}>
+                    <div className="modal-content" style={{ maxWidth: '600px' }}>
                         <div className="p-8 border-b flex justify-between items-center">
                             <div>
                                 <h2 className="brand-name">{editingCategory ? "Edit Category" : "Create New Category"}</h2>
@@ -254,13 +268,14 @@ export function ServiceCategoriesPage() {
                             </div>
                             <button onClick={() => { setIsModalOpen(false); setEditingCategory(null); }} className="logout-btn"><X size={24} /></button>
                         </div>
-                        <form className="p-8 flex-col gap-5" onSubmit={(e) => {
+                        <form className="p-8 flex flex-col gap-6" onSubmit={(e) => {
                             e.preventDefault();
                             const fd = new FormData();
                             fd.append("name", name);
                             fd.append("title", title);
                             fd.append("type", type);
                             if (file) fd.append("image", file);
+                            if (bannerFile) fd.append("banner", bannerFile);
 
                             if (editingCategory) {
                                 updateMutation.mutate({ id: editingCategory._id, formData: fd });
@@ -268,47 +283,77 @@ export function ServiceCategoriesPage() {
                                 createMutation.mutate(fd);
                             }
                         }}>
-                            <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">System Reference (Database ID)</label>
-                                <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. medical_consult" required />
-                            </div>
-                            <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Name (Public Display)</label>
-                                <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Consult a Doctor" required />
-                            </div>
-                            <div className="grid-2">
+                            <div className="grid grid-cols-2 gap-6">
                                 <div className="input-group">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Type</label>
-                                    <select className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold" value={type} onChange={(e) => setType(e.target.value)}>
-                                        {availableTypes.map(t => (
-                                            <option key={t.id} value={t.id}>{t.title}</option>
-                                        ))}
-                                    </select>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">System Reference (Database ID)</label>
+                                    <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. medical_consult" required />
                                 </div>
                                 <div className="input-group">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Visual Asset</label>
-                                    <label className={`flex items-center gap-3 w-full h-14 px-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${file ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-100 hover:border-blue-200"}`}>
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden bg-slate-100 ${file || (editingCategory && editingCategory.imageUrl) ? "" : "text-slate-500"}`}>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Name (Public Display)</label>
+                                    <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Consult a Doctor" required />
+                                </div>
+                            </div>
+
+                            <div className="input-group">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Type</label>
+                                <select className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold" value={type} onChange={(e) => setType(e.target.value)}>
+                                    {availableTypes.map(t => (
+                                        <option key={t.id} value={t.id}>{t.title}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="input-group">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Icon</label>
+                                    <label className={`flex flex-col items-center justify-center gap-2 w-full h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${file ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-100 hover:border-blue-200"}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-white shadow-sm ${file || (editingCategory && editingCategory.imageUrl) ? "" : "text-slate-400"}`}>
                                             {previewUrl ? (
                                                 <img src={previewUrl} className="w-full h-full object-cover" />
                                             ) : editingCategory?.imageUrl ? (
                                                 <img src={editingCategory.imageUrl} className="w-full h-full object-cover" />
                                             ) : (
-                                                <UploadCloud size={20} />
+                                                <UploadCloud size={24} />
                                             )}
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className={`text-xs font-bold truncate ${file ? "text-blue-700" : "text-slate-400"}`}>
-                                                {file ? file.name : "Select category icon..."}
+                                        <p className={`text-[10px] font-black uppercase tracking-widest ${file ? "text-blue-600" : "text-slate-400"}`}>
+                                            {file ? "Change Icon" : "Upload Icon"}
+                                        </p>
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                                    </label>
+                                </div>
+
+                                <div className="input-group">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Banner</label>
+                                    <label className={`flex flex-col items-center justify-center gap-2 w-full h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${bannerFile ? "bg-blue-50 border-blue-200" : "bg-slate-50 border-slate-100 hover:border-blue-200"}`}>
+                                        <div className={`w-full h-full rounded-xl flex items-center justify-center overflow-hidden bg-white shadow-sm ${bannerFile || (editingCategory && editingCategory.bannerUrl) ? "" : "text-slate-400"}`}>
+                                            {bannerPreviewUrl ? (
+                                                <img src={bannerPreviewUrl} className="w-full h-full object-cover" />
+                                            ) : editingCategory?.bannerUrl ? (
+                                                <img src={editingCategory.bannerUrl} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Image size={24} />
+                                            )}
+                                        </div>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-xl">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                                                {bannerFile ? "Change Banner" : "Upload Banner"}
                                             </p>
                                         </div>
-                                        <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                                        {!bannerPreviewUrl && !editingCategory?.bannerUrl && (
+                                            <>
+                                                <Image size={24} className="text-slate-400" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Upload Banner</p>
+                                            </>
+                                        )}
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] || null)} />
                                     </label>
                                 </div>
                             </div>
+
                             <div className="pt-4 flex gap-4">
                                 <button type="button" className="flex-1 h-14 rounded-2xl bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px]" onClick={() => setIsModalOpen(false)}>Abort</button>
-                                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-black uppercase text-[10px] shadow-lg shadow-blue-100">
+                                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-black uppercase text-[10px] shadow-xl shadow-blue-100">
                                     {createMutation.isPending || updateMutation.isPending ? "Processing..." : (editingCategory ? "Update Category" : "Finalize Category")}
                                 </button>
                             </div>
