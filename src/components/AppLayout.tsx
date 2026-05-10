@@ -85,9 +85,9 @@ export function AppLayout() {
     { label: "Nurse Registry", to: "/manage-nurses", icon: "🏥", cat: "Users" },
     { label: "Ambulance Fleet", to: "/manage-ambulances", icon: "🚑", cat: "Users" },
     { label: "Rental Inventory", to: "/manage-rentals", icon: "📦", cat: "Users" },
-    { label: "Service Categories", to: "/service-categories", icon: "📂", cat: "Services" },
-    { label: "Sub-Categories", to: "/service-subcategories", icon: "📁", cat: "Services" },
-    { label: "Service Items", to: "/service-child-services", icon: "🏷️", cat: "Services" },
+    { label: "Categories", to: "/service-categories", icon: "📂", cat: "Services" },
+    { label: "Subcategories", to: "/service-subcategories", icon: "📁", cat: "Services" },
+    { label: "Child Categories", to: "/service-child-services", icon: "🏷️", cat: "Services" },
     { label: "Health Packages", to: "/health-packages", icon: "📦", cat: "Services" },
     { label: "System Config", to: "/manage-system-config", icon: "⚙️", cat: "Admin" },
     { label: "Payment Audit Logs", to: "/payment-logs", icon: "🧾", cat: "Admin" },
@@ -181,7 +181,7 @@ export function AppLayout() {
           <div className="logo-box large">
             <img src="/a1care_logo1.png" alt="A1Care Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="text-center">
+          <div className="flex flex-col">
             <h2 className="brand-name">A1Care Admin</h2>
             <p className="role-label">System Controller</p>
           </div>
@@ -245,9 +245,9 @@ export function AppLayout() {
                 <div className="submenu-list">
                   {[
                     // { to: "/service-portfolio", label: "Portfolios Hub", icon: Briefcase },
-                    { to: "/service-categories", label: "Master Categories", icon: LayoutGrid },
-                    { to: "/service-subcategories", label: "Sub-Categories", icon: Layers },
-                    { to: "/service-child-services", label: "Catalog Offerings", icon: Tag },
+                    { to: "/service-categories", label: "Categories", icon: LayoutGrid },
+                    { to: "/service-subcategories", label: "Subcategories", icon: Layers },
+                    { to: "/service-child-services", label: "Child Categories", icon: Tag },
                     { to: "/health-packages", label: "Health Packages", icon: Package }
                   ].map(link => (
                     <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active text-primary font-bold" : ""}`}>

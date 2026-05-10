@@ -438,7 +438,7 @@ export function AppManagementPage({ appKey }: Props) {
       </main>
 
       {/* Synchronous Global Action Bar */}
-      <footer className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-4xl px-8">
+      <footer className="mt-12 mb-20 w-full max-w-4xl mx-auto px-4">
         <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[32px] p-4 flex items-center justify-between shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
           <div className="flex-1 pl-6">
             {uploadingTarget ? (
@@ -452,21 +452,25 @@ export function AppManagementPage({ appKey }: Props) {
                 <span className="text-xs font-black uppercase tracking-widest">{status}</span>
               </div>
             ) : (
-              <div>
+              <div className="space-y-0.5">
                 <p className="text-white font-black text-sm tracking-tight">Deployment Ready</p>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Push local modifications to registry cluster</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Push local modifications to registry cluster</p>
               </div>
             )}
           </div>
 
           <button
-            className="h-16 px-10 bg-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:bg-blue-500/100 text-white font-black rounded-[24px] flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 active:scale-95 transition-all group disabled:opacity-50"
+            className="h-14 px-8 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 active:scale-95 transition-all group disabled:opacity-50"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
           >
-            {saveMutation.isPending ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin"></div> : <Save size={24} />}
-            <span className="text-base uppercase tracking-tighter">Commit Architecture</span>
-            <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            {saveMutation.isPending ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <Save size={20} className="group-hover:scale-110 transition-transform" />
+            )}
+            <span className="text-sm uppercase tracking-wider">Commit Architecture</span>
+            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform opacity-50" />
           </button>
         </div>
       </footer>

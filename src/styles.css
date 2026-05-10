@@ -74,11 +74,11 @@ body {
 }
 
 .sidebar-brand {
-  padding: 32px 24px;
+  padding: 24px 20px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   border-bottom: 1px solid var(--sidebar-border);
 }
 
@@ -95,9 +95,9 @@ body {
 }
 
 .logo-box.large {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
 }
 
 .brand-name {

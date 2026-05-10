@@ -162,37 +162,23 @@ export function ServiceCategoriesPage() {
 
     return (
         <div className="space-y-8 animate-in text-left items-start">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm text-left items-start">
-                <div className="space-y-2 text-left items-start">
-                    <h1 className="text-3xl font-black tracking-tight text-[var(--text-main)]">
-                        {filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Portfolio` : "Master Service Categories"}
+            <header className="flex items-center justify-between gap-6 bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm">
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-bold tracking-tighter text-[var(--text-main)]">
+                        {filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Portfolio` : "Categories"}
                     </h1>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                        <p className="text-sm font-medium text-[var(--text-muted)] tracking-wide uppercase">Core Catalog Architecture</p>
-                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="relative group min-w-[300px]">
-                        {/* <Search size={18} className="absolute text-[var(--text-muted)] group-focus-within:text-blue-500 transition-colors" style={{ left: '20px', top: '50%', transform: 'translateY(-50%)' }} /> */}
-                        <input
-                            type="text"
-                            placeholder="Search portfolios..."
-                            className="w-full h-12 pl-12 pr-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 text-sm font-bold"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                <div className="flex items-center gap-4">
                     {filterType && (
                         <button
                             onClick={() => setSearchParams({})}
-                            className="h-12 px-6 rounded-xl bg-slate-100 dark:bg-slate-800 text-[var(--text-muted)] font-black text-[10px] uppercase hover:bg-slate-200"
+                            className="h-12 px-6 rounded-xl bg-slate-100 dark:bg-slate-800 text-[var(--text-muted)] font-black text-[10px] uppercase hover:bg-slate-200 transition-all"
                         >
                             Clear Filter
                         </button>
                     )}
-                    <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-95 font-black text-xs uppercase tracking-widest">
+                    <button onClick={() => { resetForm(); setIsModalOpen(true); }} className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center gap-3 shadow-xl shadow-blue-500/20 transition-all active:scale-95 font-black text-[11px] uppercase tracking-[0.15em]">
                         <Plus size={20} />
                         <span>Add Category</span>
                     </button>
@@ -243,11 +229,11 @@ export function ServiceCategoriesPage() {
 
                             <div className="space-y-1 mb-8 flex-1 text-left items-start">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-600/60 mb-1 block">{c.type || "General Service"}</span>
-                                <h3 className="text-lg font-black text-[var(--text-main)] group-hover:text-blue-600 transition-colors uppercase tracking-tight">{cleanName(c.name)}</h3>
+                                <h3 className="text-2xl font-bold text-[var(--text-main)] group-hover:text-blue-600 transition-colors uppercase tracking-tight">{cleanName(c.name)}</h3>
                             </div>
 
                             <div className="pt-6 border-t border-[var(--border-color)] w-full flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Registry</span>
+                                <span className="text-[10px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Subcategories</span>
                                 <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                             </div>
                         </article>

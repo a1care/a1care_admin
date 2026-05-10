@@ -32,6 +32,7 @@ interface ChildService {
     isActive: boolean;
     rating: number;
     completed: number;
+    fulfillmentMode?: "HOME_VISIT" | "HOSPITAL_VISIT" | "VIRTUAL";
     description?: string;
     imageUrl?: string;
 }
@@ -161,15 +162,17 @@ export function ServiceChildServicesPage() {
     };
 
     return (
-        <div className="flex-col gap-6">
-            <header className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-all">
+        <div className="flex-col gap-6 space-y-6">
+            <header className="flex justify-between items-center bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm">
+                <div className="flex items-center gap-5">
+                    <button 
+                        onClick={() => navigate(`/service-subcategories?categoryId=${activeCatId}`)} 
+                        className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all border border-blue-100 shadow-sm shadow-blue-500/10"
+                    >
                         <ChevronLeft size={20} />
                     </button>
-                    <div>
-                        <h1 className="brand-name" style={{ fontSize: '2rem' }}>Catalog Items</h1>
-                        <p className="muted font-bold tracking-wider uppercase text-[10px] mt-1">Bookable medical services & pricing</p>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-bold tracking-tighter text-[var(--text-main)]">Child Categories</h1>
                     </div>
                 </div>
                 <button
@@ -180,9 +183,10 @@ export function ServiceChildServicesPage() {
                         setFulfillment("HOME_VISIT");
                         setIsModalOpen(true);
                     }}
-                    className="button primary h-12 px-6 rounded-2xl gap-2 shadow-lg shadow-emerald-100"
+                    className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center gap-3 shadow-xl shadow-blue-500/20 transition-all active:scale-95 font-black text-[11px] uppercase tracking-[0.15em] disabled:opacity-50"
                 >
-                    <Plus size={18} /> New Catalog Item
+                    <Plus size={20} />
+                    <span>Add Child Category</span>
                 </button>
             </header>
 
@@ -206,7 +210,7 @@ export function ServiceChildServicesPage() {
 
                         <div className="flex items-center gap-2 mb-4">
                             <Tag size={14} className="text-emerald-600" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sub-Category</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Subcategory</span>
                         </div>
                         <div className="flex-col gap-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                             {!activeCatId && <p className="text-[10px] text-slate-400 italic">Select a category first</p>}
@@ -231,94 +235,79 @@ export function ServiceChildServicesPage() {
                             <p className="font-bold text-slate-400">Select a sub-category from the registry to manage its bookable items</p>
                         </div>
                     ) : (
-                        <div className="flex-col gap-6">
-                            <div className="card p-4 flex items-center gap-4 bg-white/50 backdrop-blur-md shadow-sm" style={{ borderRadius: '24px' }}>
-                                <div className="relative flex-1 group">
-                                    <Search className="absolute text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} style={{ left: '20px', top: '50%', transform: 'translateY(-50%)' }} />
-                                    <input
-                                        placeholder="Search catalog items..."
-                                        className="w-full bg-[var(--bg-main)] border-none font-semibold text-slate-700"
-                                        style={{ paddingLeft: '60px', height: '56px', borderRadius: '16px' }}
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex-col gap-3">
-                                {filtered?.map((child) => (
-                                    <article key={child._id} className="card flex justify-between items-center group hover:border-blue-200 transition-all" style={{ padding: '20px 32px', borderRadius: '24px' }}>
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden">
-                                                {child.imageUrl ? (
-                                                    <img src={child.imageUrl} alt={child.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    (() => {
-                                                        const ChildIcon = getChildIcon(child);
-                                                        return <ChildIcon size={24} />;
-                                                    })()
+                        <div className="flex-col gap-3">
+                            {filtered?.map((child) => (
+                                <article key={child._id} className="card flex justify-between items-center group hover:border-blue-200 transition-all" style={{ padding: '20px 32px', borderRadius: '24px' }}>
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden">
+                                            {child.imageUrl ? (
+                                                <img src={child.imageUrl} alt={child.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                (() => {
+                                                    const ChildIcon = getChildIcon(child);
+                                                    return <ChildIcon size={24} />;
+                                                })()
+                                            )}
+                                        </div>
+                                        <div className="flex-col gap-1">
+                                            <div className="flex items-center gap-3">
+                                                <h4 className="font-black text-slate-800 text-lg m-0">{cleanName(child.name)}</h4>
+                                                {child.isFeatured && (
+                                                    <span className="px-3 py-1 rounded-lg bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-100 flex items-center gap-1">
+                                                        <Star size={10} fill="currentColor" /> Popular Choice
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="flex-col gap-1">
-                                                <div className="flex items-center gap-3">
-                                                    <h4 className="font-black text-slate-800 text-lg m-0">{cleanName(child.name)}</h4>
-                                                    {child.isFeatured && (
-                                                        <span className="px-3 py-1 rounded-lg bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-100 flex items-center gap-1">
-                                                            <Star size={10} fill="currentColor" /> Popular Choice
-                                                        </span>
-                                                    )}
+                                            {child.description && (
+                                                <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 max-w-sm">
+                                                    {child.description}
+                                                </p>
+                                            )}
+                                            <div className="flex items-center gap-4 mt-2">
+                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-lg text-slate-600 font-black text-xs">
+                                                    ₹{child.price}
                                                 </div>
-                                                {child.description && (
-                                                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 max-w-sm">
-                                                        {child.description}
-                                                    </p>
-                                                )}
-                                                <div className="flex items-center gap-4 mt-2">
-                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-lg text-slate-600 font-black text-xs">
-                                                        ₹{child.price}
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                        <CheckCircle2 size={12} className="text-emerald-500" /> {child.completed || 0} Successful Cycles
-                                                    </div>
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    <CheckCircle2 size={12} className="text-emerald-500" /> {child.completed || 0} Successful Cycles
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                title={child.isFeatured ? "Remove from Popular" : "Promote to Popular"}
-                                                onClick={() => toggleFeaturedMutation.mutate(child._id)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${child.isFeatured ? "bg-amber-100 text-amber-600" : "bg-slate-50 text-slate-400 hover:bg-amber-50"}`}
-                                            >
-                                                <Star size={18} fill={child.isFeatured ? "currentColor" : "none"} />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingItem(child);
-                                                    setName(child.name);
-                                                    setPrice(String(child.price));
-                                                    setDesc(child.description || "");
-                                                    setFulfillment("HOME_VISIT"); // Default or from data if exists
-                                                    setPreview(child.imageUrl || null);
-                                                    setIsModalOpen(true);
-                                                }}
-                                                className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-sm"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteId(child._id)}
-                                                className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </article>
-                                ))}
-                                {filtered?.length === 0 && !isLoading && (
-                                    <div className="p-20 text-center opacity-30 font-bold">No catalog items defined for this unit.</div>
-                                )}
-                            </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            title={child.isFeatured ? "Remove from Popular" : "Promote to Popular"}
+                                            onClick={() => toggleFeaturedMutation.mutate(child._id)}
+                                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${child.isFeatured ? "bg-amber-100 text-amber-600" : "bg-slate-50 text-slate-400 hover:bg-amber-50"}`}
+                                        >
+                                            <Star size={18} fill={child.isFeatured ? "currentColor" : "none"} />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingItem(child);
+                                                setName(child.name);
+                                                setPrice(String(child.price));
+                                                setDesc(child.description || "");
+                                                setFulfillment(child.fulfillmentMode || "HOME_VISIT");
+                                                setPreview(child.imageUrl || null);
+                                                setIsModalOpen(true);
+                                            }}
+                                            className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-sm"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteId(child._id)}
+                                            className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                            {filtered?.length === 0 && !isLoading && (
+                                <div className="p-20 text-center opacity-30 font-bold">No catalog items defined for this unit.</div>
+                            )}
                         </div>
                     )}
                 </main>

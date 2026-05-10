@@ -147,15 +147,17 @@ export function ServiceSubServicesPage() {
     };
 
     return (
-        <div className="flex-col gap-6">
-            <header className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-all">
+        <div className="flex-col gap-6 space-y-6">
+            <header className="flex justify-between items-center bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm">
+                <div className="flex items-center gap-5">
+                    <button 
+                        onClick={() => navigate("/service-categories")} 
+                        className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all border border-blue-100 shadow-sm shadow-blue-500/10"
+                    >
                         <ChevronLeft size={20} />
                     </button>
-                    <div>
-                        <h1 className="brand-name" style={{ fontSize: '2rem' }}>Sub-Categories</h1>
-                        <p className="muted font-bold tracking-wider uppercase text-[10px] mt-1">Tier 2 specialized medical units</p>
+                    <div className="space-y-1">
+                        <h1 className="text-3xl font-bold tracking-tighter text-[var(--text-main)]">Subcategories</h1>
                     </div>
                 </div>
                 <button
@@ -165,9 +167,10 @@ export function ServiceSubServicesPage() {
                         setName(""); setDesc(""); setFile(null); setPreview(null);
                         setIsModalOpen(true);
                     }}
-                    className="button primary h-12 px-6 rounded-2xl gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50"
+                    className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center gap-3 shadow-xl shadow-blue-500/20 transition-all active:scale-95 font-black text-[11px] uppercase tracking-[0.15em] disabled:opacity-50"
                 >
-                    <Plus size={18} /> New Sub-Category
+                    <Plus size={20} />
+                    <span>Add Subcategory</span>
                 </button>
             </header>
 
@@ -193,26 +196,13 @@ export function ServiceSubServicesPage() {
                 </aside>
 
                 <main className="lg:col-span-3 flex-col gap-6">
-                    <div className="card p-4 flex items-center gap-4 bg-white/50 backdrop-blur-md shadow-sm" style={{ borderRadius: '24px' }}>
-                        <div className="relative flex-1 group">
-                            <Search className="absolute text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} style={{ left: '20px', top: '50%', transform: 'translateY(-50%)' }} />
-                            <input
-                                placeholder="Search sub-categories..."
-                                className="w-full bg-[var(--bg-main)] border-none font-semibold text-slate-700"
-                                style={{ paddingLeft: '60px', height: '56px', borderRadius: '16px' }}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
                     {!selectedCatId ? (
                         <div className="p-20 text-center card-ghost">
                             <Layers size={48} className="mx-auto mb-4 opacity-20" />
                             <p className="font-bold text-slate-400">Select a primary category to view its organizational units</p>
                         </div>
                     ) : (
-                        <div className="grid-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {filtered?.map((sub) => (
                                 <article
                                     key={sub._id}
@@ -263,7 +253,7 @@ export function ServiceSubServicesPage() {
                                         <p className="text-[9px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1">Tier 2 Specialization</p>
                                     </div>
                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                                        <span className="text-xs font-bold text-blue-600">Explore Catalog</span>
+                                        <span className="text-[10px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Child Categories</span>
                                         <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1" />
                                     </div>
                                 </article>
