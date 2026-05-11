@@ -62,8 +62,9 @@ export function AppLayout() {
   const { user, logout } = useAuth();
 
   const [servicesOpen, setServicesOpen] = useState(false);
-  const [usersOpen, setUsersOpen] = useState(true);
+  const [usersOpen, setUsersOpen] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
+  const [customerAppOpen, setCustomerAppOpen] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem("admin_theme") || "light");
 
   // Search / Command Palette State
@@ -267,6 +268,27 @@ export function AppLayout() {
 
           {user?.role === "super_admin" && (
             <>
+              <div className="nav-section">Customer App Management</div>
+
+              <button
+                className={`submenu-trigger ${customerAppActive ? "active" : ""}`}
+                onClick={() => setCustomerAppOpen((prev) => !prev)}
+              >
+                <div className="flex items-center gap-3">
+                  <Flame size={18} />
+                  <span>Growth Banners</span>
+                </div>
+                {customerAppOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+
+              {customerAppOpen && (
+                <div className="submenu-list">
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners Customer</NavLink>
+                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promo Banners</NavLink>
+                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Banners</NavLink>
+                </div>
+              )}
+
               <div className="nav-section">System Configuration</div>
 
               <button
@@ -282,12 +304,9 @@ export function AppLayout() {
 
               {appsOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners Customer</NavLink>
-                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promo Banners</NavLink>
-                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Banners</NavLink>
-                  <div className="h-px bg-slate-100 my-1 mx-2"></div>
                   <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>User Apps Config</NavLink>
                   <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Provider Apps Config</NavLink>
+                  <div className="h-px bg-slate-100 my-1 mx-2"></div>
                   <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Health Vault Audit</NavLink>
                   <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <Receipt size={13} />

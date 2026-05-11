@@ -229,22 +229,24 @@ export function AppBannerManagementPage() {
                         onChange={(e) => updateBanner(index, "title", e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">Link to Category (Auto-generates Deep Link)</label>
-                      <select 
-                        className="w-full h-12 bg-[var(--bg-main)] border-none rounded-xl px-4 font-bold text-[var(--text-main)] focus:ring-2 focus:ring-blue-100"
-                        onChange={(e) => {
-                          const cat = categories?.find(c => c._id === e.target.value);
-                          if (cat) handleCategorySelect(index, cat.name, cat._id);
-                        }}
-                        value={categories?.find(c => banner.redirectUrl.includes(c._id))?._id || ""}
-                      >
-                        <option value="">Select Category...</option>
-                        {categories?.map(cat => (
-                          <option key={cat._id} value={cat._id}>{cat.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {type !== "promotional" && (
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">Link to Category (Auto-generates Deep Link)</label>
+                        <select 
+                          className="w-full h-12 bg-[var(--bg-main)] border-none rounded-xl px-4 font-bold text-[var(--text-main)] focus:ring-2 focus:ring-blue-100"
+                          onChange={(e) => {
+                            const cat = categories?.find(c => c._id === e.target.value);
+                            if (cat) handleCategorySelect(index, cat.name, cat._id);
+                          }}
+                          value={categories?.find(c => banner.redirectUrl.includes(c._id))?._id || ""}
+                        >
+                          <option value="">Select Category...</option>
+                          {categories?.map(cat => (
+                            <option key={cat._id} value={cat._id}>{cat.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
