@@ -90,7 +90,7 @@ export function BookingOperationsPage() {
 
     // Fetching Bookings
     const { data: doctorData, isLoading: loadingDocs } = useQuery({
-        queryKey: ["admin_doctor_bookings", page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, subServiceFilter],
+        queryKey: ["admin_doctor_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, subServiceFilter],
         queryFn: async () => {
             if (activeTab !== "doctors") return null;
             const params = new URLSearchParams({ page: page.toString(), limit: "55" });
@@ -107,7 +107,7 @@ export function BookingOperationsPage() {
     });
 
     const { data: serviceData, isLoading: loadingServices } = useQuery({
-        queryKey: ["admin_service_bookings", page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, serviceFilter, departmentFilter, serviceCategory],
+        queryKey: ["admin_service_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, serviceFilter, departmentFilter, serviceCategory],
         queryFn: async () => {
             if (activeTab !== "services") return null;
             const params = new URLSearchParams({ page: page.toString(), limit: "55" });
@@ -126,7 +126,7 @@ export function BookingOperationsPage() {
     });
 
     const { data: hospitalData, isLoading: loadingHospital } = useQuery({
-        queryKey: ["admin_hospital_bookings", page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter],
+        queryKey: ["admin_hospital_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter],
         queryFn: async () => {
             if (activeTab !== "hospital") return null;
             const params = new URLSearchParams({ page: page.toString(), limit: "55" });
@@ -210,7 +210,10 @@ export function BookingOperationsPage() {
         const notes = String(booking?.notes || "").trim();
         if (notes.startsWith("Symptom:")) return notes.replace("Symptom:", "").trim();
         if (notes.startsWith("Dept:")) return notes.replace("Dept:", "").trim();
-        if (activeTab === "doctors") return booking.doctorId?.name || "Doctor Consult";
+        if (activeTab === "doctors") {
+             const spec = booking.serviceName || (Array.isArray(booking.doctorId?.specialization) ? booking.doctorId.specialization[0] : null);
+             return spec || booking.doctorId?.name || "Doctor Consult";
+        }
         if (activeTab === "services") return booking.serviceId?.name || "Service Request";
         return booking.serviceName || "Hospital Task";
     };
@@ -281,6 +284,12 @@ export function BookingOperationsPage() {
                                 className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "services" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
                             >
                                 Service Requests
+                            </button>
+                            <button
+                                onClick={() => { setActiveTab("doctors"); setPage(1); }}
+                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "doctors" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
+                            >
+                                Doctor Consult
                             </button>
                             <button
                                 onClick={() => { setActiveTab("hospital"); setPage(1); }}

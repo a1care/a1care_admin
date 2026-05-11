@@ -85,10 +85,13 @@ export function OPBookingsPage() {
             const payload = normalizeBookingPayload(res.data.data);
             const items = Array.isArray(payload.items) ? payload.items : [];
             const normalizedItems = items.map((item: any) => {
-                const specialization = Array.isArray(item?.doctorId?.specialization) ? item.doctorId.specialization[0] : "";
+                const specialization = item?.serviceName || (Array.isArray(item?.doctorId?.specialization) ? item.doctorId.specialization[0] : "");
+                const fallbackName = item?.serviceId?.name || item?.doctorId?.name || "Doctor Consultation";
                 return {
                     ...item,
-                    serviceId: item.serviceId || { name: specialization || item?.doctorId?.name || "Doctor Consultation" },
+                    // For doctor appointments, serviceName or specialization should be the primary label
+                    // so departments like ENT don't get replaced by stale generic service names.
+                    serviceId: { ...(item?.serviceId || {}), name: specialization || fallbackName },
                 };
             });
             return { ...payload, items: normalizedItems };
@@ -356,7 +359,12 @@ export function OPBookingsPage() {
                                             </td>
                                             <td className="py-5 px-6">
                                                 <div className="text-sm font-bold text-[var(--text-main)] truncate max-w-[250px]" title={booking.serviceId?.name}>
-                                                    {booking.serviceId?.name}
+                                                    {booking.serviceName || booking.serviceId?.name || "Doctor Consult"}
+                                                    {booking.doctorId?.name && (
+                                                        <span className="text-[10px] text-[var(--text-muted)] block mt-0.5">
+                                                            with Dr. {booking.doctorId.name}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6">
