@@ -133,7 +133,7 @@ export default function KYCVerificationPage() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {isLoading ? (
                     <div className="col-span-full py-20 text-center">
                         <div className="flex flex-col items-center gap-4">
@@ -142,14 +142,14 @@ export default function KYCVerificationPage() {
                         </div>
                     </div>
                 ) : Array.isArray(staff) && staff.map((doctor) => (
-                    <div key={doctor._id} className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 group overflow-hidden flex flex-col">
-                        <div className="p-5 flex-1 flex flex-col">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex gap-3 items-center">
+                    <div key={doctor._id} className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 group overflow-hidden flex flex-col min-w-[340px]">
+                        <div className="p-6 flex-1 flex flex-col">
+                            <div className="flex items-start justify-between gap-4 mb-4">
+                                <div className="flex gap-3 items-center min-w-0 flex-1">
                                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-sm font-black text-slate-500 group-hover:from-blue-600 group-hover:to-indigo-700 group-hover:text-white transition-all duration-500 shadow-inner">
                                         {doctor.name?.charAt(0) || 'P'}
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <h3 className="text-sm font-black text-slate-900 truncate leading-tight">{doctor.name || "Provider"}</h3>
                                         <div className="flex items-center gap-1.5 mt-1">
                                             <Phone size={12} className="text-slate-400" />
@@ -157,7 +157,7 @@ export default function KYCVerificationPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
+                                <div className={`shrink-0 min-w-[88px] text-center px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
                                     }`}>
                                     {doctor.status}
                                 </div>

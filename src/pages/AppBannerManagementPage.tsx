@@ -33,9 +33,9 @@ export function AppBannerManagementPage() {
   const [status, setStatus] = useState<string>("");
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  const bannerTypeLabel = 
-    type === "main" ? "Offer Banners Customer" : 
-    type === "knowledge" ? "Knowledge Banners" : "Promotional Banners";
+  const bannerTypeLabel =
+    type === "main" ? "Offer Banners Customer" :
+    type === "knowledge" ? "Knowledge Base" : "Promotional Banners";
   const configField = 
     type === "main" ? "mainBanners" : 
     type === "knowledge" ? "knowledgeBanners" : "promotionalBanners";

@@ -2,16 +2,29 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    useSortable,
+    rectSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
     Plus,
     Trash2,
     ChevronRight,
     LayoutGrid,
     X,
-    Settings2,
-    Search,
+    GripVertical,
     Image,
     UploadCloud,
-    CheckCircle2,
     Edit2,
     Stethoscope,
     Syringe,
@@ -28,6 +41,88 @@ interface Category {
     type?: string;
     imageUrl?: string;
     bannerUrl?: string;
+    priority?: number;
+}
+
+function SortableCard({ c, index, onEdit, onDelete, onNavigate, getCategoryIcon, cleanName }: {
+    c: Category; index: number;
+    onEdit: (c: Category) => void;
+    onDelete: (id: string) => void;
+    onNavigate: (id: string) => void;
+    getCategoryIcon: (c: Category) => any;
+    cleanName: (name: string) => string;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c._id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : undefined,
+    };
+    const CategoryIcon = getCategoryIcon(c);
+
+    return (
+        <article
+            ref={setNodeRef}
+            style={style}
+            className="group bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl p-5 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer overflow-hidden relative flex flex-col text-left items-start"
+            onClick={() => onNavigate(c._id)}
+        >
+            {/* Top bar: grip+priority on left, actions on right */}
+            <div className="flex items-center justify-between w-full mb-4">
+                <div className="flex items-center gap-2">
+                    {/* Drag handle */}
+                    <div
+                        {...attributes}
+                        {...listeners}
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-blue-500 hover:bg-blue-50 cursor-grab active:cursor-grabbing transition-all"
+                        title="Drag to reorder"
+                    >
+                        <GripVertical size={16} />
+                    </div>
+                    {/* Priority badge */}
+                    <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[11px] font-black shadow">
+                        {index + 1}
+                    </div>
+                </div>
+
+                {/* Edit / Delete */}
+                <div className="flex gap-1.5">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEdit(c); }}
+                        className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
+                    >
+                        <Edit2 size={15} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(c._id); }}
+                        className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                    >
+                        <Trash2 size={15} />
+                    </button>
+                </div>
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform overflow-hidden">
+                {c.imageUrl ? (
+                    <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+                ) : (
+                    <CategoryIcon size={24} />
+                )}
+            </div>
+
+            <div className="space-y-1 mb-4 flex-1 text-left items-start">
+                <span className="text-[9px] font-black uppercase tracking-widest text-blue-600/60 mb-1 block">{c.type || "General Service"}</span>
+                <h3 className="text-base font-bold text-[var(--text-main)] group-hover:text-blue-600 transition-colors uppercase tracking-tight">{cleanName(c.name)}</h3>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border-color)] w-full flex items-center justify-between">
+                <span className="text-[9px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Subcategories</span>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+            </div>
+        </article>
+    );
 }
 
 export function ServiceCategoriesPage() {
@@ -68,6 +163,7 @@ export function ServiceCategoriesPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
+    const [priority, setPriority] = useState<number>(0);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
@@ -139,6 +235,7 @@ export function ServiceCategoriesPage() {
         setName("");
         setTitle("");
         setType(filterType || "doctor");
+        setPriority(0);
         setFile(null);
         setBannerFile(null);
         setEditingCategory(null);
@@ -155,7 +252,41 @@ export function ServiceCategoriesPage() {
         }
     });
 
-    const filteredCategories = (categories || []).filter(c => {
+    const [orderedCategories, setOrderedCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        if (categories) {
+            const sorted = [...categories].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+            setOrderedCategories(sorted);
+        }
+    }, [categories]);
+
+    const reorderMutation = useMutation({
+        mutationFn: async (items: { id: string; priority: number }[]) => {
+            await api.post("/services/reorder", items);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin_categories"] });
+            toast.success("Order saved");
+        },
+        onError: () => toast.error("Failed to save order"),
+    });
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const oldIndex = orderedCategories.findIndex(c => c._id === active.id);
+        const newIndex = orderedCategories.findIndex(c => c._id === over.id);
+        const reordered = arrayMove(orderedCategories, oldIndex, newIndex);
+        setOrderedCategories(reordered);
+        reorderMutation.mutate(reordered.map((c, i) => ({ id: c._id, priority: i })));
+    };
+
+    const filteredCategories = orderedCategories.filter(c => {
         const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = !filterType || c.type === filterType;
         return matchesSearch && matchesType;
@@ -184,6 +315,13 @@ export function ServiceCategoriesPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <input
+                        type="text"
+                        placeholder="Search categories..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="h-12 px-5 rounded-xl bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-[var(--text-main)] placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-500/40 w-56"
+                    />
                     {filterType && (
                         <button
                             onClick={() => setSearchParams({})}
@@ -199,61 +337,31 @@ export function ServiceCategoriesPage() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredCategories.map((c) => {
-                    const CategoryIcon = getCategoryIcon(c);
-                    return (
-                        <article
-                            key={c._id}
-                            className="group bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl p-5 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 cursor-pointer overflow-hidden relative flex flex-col text-left items-start"
-                            onClick={() => navigate(`/service-subcategories?categoryId=${c._id}`)}
-                        >
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingCategory(c);
-                                        setName(c.name);
-                                        setTitle(c.title);
-                                        setType(c.type || "doctor");
-                                        setIsModalOpen(true);
-                                    }}
-                                    className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
-                                >
-                                    <Edit2 size={18} />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDeleteId(c._id);
-                                    }}
-                                    className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform overflow-hidden">
-                                {c.imageUrl ? (
-                                    <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
-                                ) : (
-                                    <CategoryIcon size={24} />
-                                )}
-                            </div>
-
-                            <div className="space-y-1 mb-4 flex-1 text-left items-start">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-blue-600/60 mb-1 block">{c.type || "General Service"}</span>
-                                <h3 className="text-base font-bold text-[var(--text-main)] group-hover:text-blue-600 transition-colors uppercase tracking-tight">{cleanName(c.name)}</h3>
-                            </div>
-
-                            <div className="pt-4 border-t border-[var(--border-color)] w-full flex items-center justify-between">
-                                <span className="text-[9px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Subcategories</span>
-                                <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                            </div>
-                        </article>
-                    )
-                })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={filteredCategories.map(c => c._id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredCategories.map((c, index) => (
+                            <SortableCard
+                                key={c._id}
+                                c={c}
+                                index={index}
+                                getCategoryIcon={getCategoryIcon}
+                                cleanName={cleanName}
+                                onEdit={(cat) => {
+                                    setEditingCategory(cat);
+                                    setName(cat.name);
+                                    setTitle(cat.title);
+                                    setType(cat.type || "doctor");
+                                    setPriority(cat.priority ?? 0);
+                                    setIsModalOpen(true);
+                                }}
+                                onDelete={(id) => setDeleteId(id)}
+                                onNavigate={(id) => navigate(`/service-subcategories?categoryId=${id}`)}
+                            />
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
 
             {isLoading && <div className="p-20 text-center muted font-bold animate-pulse">Synchronizing sector data...</div>}
 
@@ -275,6 +383,7 @@ export function ServiceCategoriesPage() {
                                 fd.append("name", name);
                                 fd.append("title", title);
                                 fd.append("type", type);
+                                fd.append("priority", String(priority));
                                 if (file) fd.append("image", file);
                                 if (bannerFile) fd.append("banner", bannerFile);
 
@@ -295,13 +404,26 @@ export function ServiceCategoriesPage() {
                                     </div>
                                 </div>
 
-                                <div className="input-group">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Type</label>
-                                    <select className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold" value={type} onChange={(e) => setType(e.target.value)}>
-                                        {availableTypes.map(t => (
-                                            <option key={t.id} value={t.id}>{t.title}</option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="input-group">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Category Type</label>
+                                        <select className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold" value={type} onChange={(e) => setType(e.target.value)}>
+                                            {availableTypes.map(t => (
+                                                <option key={t.id} value={t.id}>{t.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="input-group">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Display Order (1 = First)</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                            value={priority + 1}
+                                            onChange={(e) => setPriority(Math.max(0, Number(e.target.value) - 1))}
+                                            placeholder="e.g. 1"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">

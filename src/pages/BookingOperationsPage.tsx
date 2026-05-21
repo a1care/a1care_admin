@@ -36,6 +36,9 @@ interface DoctorListItem {
     _id: string;
     name: string;
     mobileNumber?: string;
+    roleId?: string | { _id?: string; name?: string };
+    status?: string;
+    specialization?: string[];
 }
 
 export function BookingOperationsPage() {
@@ -152,7 +155,7 @@ export function BookingOperationsPage() {
     const { data: doctorsList } = useQuery({
         queryKey: ["admin_doctors_list"],
         queryFn: async () => {
-            const res = await api.get("/admin/doctors");
+            const res = await api.get("/admin/doctors?status=Active&limit=500");
             const payload = res.data?.data;
             if (Array.isArray(payload)) return payload as DoctorListItem[];
             if (Array.isArray(payload?.items)) return payload.items as DoctorListItem[];
@@ -179,6 +182,16 @@ export function BookingOperationsPage() {
 
     const [acceptServiceModal, setAcceptServiceModal] = useState<{ bookingId: string; booking: any } | null>(null);
     const [selectedHospitalId, setSelectedHospitalId] = useState("");
+    const getProviderRoleId = (provider: DoctorListItem) =>
+        typeof provider.roleId === "string" ? provider.roleId : provider.roleId?._id || "";
+    const getEligibleProvidersForBooking = (booking: any) => {
+        const allowedRoleIds = booking?.serviceId?.allowedRoleIds || booking?.childServiceId?.allowedRoleIds || [];
+        if (!Array.isArray(allowedRoleIds) || allowedRoleIds.length === 0) {
+            return normalizedDoctorsList.filter((d) => d.status === "Active");
+        }
+        const allowed = new Set(allowedRoleIds.map((id: any) => String(id?._id || id)));
+        return normalizedDoctorsList.filter((d) => d.status === "Active" && allowed.has(getProviderRoleId(d)));
+    };
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, type, status, assignedProviderId }: { id: string, type: "doctor" | "service", status: string; assignedProviderId?: string }) => {
@@ -504,20 +517,20 @@ export function BookingOperationsPage() {
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-center">
-                                                {activeTab === "services" && (booking.status?.toUpperCase() === "RETURNED_TO_ADMIN") ? (
+                                                {activeTab === "services" && isPending ? (
                                                     <button
                                                         onClick={() => setAcceptServiceModal({ bookingId: booking._id, booking })}
                                                         className="h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto bg-blue-600 text-white hover:bg-blue-700 animate-soft-glow"
                                                     >
                                                         <CheckCircle2 size={14} />
-                                                        Assign to hospital
+                                                        Assign Provider
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        disabled={!isPending}
+                                                        disabled={!isPending || activeTab === "services"}
                                                         onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "CONFIRMED")}
                                                         className={`h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto 
-                                                            ${isPending
+                                                            ${isPending && activeTab !== "services"
                                                                 ? "bg-blue-600 text-white hover:bg-blue-700 animate-soft-glow"
                                                                 : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700 shadow-none"
                                                             }`}
@@ -716,23 +729,28 @@ export function BookingOperationsPage() {
                 </div>
             )}
 
-            {/* Assign service to hospital modal (for RETURNED_TO_ADMIN) */}
+            {/* Assign service to provider modal */}
             {acceptServiceModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}></div>
                     <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl p-6">
-                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Assign to hospital</h3>
-                        <p className="text-sm text-[var(--text-muted)] mb-4">Select a provider to accept this booking. It will appear in Hospital Bookings.</p>
+                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Assign Provider</h3>
+                        <p className="text-sm text-[var(--text-muted)] mb-4">Choose an active provider eligible for this service. The booking will move to assigned work.</p>
                         <select
                             value={selectedHospitalId}
                             onChange={(e) => setSelectedHospitalId(e.target.value)}
                             className="w-full h-12 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm font-medium text-[var(--text-main)] mb-4"
                         >
                             <option value="">Choose provider...</option>
-                            {normalizedDoctorsList.map((d) => (
-                                <option key={d._id} value={d._id}>{d.name} {d.mobileNumber ? `(${d.mobileNumber})` : ""}</option>
+                            {getEligibleProvidersForBooking(acceptServiceModal.booking).map((d) => (
+                                <option key={d._id} value={d._id}>
+                                    {d.name} {d.specialization?.length ? `- ${d.specialization.join(", ")}` : ""} {d.mobileNumber ? `(${d.mobileNumber})` : ""}
+                                </option>
                             ))}
                         </select>
+                        {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
+                            <p className="text-xs font-bold text-rose-600 mb-4">No active matching providers found for this service.</p>
+                        )}
                         <div className="flex gap-3 justify-end">
                             <button onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }} className="px-5 h-11 rounded-xl border border-[var(--border-color)] font-bold text-[var(--text-main)]">Cancel</button>
                             <button onClick={handleAcceptServiceWithHospital} disabled={!selectedHospitalId || updateStatusMutation.isPending} className="px-5 h-11 rounded-xl bg-blue-600 text-white font-bold disabled:opacity-50">Assign</button>
