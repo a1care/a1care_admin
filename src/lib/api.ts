@@ -21,6 +21,10 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
+      // Bounce to login so an expired session doesn't leave the admin on a dead page.
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

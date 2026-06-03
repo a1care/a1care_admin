@@ -20,6 +20,9 @@ import { TicketsPage } from "@/pages/TicketsPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { SubscriptionManagementPage } from "@/pages/SubscriptionManagementPage";
 import { PayoutsPage } from "@/pages/PayoutsPage";
+import { CouponsPage } from "@/pages/CouponsPage";
+import { ReferralsPage } from "@/pages/ReferralsPage";
+import { ReportsPage } from "@/pages/ReportsPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import KYCVerificationPage from "./pages/KYCVerificationPage";
 import { HealthVaultAuditPage } from "./pages/HealthVaultAuditPage";
@@ -50,6 +53,8 @@ export default function App() {
             {/* Revenue & Subscriptions */}
             <Route path="/partner-revenue-model" element={<SubscriptionManagementPage />} />
             <Route path="/payouts" element={<PayoutsPage />} />
+            <Route path="/coupons" element={<CouponsPage />} />
+            <Route path="/referrals" element={<ReferralsPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/kyc-verification" element={<KYCVerificationPage />} />
 
@@ -72,14 +77,14 @@ export default function App() {
             <Route path="/op-bookings" element={<OPBookingsPage />} />
             <Route path="/support-tickets" element={<TicketsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/reports" element={<ModulePlaceholderPage title="Reports" description="View business and operational metrics." />} />
+            <Route path="/reports" element={<ReportsPage />} />
 
             {/* Super Admin Restricted */}
             <Route element={<ProtectedRoute allowRoles={["super_admin"]} />}>
               <Route path="/admin-management" element={<AdminManagementPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="/audit-health-vault" element={<HealthVaultAuditPage />} />
-              <Route path="/settings" element={<ModulePlaceholderPage title="System Settings" description="Critical system configurations are restricted to super_admin." />} />
+              <Route path="/settings" element={<Navigate to="/manage-system-config" replace />} />
               <Route path="/manage-customer-app" element={<AppManagementPage appKey="user_app" />} />
               <Route path="/manage-provider-app" element={<AppManagementPage appKey="provider_app" />} />
               <Route path="/manage-system-config" element={<SystemSettingsPage />} />

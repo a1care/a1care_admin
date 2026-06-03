@@ -153,6 +153,17 @@ export function DashboardPage() {
         <StatCard title="Total Assets" value={kpis?.revenue?.total ? `₹${kpis.revenue.total.toLocaleString()}` : "₹0"} icon={Activity} color="slate" onClick={() => navigate("/payment-logs")} />
       </section>
 
+      {/* Commission Intelligence — net A1Care economics, not gross booking volume */}
+      <section>
+        <h2 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-3">Commission Intelligence</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Commission Earned" value={`₹${(kpis?.commission?.earned ?? 0).toLocaleString()}`} icon={TrendingUp} color="emerald" onClick={() => navigate("/payouts")} />
+          <StatCard title="Payouts Settled" value={`₹${(kpis?.commission?.payoutsSettled ?? 0).toLocaleString()}`} icon={CreditCard} color="blue" onClick={() => navigate("/payouts")} />
+          <StatCard title="Pending Payouts" value={kpis?.commission?.pendingPayouts ?? 0} icon={ShieldCheck} color="amber" onClick={() => navigate("/payouts")} />
+          <StatCard title="Net Retained" value={`₹${(kpis?.commission?.netRetained ?? 0).toLocaleString()}`} icon={Activity} color="indigo" onClick={() => navigate("/payouts")} />
+        </div>
+      </section>
+
       <div className="space-y-4">
 
         {/* Booking Overview */}

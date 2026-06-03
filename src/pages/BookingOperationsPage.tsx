@@ -207,6 +207,10 @@ export function BookingOperationsPage() {
             queryClient.invalidateQueries({ queryKey: ["admin_hospital_bookings"] });
             setAcceptServiceModal(null);
             setSelectedHospitalId("");
+            toast.success("Booking updated successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error?.response?.data?.message || "Failed to update booking. Please try again.");
         }
     });
 
@@ -517,18 +521,18 @@ export function BookingOperationsPage() {
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-center">
-                                                {activeTab === "services" && isPending ? (
+                                                {activeTab === "services" && (isPending || isConfirmed) ? (
                                                     <button
                                                         onClick={() => setAcceptServiceModal({ bookingId: booking._id, booking })}
-                                                        className="h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto bg-blue-600 text-white hover:bg-blue-700 animate-soft-glow"
+                                                        className={`h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto text-white ${isConfirmed ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700 animate-soft-glow"}`}
                                                     >
                                                         <CheckCircle2 size={14} />
-                                                        Assign Provider
+                                                        {isConfirmed ? "Re-assign" : "Assign Provider"}
                                                     </button>
                                                 ) : (
                                                     <button
                                                         disabled={!isPending || activeTab === "services"}
-                                                        onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "CONFIRMED")}
+                                                        onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "Confirmed")}
                                                         className={`h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto 
                                                             ${isPending && activeTab !== "services"
                                                                 ? "bg-blue-600 text-white hover:bg-blue-700 animate-soft-glow"
@@ -714,6 +718,33 @@ export function BookingOperationsPage() {
                                     </p>
                                 </div>
                             )}
+
+                            {/* Assigned Provider */}
+                            {selectedBooking.assignedProviderId && (() => {
+                                const assignedId = typeof selectedBooking.assignedProviderId === "object"
+                                    ? selectedBooking.assignedProviderId?._id
+                                    : selectedBooking.assignedProviderId;
+                                const provider = normalizedDoctorsList.find((d) => d._id === assignedId);
+                                const providerName = provider?.name
+                                    || (typeof selectedBooking.assignedProviderId === "object" ? selectedBooking.assignedProviderId?.name : null)
+                                    || "Assigned Provider";
+                                return (
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                            <CheckCircle2 size={12} /> Assigned Provider
+                                        </h4>
+                                        <div className="flex items-center gap-3 p-4 bg-emerald-50/60 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/10">
+                                            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm">
+                                                {providerName.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-[var(--text-main)]">{providerName}</p>
+                                                {provider?.mobileNumber && <p className="text-xs font-mono text-[var(--text-muted)]">{provider.mobileNumber}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         {/* Modal Footer */}
