@@ -34,6 +34,7 @@ import {
   LayoutGrid,
   Tag,
   Gift,
+  FileText,
   Briefcase,
   Trash2,
   Calendar,
@@ -56,6 +57,7 @@ const mainNav = (role: string) => [
   { to: "/referrals", label: "Referrals", icon: Gift },
   { to: "/reviews", label: "User Reviews", icon: MessageSquare },
   { to: "/support-tickets", label: "Tickets", icon: Ticket },
+  { to: "/reports", label: "Reports", icon: FileText },
   { to: "/notifications", label: "Push Notifications", icon: Bell },
 ];
 
