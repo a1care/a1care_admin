@@ -452,7 +452,7 @@ export function BookingOperationsPage() {
                                 <th className="py-5 px-6 whitespace-nowrap">Date & Time</th>
                                 <th className="py-5 px-6 whitespace-nowrap">Status</th>
                                 <th className="py-5 px-6 whitespace-nowrap">Amount</th>
-                                <th className="py-5 px-6 whitespace-nowrap text-center">Acceptance</th>
+                                <th className="py-5 px-6 whitespace-nowrap text-center">Assign Partner</th>
                                 <th className="py-5 px-6 whitespace-nowrap text-right">Actions</th>
                             </tr>
                         </thead>
