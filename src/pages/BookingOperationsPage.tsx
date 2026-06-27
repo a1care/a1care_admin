@@ -237,7 +237,8 @@ export function BookingOperationsPage() {
 
     const handleAcceptServiceWithHospital = () => {
         if (!acceptServiceModal || !selectedHospitalId) return;
-        handleUpdateStatus(acceptServiceModal.bookingId, "service", "ACCEPTED", selectedHospitalId);
+        // Use PARTNER_ASSIGNED so partner gets the Rapido-style acceptance popup (5-min timer)
+        handleUpdateStatus(acceptServiceModal.bookingId, "service", "PARTNER_ASSIGNED", selectedHospitalId);
     };
 
     const getBookingDisplayName = (booking: any) => {
