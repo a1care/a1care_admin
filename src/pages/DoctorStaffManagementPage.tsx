@@ -293,7 +293,14 @@ export function DoctorStaffManagementPage() {
                         </button>
                     ) : (
                         <button
-                            onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Rejected' })}
+                            onClick={() => {
+                                const reason = window.prompt("Reason for restricting access (required):", "Violation of terms");
+                                if (!reason || !reason.trim()) {
+                                    toast.error("Reason is required to restrict access.");
+                                    return;
+                                }
+                                updateStatusMutation.mutate({ id: doctor._id, status: 'Rejected', rejectionReason: reason.trim() });
+                            }}
                             disabled={updateStatusMutation.isPending}
                             className="button secondary h-14 flex-1 border-none bg-rose-50 text-rose-600 hover:bg-rose-100 gap-3 text-sm font-black uppercase tracking-widest rounded-2xl transition-all"
                         >

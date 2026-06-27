@@ -35,10 +35,13 @@ export function UserManagementPage({ category }: { category: string }) {
         if (!deleteConfig) return;
         const { id, type } = deleteConfig;
         api.delete(`/admin/users/${type}/${id}`).then(() => {
-            queryClient.invalidateQueries({ queryKey: ["category_users", category] });
+            queryClient.invalidateQueries({ queryKey: ["category_users"] });
+            queryClient.invalidateQueries({ queryKey: ["category_stats"] });
             setSelectedUser(null);
             setDeleteConfig(null);
             toast.success("Member record deleted.");
+        }).catch((err: any) => {
+            toast.error(err?.response?.data?.message || "Failed to delete record.");
         });
     };
 

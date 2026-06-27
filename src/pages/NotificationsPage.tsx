@@ -401,7 +401,7 @@ export function NotificationsPage() {
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">{alert.refType || 'System'}</span>
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">{(alert.refType || 'System').replace(/([a-z])([A-Z])/g, '$1 $2')}</span>
                               <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                               <span className="text-[10px] font-bold text-slate-400">{new Date(alert.createdAt).toLocaleString()}</span>
                             </div>
