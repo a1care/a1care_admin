@@ -131,6 +131,23 @@ export function OPBookingsPage() {
         updateStatusMutation.mutate({ id, status });
     };
 
+    const getStatusLabel = (status: string): string => {
+        const map: Record<string, string> = {
+            PENDING: 'Pending',
+            BROADCASTED: 'Finding Partner',
+            ACCEPTED: 'Partner Assigned',
+            IN_PROGRESS: 'In Progress',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled',
+            RETURNED_TO_ADMIN: 'Needs Reassignment',
+            Pending: 'Pending',
+            Confirmed: 'Confirmed',
+            Completed: 'Completed',
+            Cancelled: 'Cancelled',
+        };
+        return map[status] || status.replace(/_/g, ' ');
+    };
+
     // Removed early return to prevent flickering
     // if (loadingServices && !serviceBookings) return (
     //     <div className="flex flex-col items-center justify-center p-20 space-y-4">
@@ -391,7 +408,7 @@ export function OPBookingsPage() {
                                                     ${booking.status?.toUpperCase() === 'COMPLETED' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
                                                     ${booking.status?.toUpperCase() === 'CANCELLED' ? 'text-[var(--text-muted)] bg-[var(--bg-main)]' : ''}
                                                 `}>
-                                                    {booking.status?.replace(/_/g, ' ')}
+                                                    {getStatusLabel(booking.status || '')}
                                                 </span>
                                             </td>
                                             <td className="py-5 px-6">
@@ -399,7 +416,7 @@ export function OPBookingsPage() {
                                                     ₹{booking.totalAmount}
                                                 </div>
                                                 <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider mt-0.5">
-                                                    {booking.paymentStatus}
+                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Awaiting Payment' : (booking.paymentStatus || 'N/A')}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-right">
@@ -438,13 +455,16 @@ export function OPBookingsPage() {
 
                                                     <button
                                                         disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
-                                                        onClick={() => handleUpdateStatus(booking._id, "CANCELLED")}
+                                                        onClick={() => {
+                                                            if (!window.confirm(`Cancel this appointment for ${booking.patientId?.name || 'this patient'}? This cannot be undone.`)) return;
+                                                            handleUpdateStatus(booking._id, "CANCELLED");
+                                                        }}
                                                         className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-sm
                                                             ${(booking.status?.toUpperCase() !== "CANCELLED" && booking.status?.toUpperCase() !== "COMPLETED")
                                                                 ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white border-red-200 dark:border-red-500/20"
                                                                 : "bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50"
                                                             }`}
-                                                        title="Cancel Token"
+                                                        title="Cancel Appointment"
                                                     >
                                                         <X size={16} />
                                                     </button>
@@ -459,7 +479,7 @@ export function OPBookingsPage() {
                                         <div className="w-20 h-20 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
                                             <Calendar size={32} className="text-[var(--text-muted)]" />
                                         </div>
-                                        <h3 className="text-xl font-black tracking-tight text-[var(--text-main)]">No active OP Tokens</h3>
+                                        <h3 className="text-xl font-black tracking-tight text-[var(--text-main)]">No Appointments Found</h3>
                                         <p className="text-[var(--text-muted)] mt-2 max-w-sm mx-auto text-sm font-medium">No hospital tokens match your current filters. Try changing your search query or status filter.</p>
                                     </td>
                                 </tr>
@@ -526,7 +546,7 @@ export function OPBookingsPage() {
                                 </div>
                                 <div>
                                     <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Fulfillment</p>
-                                    <p className="text-xs font-bold bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] px-2.5 py-1 rounded-md inline-block">{selectedBooking.fulfillmentMode?.replace("_", " ")}</p>
+                                    <p className="text-xs font-bold bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] px-2.5 py-1 rounded-md inline-block">{({'HOME_VISIT':'Home Visit','HOSPITAL_VISIT':'Hospital Visit','VIRTUAL':'Virtual / Online'} as Record<string,string>)[selectedBooking.fulfillmentMode] || selectedBooking.fulfillmentMode?.replace(/_/g,' ')}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Date & Time</p>

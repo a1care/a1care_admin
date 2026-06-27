@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { api } from "@/lib/api";
+import { api, resolveAssetUrl } from "@/lib/api";
 import type { FestivalBanner, ManagedAppConfig } from "@/types";
 import {
   Image as ImageIcon,
@@ -186,7 +186,7 @@ export function AppBannerManagementPage() {
                   <div className="lg:col-span-1 space-y-6">
                     <div className="w-full aspect-[21/9] bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] overflow-hidden flex items-center justify-center relative">
                       {banner.imageUrl ? (
-                        <img src={banner.imageUrl} className="w-full h-full object-cover" alt="Preview" />
+                        <img src={resolveAssetUrl(banner.imageUrl)} className="w-full h-full object-cover" alt="Preview" />
                       ) : (
                         <div className="text-slate-300 flex flex-col items-center gap-2">
                           <ImageIcon size={32} />

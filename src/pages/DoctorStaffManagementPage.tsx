@@ -217,9 +217,9 @@ export function DoctorStaffManagementPage() {
                                             doctor.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-100' :
                                                 'bg-rose-50 text-rose-600 border-rose-100'
                                         }`}>
-                                        {doctor.status === 'Active' ? 'Verified Member' :
-                                            doctor.status === 'Pending' ? 'Pending Verification' :
-                                                'Inactive / Restricted'}
+                                        {doctor.status === 'Active' ? 'Approved' :
+                                            doctor.status === 'Pending' ? 'Pending Review' :
+                                                'Inactive'}
                                     </span>
                                     <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
                                     <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Partner ID: {doctor._id.slice(-6).toUpperCase()}</p>
@@ -237,10 +237,10 @@ export function DoctorStaffManagementPage() {
 
                 <div className="px-8 flex-1 overflow-y-auto mt-neg-24">
                     <div className="grid grid-cols-2 gap-4 mb-8">
-                        <InfoCard icon={<Users size={16} />} label="GENDER PROFILE" value={doctor.gender || "Not Specified"} />
-                        <InfoCard icon={<Clock size={16} />} label="PROFESSIONAL TENURE" value={doctor.startExperience ? `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years Experience` : "Experience Not Set"} />
-                        <InfoCard icon={<Phone size={16} />} label="CONTACT CHANNEL" value={doctor.mobileNumber || "N/A"} />
-                        <InfoCard icon={<ShieldCheck size={16} />} label="CONSULTATION VALUE" value={`₹${doctor.consultationFee || 0}`} color="#10b981" />
+                        <InfoCard icon={<Users size={16} />} label="Gender" value={doctor.gender || "Not Specified"} />
+                        <InfoCard icon={<Clock size={16} />} label="Experience" value={doctor.startExperience ? `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years` : "Not Set"} />
+                        <InfoCard icon={<Phone size={16} />} label="Phone Number" value={doctor.mobileNumber || "N/A"} />
+                        <InfoCard icon={<ShieldCheck size={16} />} label="Consultation Fee" value={`₹${doctor.consultationFee || 0}`} color="#10b981" />
                     </div>
 
                     <div className="mb-10">
@@ -264,11 +264,11 @@ export function DoctorStaffManagementPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm font-black text-[var(--text-main)]">{doc.type}</p>
-                                        <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-0.5">Asset Ref: DOC772{idx}</p>
+                                        <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-0.5">Document {idx + 1}</p>
                                     </div>
                                 </div>
                                 <a href={doc.url} target="_blank" className="button primary h-10 px-5 gap-2 text-xs rounded-xl shadow-lg shadow-blue-100">
-                                    <Eye size={16} /> INSPECT
+                                    <Eye size={16} /> View
                                 </a>
                             </div>
                         ))}
@@ -534,7 +534,7 @@ export function DoctorStaffManagementPage() {
                         </div>
                         <form className="w-full space-y-5" onSubmit={handleAddProvider}>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Full Legal Identity</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Full Name</label>
                                 <input
                                     className="w-full h-14 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-[20px] px-6 text-[var(--text-main)] font-black placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                                     value={newName}
@@ -544,7 +544,7 @@ export function DoctorStaffManagementPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Primary Phone Network</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Phone Number</label>
                                 <input
                                     className="w-full h-14 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-[20px] px-6 text-[var(--text-main)] font-black placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                                     value={newMobile}
@@ -554,7 +554,7 @@ export function DoctorStaffManagementPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Digital Communication (Mail)</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">Email Address</label>
                                 <input
                                     className="w-full h-14 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-[20px] px-6 text-[var(--text-main)] font-black placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                                     value={newEmail}
@@ -644,13 +644,10 @@ function DoctorWalletSection({ doctor }: { doctor: Doctor }) {
                 <div className="h-px flex-1 bg-[var(--bg-main)]"></div>
             </div>
 
-            <div className="bg-slate-950 p-8 rounded-[40px] border border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl overflow-hidden relative group">
-                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <WalletIcon size={100} className="text-emerald-500" />
-                </div>
-                <div className="relative z-10">
-                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Current Balance</p>
-                    <h4 className="text-5xl font-black text-white leading-none">
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Current Balance</p>
+                    <h4 className="text-4xl font-black text-slate-900 leading-none">
                         {isLoading ? "---" : `₹${wallet?.balance || 0}`}
                     </h4>
                 </div>
@@ -658,45 +655,45 @@ function DoctorWalletSection({ doctor }: { doctor: Doctor }) {
                 {!isAdjusting ? (
                     <button
                         onClick={() => setIsAdjusting(true)}
-                        className="h-14 px-10 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-emerald-700"
+                        className="h-12 px-8 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow active:scale-95 transition-all hover:bg-emerald-700"
                     >
-                        Execute Delta Adjust
+                        Adjust Balance
                     </button>
                 ) : (
-                    <div className="w-full md:w-[340px] space-y-3 p-5 bg-white/5 rounded-3xl border border-white/10 animate-in zoom-in-95 backdrop-blur-xl">
+                    <div className="w-full md:w-[340px] space-y-3 p-4 bg-white rounded-2xl border border-slate-200 animate-in zoom-in-95">
                         <input
                             type="number"
                             placeholder="Amount in ₹"
                             value={amount}
                             onChange={e => setAmount(e.target.value)}
-                            className="w-full bg-white border-none h-12 px-5 rounded-2xl text-slate-950 font-black placeholder:text-slate-400 outline-none"
+                            className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/40 outline-none"
                         />
                         <input
                             placeholder="Reason (e.g., Promotion)"
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="w-full bg-white border-none h-12 px-5 rounded-2xl text-slate-950 font-bold placeholder:text-slate-400 outline-none"
+                            className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/40 outline-none"
                         />
                         <div className="flex gap-2">
                             <button
                                 onClick={() => adjustMutation.mutate('Credit')}
-                                className="flex-1 h-11 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase flex items-center justify-center gap-2"
+                                className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase flex items-center justify-center gap-2"
                                 disabled={adjustMutation.isPending}
                             >
                                 <ArrowUpCircle size={14} /> Credit
                             </button>
                             <button
                                 onClick={() => adjustMutation.mutate('Debit')}
-                                className="flex-1 h-11 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase flex items-center justify-center gap-2"
+                                className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black uppercase flex items-center justify-center gap-2"
                                 disabled={adjustMutation.isPending}
                             >
                                 <ArrowDownCircle size={14} /> Debit
                             </button>
                             <button
                                 onClick={() => setIsAdjusting(false)}
-                                className="w-11 h-11 rounded-xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+                                className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200"
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, resolveAssetUrl } from "@/lib/api";
 import {
     DndContext,
     closestCenter,
@@ -106,7 +106,7 @@ function SortableCard({ c, index, onEdit, onDelete, onNavigate, getCategoryIcon,
 
             <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform overflow-hidden">
                 {c.imageUrl ? (
-                    <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+                    <img src={resolveAssetUrl(c.imageUrl)} alt={c.title} className="w-full h-full object-cover" />
                 ) : (
                     <CategoryIcon size={24} />
                 )}
@@ -434,7 +434,7 @@ export function ServiceCategoriesPage() {
                                                 {previewUrl ? (
                                                     <img src={previewUrl} className="w-full h-full object-cover" />
                                                 ) : editingCategory?.imageUrl ? (
-                                                    <img src={editingCategory.imageUrl} className="w-full h-full object-cover" />
+                                                    <img src={resolveAssetUrl(editingCategory.imageUrl)} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="flex flex-col items-center gap-2">
                                                         <UploadCloud size={24} className="text-slate-400" />

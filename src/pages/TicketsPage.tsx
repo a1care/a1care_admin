@@ -169,44 +169,32 @@ export function TicketsPage() {
 
     return (
         <div className="space-y-8 min-h-screen">
-            {/* Premium Hero Section with Dynamic Background */}
-            <div className="card p-0 overflow-hidden group shadow-2xl"
-                style={{ border: 'none', background: 'linear-gradient(135deg, #1A7FD4 0%, #0d47a1 100%)' }}>
-                <div className="relative p-12 flex justify-between items-center text-white">
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mb-4 opacity-80">
-                            <span className="hover:text-white transition-colors cursor-pointer">Network Hub</span>
-                            <ChevronRight size={12} className="opacity-50" />
-                            <span className="text-white">Crisis Management</span>
-                        </div>
-                        <h1 className="text-5xl font-black mb-4 tracking-tighter" style={{ color: 'white' }}>Support Tickets</h1>
-                        <p className="text-blue-100/80 font-bold max-w-lg text-sm leading-relaxed">
-                            Orchestrating operational excellence. Monitor partner nodes and resolve critical infrastructure queries in real-time.
-                        </p>
-                    </div>
-                    {/* Decorative Elements */}
-                    <div className="absolute top-[-50px] right-[-50px] w-96 h-96 bg-white/5 rounded-full blur-[100px]"></div>
-                    <div className="absolute bottom-[-20px] left-[20%] w-64 h-64 bg-blue-400/10 rounded-full blur-[80px]"></div>
-                    <MessageSquare size={160} className="text-white/5 absolute right-12 top-1/2 -translate-y-1/2 rotate-12 group-hover:rotate-[20deg] transition-transform duration-700" />
+            {/* Header */}
+            <div>
+                <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">
+                    <span>Support</span>
+                    <ChevronRight size={12} className="opacity-50" />
+                    <span className="text-slate-600">Tickets</span>
                 </div>
+                <h1 className="text-4xl font-black tracking-tight text-slate-800">Support Tickets</h1>
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="relative group flex-1 max-w-2xl">
+            <div className="flex flex-row items-center gap-4">
+                <div className="relative group flex-1 min-w-0">
                     <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
                         {/* <Search className="text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} /> */}
                     </div>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Search by ID, Subject, Description or Node Details..."
                         className="w-full h-16 pl-16 pr-6 bg-white border border-slate-100 rounded-[28px] text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                     />
                 </div>
-                
-                <div className="flex items-center bg-white p-2 rounded-[24px] border border-slate-100 shadow-sm">
+
+                <div className="flex items-center shrink-0 bg-white p-2 rounded-[24px] border border-slate-100 shadow-sm">
                     {['All', 'Pending', 'In Progress', 'Resolved'].map((s) => (
                         <button
                             key={s}
@@ -224,9 +212,9 @@ export function TicketsPage() {
             {/* Operational Intelligence Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                    { label: 'TOTAL TRAFFIC', val: tickets.length, icon: <Ticket size={24} />, color: '#3b82f6', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-                    { label: 'ACTIVE QUEUE', val: tickets.filter(t => t.status?.toLowerCase() !== 'resolved' && t.status?.toLowerCase() !== 'closed').length, icon: <AlertCircle size={24} />, color: '#f59e0b', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                    { label: 'SUCCESS RESOLVED', val: tickets.filter(t => t.status?.toLowerCase() === 'resolved').length, icon: <CheckCircle2 size={24} />, color: '#10b981', bg: 'bg-emerald-50 dark:bg-emerald-500/10' }
+                    { label: 'Total Tickets', val: tickets.length, icon: <Ticket size={24} />, color: '#3b82f6', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                    { label: 'Open Tickets', val: tickets.filter(t => t.status?.toLowerCase() !== 'resolved' && t.status?.toLowerCase() !== 'closed').length, icon: <AlertCircle size={24} />, color: '#f59e0b', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+                    { label: 'Resolved', val: tickets.filter(t => t.status?.toLowerCase() === 'resolved').length, icon: <CheckCircle2 size={24} />, color: '#10b981', bg: 'bg-emerald-50 dark:bg-emerald-500/10' }
                 ].map((s, i) => (
                     <div key={i} className="card p-7 border-none shadow-blue-100/50 flex items-center justify-between hover:translate-y-[-4px] transition-all">
                         <div className="flex items-center gap-5">
@@ -238,7 +226,7 @@ export function TicketsPage() {
                                 <h2 className="text-3xl font-black text-[var(--text-main)] dark:text-white">{s.val}</h2>
                             </div>
                         </div>
-                        <div className="text-[10px] font-bold text-[var(--text-muted)]">HUB-METRIC</div>
+                        <div></div>
                     </div>
                 ))}
             </div>
@@ -249,11 +237,11 @@ export function TicketsPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-[var(--bg-main)] border-b border-[var(--border-color)] text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)]">
-                                <th className="px-6 py-4">Sno</th>
-                                <th className="px-6 py-4">Partner Node</th>
-                                <th className="px-6 py-4">Context & Subject</th>
-                                <th className="px-6 py-4">Operational State</th>
-                                <th className="px-6 py-4 text-center">Action Channel</th>
+                                <th className="px-6 py-4">#</th>
+                                <th className="px-6 py-4">Submitted By</th>
+                                <th className="px-6 py-4">Subject</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -262,7 +250,7 @@ export function TicketsPage() {
                                     <td colSpan={5} className="p-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing HUB Data...</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading tickets...</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -281,7 +269,7 @@ export function TicketsPage() {
                                                     {t.staffId?.name || t.userId?.name || "Unknown Sender"}
                                                 </p>
                                                 <p className="text-[10px] font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] uppercase tracking-widest mt-0.5">
-                                                    {t.staffId?.mobileNumber || t.userId?.mobileNumber || "REF: INTERNAL"}
+                                                    {t.staffId?.mobileNumber || t.userId?.mobileNumber || "—"}
                                                 </p>
                                             </div>
                                         </div>
@@ -311,7 +299,7 @@ export function TicketsPage() {
                                             <button
                                                 onClick={() => setSelectedTicket(t)}
                                                 className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-                                                title="Intervene in Chat"
+                                                title="Reply to Ticket"
                                             >
                                                 <MessageSquare size={16} />
                                             </button>
@@ -320,10 +308,10 @@ export function TicketsPage() {
                                                 onChange={(e) => updateStatus(t._id, e.target.value)}
                                                 className="bg-[var(--bg-main)] dark:bg-white/5 border-none rounded-2xl px-5 py-3 text-[11px] font-black uppercase tracking-widest cursor-pointer shadow-sm hover:translate-y-[-2px] hover:shadow-lg transition-all outline-none text-[var(--text-muted)] dark:text-slate-200"
                                             >
-                                                <option value="Pending">Queue</option>
-                                                <option value="In Progress">Process</option>
-                                                <option value="Resolved">Resolve</option>
-                                                <option value="Closed">Archive</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="In Progress">In Progress</option>
+                                                <option value="Resolved">Resolved</option>
+                                                <option value="Closed">Closed</option>
                                             </select>
                                         </div>
                                     </td>
@@ -336,7 +324,7 @@ export function TicketsPage() {
                                             <div className="w-20 h-20 rounded-full bg-[var(--bg-main)] dark:bg-white/5 flex items-center justify-center">
                                                 <MessageSquare size={40} className="text-[var(--text-muted)]" />
                                             </div>
-                                            <p className="text-[var(--text-muted)] font-black text-sm tracking-[0.2em] uppercase">Operational Silence. No Tickets Found.</p>
+                                            <p className="text-[var(--text-muted)] font-black text-sm tracking-[0.2em] uppercase">No support tickets found</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -381,7 +369,7 @@ export function TicketsPage() {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-black text-slate-900 line-clamp-1">{selectedTicket.subject}</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Support Intervention • {selectedTicket.staffId?.name || selectedTicket.userId?.name || "Patient"}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Support Ticket • {selectedTicket.staffId?.name || selectedTicket.userId?.name || "Patient"}</p>
                                 </div>
                             </div>
                             <button onClick={() => setSelectedTicket(null)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
@@ -431,7 +419,7 @@ export function TicketsPage() {
                             <div className="relative">
                                 <textarea
                                     className="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-3xl p-6 pr-20 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all resize-none min-h-[80px]"
-                                    placeholder="Type your intervention response..."
+                                    placeholder="Type your response..."
                                     value={replyMsg}
                                     onChange={(e) => setReplyMsg(e.target.value)}
                                     onKeyDown={(e) => {

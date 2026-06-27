@@ -115,7 +115,7 @@ export default function KYCVerificationPage() {
                         <ShieldCheck size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Awaiting Review</p>
+                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Pending Verification</p>
                         <p className="text-xl font-black text-amber-900 leading-none mt-0.5">{staff?.filter((s: Doctor) => s.status === 'Pending').length || 0}</p>
                     </div>
                 </div>

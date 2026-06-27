@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import type { SystemConfig, MobileFirebaseClient } from "@/types";
 import {
     Flame, Globe, Smartphone, Save, CheckCircle2, AlertCircle,
-    ChevronRight, Eye, EyeOff, RefreshCw, Shield, Cpu, CreditCard, Mail, Server, Video
+    ChevronRight, Eye, EyeOff, RefreshCw, Shield, Cpu, CreditCard, Mail, Server
 } from "lucide-react";
 
 // ─── Default (hardcoded fallback) ────────────────────────────────────────────
@@ -135,7 +135,7 @@ function FieldRow({ label, value, onChange, masked = false, id, note, type = "te
 export function SystemSettingsPage() {
     const [form, setForm] = useState<SystemConfig>(DEFAULT_CONFIG);
     const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
-    const [activeTab, setActiveTab] = useState<"website" | "project" | "clients" | "firebase" | "maps" | "easebuzz" | "email" | "twilio" | "aws" | "redis" | "zego">("website");
+    const [activeTab, setActiveTab] = useState<"website" | "project" | "clients" | "firebase" | "maps" | "easebuzz" | "email" | "twilio" | "aws" | "redis">("website");
 
     const { data, isLoading, refetch } = useQuery({
         queryKey: ["system-config"],
@@ -189,9 +189,6 @@ export function SystemSettingsPage() {
     const setRedis = (key: keyof SystemConfig["redis"], val: string | number) =>
         setForm(p => ({ ...p, redis: { ...p.redis, [key]: val } }));
 
-    const setZego = (key: keyof SystemConfig["zego"], val: string | number) =>
-        setForm(p => ({ ...p, zego: { ...p.zego, [key]: val } }));
-
     const tabs = [
         { key: "website" as const, label: "Firebase Web", icon: Globe },
         { key: "project" as const, label: "Firebase Project", icon: Cpu },
@@ -203,7 +200,6 @@ export function SystemSettingsPage() {
         { key: "twilio" as const, label: "Twilio", icon: Mail },
         { key: "aws" as const, label: "AWS S3", icon: Server },
         { key: "redis" as const, label: "Redis Caching", icon: RefreshCw },
-        { key: "zego" as const, label: "ZegoCloud", icon: Video },
     ];
 
     return (
@@ -532,36 +528,6 @@ export function SystemSettingsPage() {
                             </section>
                         )}
 
-                        {/* ── ZegoCloud ── */}
-                        {activeTab === "zego" && (
-                            <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center">
-                                        <Video size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-black text-[var(--text-main)]">ZegoCloud (Video Consultations)</h3>
-                                        <p className="text-sm font-medium text-[var(--text-muted)]">Configuration for initiating and joining video calls.</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid lg:grid-cols-2 gap-6">
-                                    <FieldRow
-                                        id="zego-appid"
-                                        label="App ID"
-                                        value={form.zego?.appId?.toString() || "0"}
-                                        onChange={(v) => setZego("appId", parseInt(v) || 0)}
-                                    />
-                                    <FieldRow
-                                        id="zego-serversecret"
-                                        label="Server Secret"
-                                        value={form.zego?.serverSecret || ""}
-                                        onChange={(v) => setZego("serverSecret", v)}
-                                        masked
-                                    />
-                                </div>
-                            </section>
-                        )}
                     </>
                 )}
             </main>

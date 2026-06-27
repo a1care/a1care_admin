@@ -146,11 +146,11 @@ export function DashboardPage() {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <StatCard title="Total Patients" value={kpis?.patients} icon={Users} color="blue" onClick={() => navigate("/manage-patients")} />
         <StatCard title="Active Staff" value={kpis?.activeStaff} icon={Stethoscope} color="indigo" onClick={() => navigate("/manage-doctors")} />
-        <StatCard title="Pending Verif" value={kpis?.pendingVerifications} icon={ShieldCheck} color="amber" onClick={() => navigate("/kyc-verification")} />
-        <StatCard title="Total Volume" value={kpis?.totalBookings} icon={Activity} color="sky" onClick={() => navigate("/bookings")} />
-        <StatCard title="Today Rev" value={kpis?.revenue?.today ? `₹${kpis.revenue.today.toLocaleString()}` : "₹0"} icon={TrendingUp} color="emerald" onClick={() => navigate("/payment-logs")} />
-        <StatCard title="Monthly Rev" value={kpis?.revenue?.month ? `₹${kpis.revenue.month.toLocaleString()}` : "₹0"} icon={CreditCard} color="blue" onClick={() => navigate("/payment-logs")} />
-        <StatCard title="Total Assets" value={kpis?.revenue?.total ? `₹${kpis.revenue.total.toLocaleString()}` : "₹0"} icon={Activity} color="slate" onClick={() => navigate("/payment-logs")} />
+        <StatCard title="Pending KYC" value={kpis?.pendingVerifications} icon={ShieldCheck} color="amber" onClick={() => navigate("/kyc-verification")} />
+        <StatCard title="Total Bookings" value={kpis?.totalBookings} icon={Activity} color="sky" onClick={() => navigate("/bookings")} />
+        <StatCard title="Today's Revenue" value={kpis?.revenue?.today ? `₹${kpis.revenue.today.toLocaleString()}` : "₹0"} icon={TrendingUp} color="emerald" onClick={() => navigate("/payment-logs")} />
+        <StatCard title="Monthly Revenue" value={kpis?.revenue?.month ? `₹${kpis.revenue.month.toLocaleString()}` : "₹0"} icon={CreditCard} color="blue" onClick={() => navigate("/payment-logs")} />
+        <StatCard title="Total Revenue" value={kpis?.revenue?.total ? `₹${kpis.revenue.total.toLocaleString()}` : "₹0"} icon={Activity} color="slate" onClick={() => navigate("/payment-logs")} />
       </section>
 
       {/* Commission Intelligence — net A1Care economics, not gross booking volume */}
@@ -204,7 +204,9 @@ export function DashboardPage() {
                 onClick={() => navigate(activeTab === "appointments" ? `/op-bookings?status=${status._id}` : `/bookings?status=${status._id}`)}
                 className="p-5 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer group"
               >
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 group-hover:text-blue-600 transition-colors">{status._id || "NEW"}</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 group-hover:text-blue-600 transition-colors">
+                  {({'PENDING':'Pending','Pending':'Pending','BROADCASTED':'Finding Partner','ACCEPTED':'Partner Assigned','Confirmed':'Confirmed','IN_PROGRESS':'In Progress','COMPLETED':'Completed','Completed':'Completed','CANCELLED':'Cancelled','Cancelled':'Cancelled','RETURNED_TO_ADMIN':'Needs Reassignment'} as Record<string,string>)[status._id] || status._id || 'New'}
+                </div>
                 <div className="text-2xl font-bold text-slate-900">{status.count}</div>
               </div>
             ))}

@@ -87,11 +87,11 @@ export function PayoutsPage() {
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-                        Financial Settlements
+                        Partner Payouts
                         {isFetching && <Loader2 size={24} className="text-blue-500 animate-spin" />}
                     </h1>
                     <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2 flex items-center gap-2">
-                        <Banknote size={16} className="text-blue-500" /> Authorized payouts for service expertise
+                        <Banknote size={16} className="text-blue-500" /> Review and approve partner payout requests
                     </p>
                 </div>
                 
@@ -124,7 +124,7 @@ export function PayoutsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-[40px] shadow-2xl shadow-blue-200 text-white relative overflow-hidden group">
                     <div className="relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Awaiting Settlement</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Pending Payouts</p>
                         <h2 className="text-4xl font-black">₹{pendingTotal.toLocaleString()}</h2>
                         <div className="mt-6 flex items-center gap-2 text-xs font-bold bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-sm">
                             <Clock size={14} /> Total {payouts?.filter(p => p.status === "PENDING").length} Requests
@@ -139,21 +139,21 @@ export function PayoutsPage() {
                         <h2 className="text-4xl font-black text-slate-900">₹{(payouts && payouts.length > 0 ? (payouts.reduce((acc, p) => acc + p.amount, 0) / payouts.length) : 0).toLocaleString()}</h2>
                     </div>
                     <div className="mt-4 text-xs font-bold text-emerald-500 flex items-center gap-1">
-                        <ArrowUpRight size={14} /> System Stability Index Optimized
+                        <ArrowUpRight size={14} /> Across all partners
                     </div>
                 </div>
 
                 <div className="bg-slate-900 p-8 rounded-[40px] text-white flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Settlement Speed</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Typical Processing</p>
                             <h2 className="text-4xl font-black">~4h</h2>
                         </div>
                         <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
                             <Clock className="text-blue-400" />
                         </div>
                     </div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Same-Day Processing Enabled</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">After admin approval</div>
                 </div>
             </div>
 
@@ -164,11 +164,11 @@ export function PayoutsPage() {
                             <div className="p-8 xl:w-1/3 bg-slate-50/30 border-r border-slate-50 relative">
                                 <div className="absolute top-0 right-0 p-4">
                                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                         payout.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' : 
+                                         payout.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
                                          payout.status === 'REJECTED' ? 'bg-rose-50 text-rose-600' :
                                          'bg-amber-50 text-amber-600'
                                      }`}>
-                                         {payout.status}
+                                         {payout.status === 'COMPLETED' ? 'Paid' : payout.status === 'REJECTED' ? 'Rejected' : 'Pending'}
                                      </span>
                                 </div>
                                 
@@ -178,7 +178,7 @@ export function PayoutsPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-black text-slate-900 leading-tight">{payout.staffId?.name}</h3>
-                                        <p className="text-xs font-black text-blue-500 uppercase tracking-widest mt-1 opacity-70">Healthcare Partner</p>
+                                        <p className="text-xs font-black text-blue-500 uppercase tracking-widest mt-1 opacity-70">Service Provider</p>
                                         <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-slate-400">
                                             <CreditCard size={14} /> {payout.staffId?.mobileNumber}
                                         </div>
@@ -199,7 +199,7 @@ export function PayoutsPage() {
 
                             <div className="p-8 xl:w-1/3 flex flex-col justify-center gap-6">
                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Building2 size={16} className="text-blue-500" /> Banking Destination Verified
+                                    <Building2 size={16} className="text-blue-500" /> Bank Account Details
                                 </h4>
                                 <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 border-dashed space-y-4">
                                     <div className="flex items-start gap-4">
@@ -207,7 +207,7 @@ export function PayoutsPage() {
                                             <Building2 size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Institution</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bank Name</p>
                                             <p className="text-sm font-black text-slate-900">{payout.bankDetails?.bankName}</p>
                                         </div>
                                     </div>
@@ -217,7 +217,7 @@ export function PayoutsPage() {
                                             <p className="text-xs font-black text-slate-800 tracking-wider">•••• {payout.bankDetails?.accountNumber?.slice(-4)}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">IFSC Token</p>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">IFSC Code</p>
                                             <p className="text-xs font-black text-slate-800 tracking-wider uppercase">{payout.bankDetails?.ifscCode}</p>
                                         </div>
                                     </div>
@@ -230,7 +230,7 @@ export function PayoutsPage() {
                                         <ArrowUpRight size={24} />
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Funds Disbursement</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payout Amount</p>
                                         <h2 className="text-4xl font-black text-slate-900 tracking-tight">₹{payout.amount.toLocaleString()}</h2>
                                     </div>
                                 </div>
@@ -240,16 +240,16 @@ export function PayoutsPage() {
                                         <button 
                                             onClick={() => {
                                                 toast.info("Confirm Settlement?", {
-                                                    description: "Authorize full disbursement of ₹" + payout.amount + "?",
+                                                    description: "Approve payout of ₹" + payout.amount + " to this partner?",
                                                     action: {
-                                                        label: "Authorize",
+                                                        label: "Approve & Pay",
                                                         onClick: () => updateStatusMutation.mutate({ id: payout._id, status: 'COMPLETED' })
                                                     }
                                                 });
                                             }}
                                             className="flex-1 bg-slate-900 hover:bg-black text-white h-16 rounded-[24px] font-black text-[12px] uppercase tracking-widest shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 active:scale-95"
                                         >
-                                            <CheckCircle2 size={20} /> Authorize Now
+                                            <CheckCircle2 size={20} /> Approve & Pay
                                         </button>
                                         <button 
                                             onClick={() => setSelectedPayout(payout)}
@@ -317,7 +317,7 @@ export function PayoutsPage() {
                     <div className="bg-white w-full max-w-lg rounded-[48px] p-10 shadow-3xl animate-in zoom-in-95 duration-300">
                         <div className="flex justify-between items-start mb-8">
                             <div>
-                                <h3 className="text-3xl font-black text-slate-900">Decline Settlement</h3>
+                                <h3 className="text-3xl font-black text-slate-900">Reject Payout</h3>
                                 <p className="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest">Amount: ₹{selectedPayout.amount}</p>
                             </div>
                             <button onClick={() => setSelectedPayout(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
@@ -327,7 +327,7 @@ export function PayoutsPage() {
                         
                         <div className="space-y-6">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Internal Feedback / Reason</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Rejection Reason</label>
                                 <textarea 
                                     className="w-full h-40 bg-slate-50 border-none rounded-[32px] p-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
                                     placeholder="Explain why this payout was rejected (e.g. Invalid bank details, Fraud check needed)..."

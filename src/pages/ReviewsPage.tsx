@@ -147,7 +147,7 @@ export default function ReviewsPage() {
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-50">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  {review.bookingType === "Doctor" ? "🩺 Doctor Consult" : "⚕️ Home Service"}
+                  {review.bookingType === "Doctor" ? "Doctor Consultation" : "Home Service"}
                 </div>
                 <div className="flex gap-2">
                   {review.status === "Active" ? (

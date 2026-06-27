@@ -214,6 +214,23 @@ export function BookingOperationsPage() {
         }
     });
 
+    const getStatusLabel = (status: string): string => {
+        const map: Record<string, string> = {
+            PENDING: 'Awaiting Assignment',
+            BROADCASTED: 'Finding Partner',
+            ACCEPTED: 'Partner Assigned',
+            IN_PROGRESS: 'In Progress',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled',
+            RETURNED_TO_ADMIN: 'Needs Reassignment',
+            Pending: 'Pending Confirmation',
+            Confirmed: 'Confirmed',
+            Completed: 'Completed',
+            Cancelled: 'Cancelled',
+        };
+        return map[status] || status.replace(/_/g, ' ');
+    };
+
     const handleUpdateStatus = (id: string, type: "doctor" | "service", status: string, assignedProviderId?: string) => {
         updateStatusMutation.mutate({ id, type, status, assignedProviderId });
     };
@@ -504,12 +521,15 @@ export function BookingOperationsPage() {
                                             <td className="py-5 px-6 whitespace-nowrap">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest
                                                     ${booking.status?.toUpperCase() === 'PENDING' ? 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/10' : ''}
+                                                    ${booking.status?.toUpperCase() === 'BROADCASTED' ? 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10' : ''}
+                                                    ${booking.status?.toUpperCase() === 'ACCEPTED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
+                                                    ${booking.status?.toUpperCase() === 'IN_PROGRESS' ? 'text-cyan-600 bg-cyan-50 dark:text-cyan-400 dark:bg-cyan-500/10' : ''}
                                                     ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20' : ''}
                                                     ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
                                                     ${booking.status?.toUpperCase() === 'COMPLETED' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
                                                     ${booking.status?.toUpperCase() === 'CANCELLED' ? 'text-[var(--text-muted)] bg-[var(--bg-main)]' : ''}
                                                 `}>
-                                                    {booking.status?.replace(/_/g, ' ')}
+                                                    {getStatusLabel(booking.status || '')}
                                                 </span>
                                             </td>
                                             <td className="py-5 px-6">
@@ -517,7 +537,7 @@ export function BookingOperationsPage() {
                                                     ₹{booking.totalAmount}
                                                 </div>
                                                 <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider mt-0.5">
-                                                    {booking.paymentStatus}
+                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Awaiting Payment' : (booking.paymentStatus || 'N/A')}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-center">
@@ -556,8 +576,11 @@ export function BookingOperationsPage() {
 
                                                     <button
                                                         disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
-                                                        onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "CANCELLED")}
-                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border 
+                                                        onClick={() => {
+                                                            if (!window.confirm(`Cancel this booking for ${booking.patientId?.name || 'this patient'}? This cannot be undone.`)) return;
+                                                            handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "CANCELLED");
+                                                        }}
+                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border
                                                             ${(booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED")
                                                                 ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border-slate-200 dark:border-slate-700"
                                                                 : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white border-red-200 dark:border-red-500/20 shadow-sm"

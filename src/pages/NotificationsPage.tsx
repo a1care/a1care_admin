@@ -142,13 +142,13 @@ export function NotificationsPage() {
             onClick={() => setActiveTab('broadcast')}
             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'broadcast' ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Outbound Broadcast
+            Send Notification
           </button>
           <button
             onClick={() => setActiveTab('intelligence')}
             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'intelligence' ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            System Intelligence
+            Notification Log
           </button>
         </div>
         <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -161,7 +161,7 @@ export function NotificationsPage() {
           <div className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-8 border-b space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black text-slate-900">Target Discovery</h3>
+                <h3 className="text-xl font-black text-slate-900">Find User</h3>
                 <button onClick={() => setIsSearchOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors">
                   <X />
                 </button>
@@ -182,7 +182,7 @@ export function NotificationsPage() {
               {searching ? (
                 <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                   <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">Scanning Network...</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest">Searching...</p>
                 </div>
               ) : searchResults && searchResults.length > 0 ? (
                 <div className="grid gap-2">
@@ -237,10 +237,10 @@ export function NotificationsPage() {
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Target Audience</label>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {[
-                      { id: "all", label: "Broadcasting All", icon: Users },
-                      { id: "patients", label: "Patients Only", icon: User },
-                      { id: "partners", label: "Partners Only", icon: User },
-                      { id: "individual", label: "Direct Recipient", icon: Search },
+                      { id: "all", label: "Everyone", icon: Users },
+                      { id: "patients", label: "Patients", icon: User },
+                      { id: "partners", label: "Partners", icon: User },
+                      { id: "individual", label: "Specific User", icon: Search },
                     ].map((item) => (
                       <button
                         key={item.id}
@@ -272,7 +272,7 @@ export function NotificationsPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Selection</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Select User</label>
                       <button
                         type="button"
                         onClick={() => setIsSearchOpen(true)}
@@ -281,7 +281,7 @@ export function NotificationsPage() {
                         <div className="flex items-center gap-3">
                           <Search size={14} className={recipientId ? "text-emerald-500" : "text-slate-400"} />
                           <span className={`text-[11px] font-black uppercase tracking-wider ${recipientId ? "text-emerald-600" : "text-slate-400"}`}>
-                            {recipientName || `Discover ${recipientType}`}
+                            {recipientName || `Search ${recipientType}...`}
                           </span>
                         </div>
                         {recipientId && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
@@ -334,7 +334,7 @@ export function NotificationsPage() {
                   ) : (
                     <>
                       <Send size={24} />
-                      <span className="text-lg uppercase tracking-tight">Deploy Network Broadcast</span>
+                      <span className="text-lg uppercase tracking-tight">Send Notification</span>
                     </>
                   )}
                 </button>
@@ -346,7 +346,7 @@ export function NotificationsPage() {
             <section className="bg-slate-900 rounded-[40px] p-8 text-white space-y-8 relative overflow-hidden shadow-2xl">
               <div className="flex items-center gap-3">
                 <History size={18} className="text-blue-400" />
-                <h4 className="font-black uppercase tracking-widest text-[10px] opacity-60">Transmission Log</h4>
+                <h4 className="font-black uppercase tracking-widest text-[10px] opacity-60">Sent Notifications</h4>
               </div>
 
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">

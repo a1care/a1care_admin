@@ -100,7 +100,7 @@ export function PaymentLogsPage() {
         <button className="relative z-10 button secondary shadow-sm h-12 px-6 rounded-2xl group active:scale-95 transition-all uppercase tracking-widest text-[10px] font-black gap-2 border border-[var(--border-color)]"
           onClick={() => refetch()} disabled={isFetching}>
           <RefreshCcw size={16} className={isFetching ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"} />
-          <span>Refresh Trace</span>
+          <span>Refresh</span>
         </button>
         <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
       </header>
@@ -191,7 +191,7 @@ export function PaymentLogsPage() {
                   </div>
                   <div style={{ marginTop: 8 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, background: "var(--bg-main)", color: "var(--text-muted)", padding: "2px 8px", borderRadius: 6, textTransform: "uppercase" }}>
-                      {order.type}
+                      {({'WALLET_TOPUP':'Wallet Top-up','SERVICE_BOOKING':'Service Booking','DOCTOR_BOOKING':'Doctor Booking','APPOINTMENT':'Appointment','SUBSCRIPTION':'Subscription'} as Record<string,string>)[order.type] || (order.type || '').replace(/_/g,' ')}
                     </span>
                   </div>
                 </div>

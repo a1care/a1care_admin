@@ -396,86 +396,75 @@ export function UserManagementPage({ category }: { category: string }) {
 
             {/* User Detail Modal */}
             {selectedUser && (
-                <div className="modal-overlay fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 md:p-8 overflow-y-auto" onClick={() => setSelectedUser(null)}>
+                <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 md:p-8 overflow-y-auto bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
                     <div
-                        className="modal-content !bg-slate-950/90 backdrop-blur-[60px] w-full !max-w-6xl max-h-[92vh] overflow-y-auto overflow-x-hidden flex flex-col gap-0 relative shadow-[0_0_200px_-50px_rgba(0,0,0,1)] transition-all animate-in border border-white/10 !p-0"
+                        className="bg-white w-full max-w-3xl max-h-[92vh] overflow-y-auto overflow-x-hidden flex flex-col rounded-3xl shadow-2xl border border-slate-200"
                         onClick={e => e.stopPropagation()}
-                        style={{ borderRadius: '48px' }}
                     >
-                        <header className="px-8 md:px-12 py-8 border-b border-white/5 bg-gradient-to-r from-indigo-500/10 via-transparent to-transparent flex items-center justify-between gap-6">
-                            <div className="flex items-center gap-6 min-w-0">
-                                <div className="w-20 h-20 rounded-[28px] bg-black/40 backdrop-blur-3xl p-2 border border-white/10 shadow-2xl">
-                                    <div className="w-full h-full rounded-[20px] overflow-hidden bg-gradient-to-br from-indigo-500/20 to-blue-500/20 flex items-center justify-center text-3xl font-black text-white">
-                                        {selectedUser.name?.charAt(0) || "U"}
-                                    </div>
+                        <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-2xl font-black text-white shrink-0">
+                                    {selectedUser.name?.charAt(0) || "U"}
                                 </div>
                                 <div className="min-w-0">
-                                    <h2 className="text-white text-2xl md:text-3xl font-black tracking-tight truncate">{selectedUser.name || "Member Profile"}</h2>
-                                    <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-white/40 uppercase tracking-[0.2em] mt-2">
-                                        <div className="flex items-center gap-2 font-mono text-[9px] bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 text-white/60">USER_ID: {selectedUser._id}</div>
-                                    </div>
+                                    <h2 className="text-slate-900 text-2xl font-black tracking-tight truncate">{selectedUser.name || "Member Profile"}</h2>
+                                    <div className="font-mono text-[10px] text-slate-400 mt-1 truncate">ID: {selectedUser._id}</div>
                                 </div>
                             </div>
-                            <button className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/30 hover:text-white" onClick={() => setSelectedUser(null)}><X size={24} /></button>
+                            <button className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 shrink-0" onClick={() => setSelectedUser(null)}><X size={20} /></button>
                         </header>
 
-                        <div className="p-8 md:p-12">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                                <div className="lg:col-span-8 space-y-12">
-                                    <section>
-                                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400/60 mb-6 flex items-center gap-4">
-                                            <span className="w-10 h-[2px] bg-indigo-500/30"></span> Personal Details
-                                        </h3>
-                                        <div className="bg-white/5 backdrop-blur-3xl p-7 rounded-[32px] border border-white/5 grid grid-cols-2 gap-6">
-                                            {[
-                                                { label: "Mobile Number", value: selectedUser.mobileNumber },
-                                                { label: "Email Address", value: selectedUser.email || "No Email" },
-                                                { label: "Gender", value: selectedUser.gender || "Unspecified" },
-                                                { label: "Verification Status", value: category === 'patient' ? (selectedUser.isRegistered ? "Verified" : "Unverified") : selectedUser.status }
-                                            ].map(item => (
-                                                <div key={item.label}>
-                                                    <dt className="text-[9px] font-black text-white/20 uppercase tracking-widest">{item.label}</dt>
-                                                    <dd className="mt-1 text-white font-bold">{item.value}</dd>
-                                                </div>
-                                            ))}
+                        <div className="p-8 space-y-8">
+                            <section>
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">Personal Details</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                    {[
+                                        { label: "Mobile Number", value: selectedUser.mobileNumber },
+                                        { label: "Email Address", value: selectedUser.email || "No Email" },
+                                        { label: "Gender", value: selectedUser.gender || "Unspecified" },
+                                        { label: "Verification Status", value: category === 'patient' ? (selectedUser.isRegistered ? "Verified" : "Unverified") : selectedUser.status }
+                                    ].map(item => (
+                                        <div key={item.label}>
+                                            <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</dt>
+                                            <dd className="mt-1 text-slate-800 font-bold break-words">{item.value}</dd>
                                         </div>
-                                    </section>
-                                    <WalletSection user={selectedUser} category={category} />
+                                    ))}
                                 </div>
+                            </section>
 
-                                <div className="lg:col-span-4 space-y-8">
-                                    <div className="bg-white/5 rounded-[32px] p-7 border border-white/10">
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-6">KYC Documents</h3>
-                                        <div className="space-y-3">
-                                            {(selectedUser.documents || []).length > 0 ? (
-                                                Array.isArray(selectedUser.documents) && selectedUser.documents.map((doc: any, i: number) => (
-                                                    <div key={i} className="p-4 bg-black/40 rounded-2xl flex items-center justify-between border border-white/5">
-                                                        <span className="text-[10px] font-bold text-white uppercase truncate">{doc.type}</span>
-                                                        <button className="text-[9px] font-black text-indigo-400 hover:text-white uppercase" onClick={() => setViewingDocument(doc)}>View</button>
-                                                    </div>
-                                                ))
-                                            ) : <p className="text-[10px] text-white/20 font-black">No documents uploaded.</p>}
-                                        </div>
-                                    </div>
-                                    <div className="bg-white/5 rounded-[32px] p-7 border border-white/10">
-                                        <h3 className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-6">Account Management</h3>
-                                        <button
-                                            className="w-full h-12 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-black uppercase tracking-widest border border-rose-500/20 transition-all"
-                                            onClick={() => {
-                                                toast.error("Confirm Account Deletion", {
-                                                    description: "Are you sure you want to permanently remove this user record? This action cannot be undone.",
-                                                    action: {
-                                                        label: "Delete",
-                                                        onClick: () => confirmGenericDelete()
-                                                    }
-                                                });
-                                            }}
-                                        >
-                                            Delete Account
-                                        </button>
-                                    </div>
+                            <WalletSection user={selectedUser} category={category} />
+
+                            <section>
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">KYC Documents</h3>
+                                <div className="space-y-3">
+                                    {(selectedUser.documents || []).length > 0 ? (
+                                        Array.isArray(selectedUser.documents) && selectedUser.documents.map((doc: any, i: number) => (
+                                            <div key={i} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100">
+                                                <span className="text-xs font-bold text-slate-700 uppercase truncate">{doc.type}</span>
+                                                <button className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase" onClick={() => setViewingDocument(doc)}>View</button>
+                                            </div>
+                                        ))
+                                    ) : <p className="text-xs text-slate-400 font-bold bg-slate-50 p-4 rounded-2xl border border-slate-100">No documents uploaded.</p>}
                                 </div>
-                            </div>
+                            </section>
+
+                            <section>
+                                <h3 className="text-[11px] font-black uppercase tracking-widest text-rose-500 mb-4">Account Management</h3>
+                                <button
+                                    className="w-full h-12 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-black uppercase tracking-widest border border-rose-200 transition-all"
+                                    onClick={() => {
+                                        toast.error("Confirm Account Deletion", {
+                                            description: "Are you sure you want to permanently remove this user record? This action cannot be undone.",
+                                            action: {
+                                                label: "Delete",
+                                                onClick: () => confirmGenericDelete()
+                                            }
+                                        });
+                                    }}
+                                >
+                                    Delete Account
+                                </button>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -621,27 +610,24 @@ function WalletSection({ user, category }: { user: any, category: string }) {
     });
 
     return (
-        <section className="space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400/60 flex items-center gap-4">
-                <span className="w-10 h-[2px] bg-indigo-500/30"></span> Wallet Management
-            </h3>
-            <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl overflow-hidden relative group">
-                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><CreditCard size={100} className="text-indigo-500" /></div>
-                <div className="relative z-10">
-                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Available Balance</p>
-                    <h4 className="text-5xl font-black text-white">{isLoading ? "---" : `₹${wallet?.balance || 0}`}</h4>
+        <section>
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">Wallet Management</h3>
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Available Balance</p>
+                    <h4 className="text-4xl font-black text-slate-900">{isLoading ? "---" : `₹${wallet?.balance || 0}`}</h4>
                 </div>
 
                 {!isAdjusting ? (
-                    <button onClick={() => setIsAdjusting(true)} className="h-14 px-10 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all">Adjust Balance</button>
+                    <button onClick={() => setIsAdjusting(true)} className="h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow active:scale-95 transition-all">Adjust Balance</button>
                 ) : (
-                    <div className="w-full md:w-[320px] space-y-3 p-4 bg-black/40 rounded-3xl border border-white/5 animate-in zoom-in-95">
-                        <input type="number" placeholder="Enter Amount to Credit/Debit..." value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white border border-white/10 h-12 px-5 rounded-2xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/50 outline-none" />
-                        <input placeholder="Transaction Memo (e.g., Bonus, Refund)..." value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-white border border-white/10 h-12 px-5 rounded-2xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/50 outline-none" />
+                    <div className="w-full md:w-[320px] space-y-3 p-4 bg-white rounded-2xl border border-slate-200">
+                        <input type="number" placeholder="Enter amount..." value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/40 outline-none" />
+                        <input placeholder="Memo (e.g., Bonus, Refund)..." value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/40 outline-none" />
                         <div className="flex gap-2">
-                            <button onClick={() => adjustMutation.mutate('Credit')} className="flex-1 h-10 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Credit (+)</button>
-                            <button onClick={() => adjustMutation.mutate('Debit')} className="flex-1 h-10 rounded-xl bg-rose-600 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Debit (-)</button>
-                            <button onClick={() => setIsAdjusting(false)} className="px-3 rounded-xl bg-white/10 text-white"><X size={16} /></button>
+                            <button onClick={() => adjustMutation.mutate('Credit')} className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Credit (+)</button>
+                            <button onClick={() => adjustMutation.mutate('Debit')} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Debit (-)</button>
+                            <button onClick={() => setIsAdjusting(false)} className="px-3 rounded-xl bg-slate-100 text-slate-500"><X size={16} /></button>
                         </div>
                     </div>
                 )}
