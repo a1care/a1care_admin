@@ -456,13 +456,7 @@ export function UserManagementPage({ category }: { category: string }) {
                                 <button
                                     className="w-full h-12 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-black uppercase tracking-widest border border-rose-200 transition-all"
                                     onClick={() => {
-                                        toast.error("Confirm Account Deletion", {
-                                            description: "Are you sure you want to permanently remove this user record? This action cannot be undone.",
-                                            action: {
-                                                label: "Delete",
-                                                onClick: () => confirmGenericDelete()
-                                            }
-                                        });
+                                        setDeleteConfig({ id: selectedUser._id, type: category as any });
                                     }}
                                 >
                                     Delete Account
