@@ -27,7 +27,7 @@ const DEFAULT_VERTICALS = [
         description: "Specialized doctors, surgeons, and general practitioners.",
         icon: Stethoscope,
         color: "blue",
-        count: "Active Portfolio"
+        count: "Active Categories"
     },
     {
         id: "nurse",
@@ -175,7 +175,7 @@ export function ServiceVerticalsPage() {
         setEditingVertical(null);
         setTitle(""); setDesc(""); setFile(null); setPreview(null);
         setIsUploading(false);
-        toast.success(editingVertical ? "Vertical updated" : "Vertical initialized");
+        toast.success(editingVertical ? "Vertical updated" : "Vertical created");
     };
 
     return (
@@ -263,7 +263,7 @@ export function ServiceVerticalsPage() {
                                 </div>
 
                                 <div className="mt-8 flex items-center justify-between w-full pt-6 border-t border-[var(--border-color)] group-hover:border-blue-500/20">
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Manage Portfolio</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Manage Categories</span>
                                     <div className="w-10 h-10 rounded-xl bg-[var(--bg-main)] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
                                         <ArrowRight size={18} />
                                     </div>
@@ -286,7 +286,7 @@ export function ServiceVerticalsPage() {
                     </div>
                     <div className="space-y-1">
                         <h4 className="text-xs font-black uppercase tracking-widest text-[var(--text-main)]">Add Custom Vertical</h4>
-                        <p className="text-[10px] font-bold text-[var(--text-muted)] max-w-[180px]">Extend the architectural framework with new service tiers.</p>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] max-w-[180px]">Add a new service vertical.</p>
                     </div>
                 </div>
             </div>
@@ -298,8 +298,8 @@ export function ServiceVerticalsPage() {
                         <div className="p-10 space-y-8">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-1">
-                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editingVertical ? 'Refine Vertical' : 'New Service Pillar'}</h2>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{editingVertical ? `Modifying ${editingVertical.title}` : 'Definition Protocol 01-A'}</p>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editingVertical ? 'Refine Vertical' : 'Add Banner Vertical'}</h2>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">{editingVertical ? `Modifying ${editingVertical.title}` : 'Enter vertical details'}</p>
                                 </div>
                                 <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:rotate-90 transition-all">
                                     <X size={20} />
@@ -308,7 +308,7 @@ export function ServiceVerticalsPage() {
 
                             <form className="space-y-6" onSubmit={handleSubmitVertical}>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Vertical Identity</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Vertical Name</label>
                                     <input
                                         className="w-full h-14 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-6 text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-inner"
                                         placeholder="e.g. Wellness & Yoga"
@@ -319,7 +319,7 @@ export function ServiceVerticalsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Pillar Mission Statment</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Description</label>
                                     <textarea
                                         className="w-full h-24 bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl px-6 py-4 text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-inner resize-none"
                                         placeholder="Briefly describe the operational scope of this new vertical..."
@@ -345,7 +345,7 @@ export function ServiceVerticalsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Legacy Palette Fallback</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Accent Color</label>
                                     <div className="flex gap-3 px-2">
                                         {['blue', 'indigo', 'emerald', 'rose', 'amber', 'purple'].map(c => (
                                             <button
@@ -361,7 +361,7 @@ export function ServiceVerticalsPage() {
                                 <div className="pt-4 flex gap-4">
                                     <button type="button" disabled={isUploading} className="flex-1 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 font-black uppercase text-[11px] tracking-widest active:scale-95 transition-all" onClick={() => setIsModalOpen(false)}>Abort</button>
                                     <button type="submit" disabled={isUploading} className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                                        {isUploading ? "Optimizing Assets..." : (editingVertical ? "Update Portfolio" : "Initialize Pillar")}
+                                        {isUploading ? "Optimizing Assets..." : (editingVertical ? "Update Categories" : "Create Vertical")}
                                     </button>
                                 </div>
                             </form>
@@ -375,10 +375,11 @@ export function ServiceVerticalsPage() {
                     <Settings2 size={28} />
                 </div>
                 <div>
-                    <h3 className="text-sm font-black text-amber-900 dark:text-amber-400 uppercase tracking-widest">Architectural Guidance</h3>
+                    <h3 className="text-sm font-black text-amber-900 dark:text-amber-400 uppercase tracking-widest">How This Works</h3>
                     <p className="text-xs font-bold text-amber-700/60 dark:text-amber-500/50 mt-1 leading-relaxed">Selecting a vertical will navigate to the category builder pre-filtered for that specific operational domain. All specialized services added within a vertical will inherit registry protocols for that type.</p>
                 </div>
             </div>
         </div>
     );
 }
+

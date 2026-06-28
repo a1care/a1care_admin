@@ -78,8 +78,8 @@ export function AppLayout() {
 
   const searchItems = useMemo(() => [
     { label: "Dashboard", to: "/", icon: "📊", cat: "General" },
-    { label: "Main Bookings", to: "/bookings", icon: "📅", cat: "Operations" },
-    { label: "OP Bookings", to: "/op-bookings", icon: "📋", cat: "Operations" },
+    { label: "Service Orders", to: "/bookings", icon: "📅", cat: "Operations" },
+    { label: "Doctor Appointments", to: "/op-bookings", icon: "📋", cat: "Operations" },
     { label: "Partner Revenue", to: "/partner-revenue-model", icon: "💰", cat: "Finance" },
     { label: "Payout Management", to: "/payouts", icon: "🏦", cat: "Finance" },
     { label: "Coupons", to: "/coupons", icon: "🏷️", cat: "Finance" },
@@ -87,9 +87,9 @@ export function AppLayout() {
     { label: "KYC Verification", to: "/kyc-verification", icon: "🛡️", cat: "Audit" },
     { label: "User Reviews", to: "/reviews", icon: "💬", cat: "User Engagement" },
     { label: "Support Tickets", to: "/support-tickets", icon: "🎫", cat: "Support" },
-    { label: "Broadcast Notifications", to: "/notifications", icon: "🔔", cat: "Support" },
-    { label: "Patient Registry", to: "/manage-patients", icon: "👤", cat: "Users" },
-    { label: "Doctor Registry", to: "/manage-doctors", icon: "🩺", cat: "Users" },
+    { label: "Push Notifications", to: "/notifications", icon: "🔔", cat: "Support" },
+    { label: "Patients", to: "/manage-patients", icon: "👤", cat: "Users" },
+    { label: "Doctors", to: "/manage-doctors", icon: "🩺", cat: "Users" },
     { label: "Nurse Registry", to: "/manage-nurses", icon: "🏥", cat: "Users" },
     { label: "Ambulance Fleet", to: "/manage-ambulances", icon: "🚑", cat: "Users" },
     { label: "Rental Inventory", to: "/manage-rentals", icon: "📦", cat: "Users" },
@@ -97,8 +97,8 @@ export function AppLayout() {
     { label: "Subcategories", to: "/service-subcategories", icon: "📁", cat: "Services" },
     { label: "Child Categories", to: "/service-child-services", icon: "🏷️", cat: "Services" },
     { label: "Health Packages", to: "/health-packages", icon: "📦", cat: "Services" },
-    { label: "System Config", to: "/manage-system-config", icon: "⚙️", cat: "Admin" },
-    { label: "Payment Audit Logs", to: "/payment-logs", icon: "🧾", cat: "Admin" },
+    { label: "System Settings", to: "/manage-system-config", icon: "⚙️", cat: "Admin" },
+    { label: "Payment Logs", to: "/payment-logs", icon: "🧾", cat: "Admin" },
     { label: "Audit Logs", to: "/audit-logs", icon: "📜", cat: "Admin" },
     { label: "Account Deletion Requests", to: "/deletion-requests", icon: "🗑️", cat: "Admin" },
   ], []);
@@ -197,7 +197,7 @@ export function AppLayout() {
           </div>
           <div className="flex flex-col">
             <h2 className="brand-name">A1Care Admin</h2>
-            <p className="role-label">System Controller</p>
+            <p className="role-label">Admin</p>
           </div>
         </div>
 
@@ -258,7 +258,7 @@ export function AppLayout() {
               {servicesOpen && (
                 <div className="submenu-list">
                   {[
-                    // { to: "/service-portfolio", label: "Portfolios Hub", icon: Briefcase },
+                    // { to: "/service-Categories", label: "Categoriess Hub", icon: Briefcase },
                     { to: "/service-categories", label: "Categories", icon: LayoutGrid },
                     { to: "/service-subcategories", label: "Subcategories", icon: Layers },
                     { to: "/service-child-services", label: "Child Categories", icon: Tag },
@@ -290,7 +290,7 @@ export function AppLayout() {
 
               {customerAppOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners Customer</NavLink>
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Customer Offer Banners</NavLink>
                   <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promotional Banners</NavLink>
                   <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
                 </div>
@@ -311,7 +311,7 @@ export function AppLayout() {
 
               {appsOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>User Apps Config</NavLink>
+                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Customer App Config</NavLink>
                   <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Provider Apps Config</NavLink>
                   <div className="h-px bg-slate-100 my-1 mx-2"></div>
                   <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Health Vault Audit</NavLink>
@@ -346,7 +346,7 @@ export function AppLayout() {
                 {user?.name || "Premium Admin"}
               </p>
               <p className="text-[9px] font-bold text-[var(--text-muted)] truncate uppercase tracking-widest opacity-80">
-                {user?.role?.replace('_', ' ') || "Global Manager"}
+                {user?.role?.replace(/_/g, ' ') || "Global Manager"}
               </p>
             </div>
             <button
@@ -433,7 +433,7 @@ export function AppLayout() {
                           <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-300">
                             <CheckCircle size={32} />
                           </div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Queue Clean</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No new notifications</p>
                         </div>
                       )}
                     </div>
@@ -443,7 +443,7 @@ export function AppLayout() {
                         onClick={() => { navigate('/notifications'); setShowBell(false); }}
                         className="w-full py-3 rounded-2xl text-[10px] font-black text-blue-600 uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                       >
-                        View Full Intelligence Log
+                        View All Notifications
                       </button>
                     </div>
                   </div>
@@ -542,3 +542,4 @@ export function AppLayout() {
     </div>
   );
 }
+

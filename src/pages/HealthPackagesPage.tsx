@@ -103,7 +103,7 @@ export function HealthPackagesPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_health_packages"] });
             setIsModalOpen(false);
-            toast.success(editTarget ? "Package updated!" : "Package created!");
+            toast.success(editTarget ? "Package updated" : "Package created");
         },
         onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to save package"),
     });
@@ -122,10 +122,11 @@ export function HealthPackagesPage() {
 
     const toggleFeaturedMutation = useMutation({
         mutationFn: (id: string) => api.patch(`/health-packages/admin/toggle-featured/${id}`),
-        onSuccess: (_, id) => {
+        onSuccess: (res, id) => {
             queryClient.invalidateQueries({ queryKey: ["admin_health_packages"] });
-            const pkg = packages?.find(p => p._id === id);
-            toast.success(pkg?.isFeatured ? "Removed from featured" : "⭐ Now featured in user app!");
+            // Read from API response (post-mutation state), not pre-mutation pkg state
+            const nowFeatured = res?.data?.data?.isFeatured;
+            toast.success(nowFeatured ? "Now featured in user app" : "Removed from featured");
         },
         onError: () => toast.error("Failed to toggle featured"),
     });
@@ -539,3 +540,4 @@ export function HealthPackagesPage() {
         </div>
     );
 }
+

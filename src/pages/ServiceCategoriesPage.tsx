@@ -248,7 +248,7 @@ export function ServiceCategoriesPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_categories"] });
             setDeleteId(null);
-            toast.success("Category archived");
+            toast.success("Category deleted");
         }
     });
 
@@ -310,7 +310,7 @@ export function ServiceCategoriesPage() {
             <header className="flex items-center justify-between gap-6 bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm">
                 <div className="space-y-1">
                     <h1 className="text-3xl font-bold tracking-tighter text-[var(--text-main)]">
-                        {filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Portfolio` : "Categories"}
+                        {filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Categories` : "Categories"}
                     </h1>
                 </div>
 
@@ -372,7 +372,7 @@ export function ServiceCategoriesPage() {
                         <div className="p-8 border-b flex justify-between items-center">
                             <div>
                                 <h2 className="brand-name">{editingCategory ? "Edit Category" : "Create New Category"}</h2>
-                                <p className="text-xs muted font-bold uppercase tracking-widest mt-1">{editingCategory ? "Update Service Classification" : "Define New Service Classification"}</p>
+                                <p className="text-xs muted font-bold uppercase tracking-widest mt-1">{editingCategory ? "Update category details" : "Enter category details"}</p>
                             </div>
                             <button onClick={() => { setIsModalOpen(false); setEditingCategory(null); }} className="logout-btn"><X size={24} /></button>
                         </div>
@@ -480,7 +480,7 @@ export function ServiceCategoriesPage() {
                                 <div className="pt-4 flex gap-4">
                                     <button type="button" className="flex-1 h-14 rounded-2xl bg-white border border-slate-100 text-slate-400 font-black uppercase text-[10px]" onClick={() => { setIsModalOpen(false); setEditingCategory(null); }}>Abort</button>
                                     <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-black uppercase text-[10px] shadow-xl shadow-blue-100">
-                                        {createMutation.isPending || updateMutation.isPending ? "Processing..." : (editingCategory ? "Update Category" : "Finalize Category")}
+                                        {createMutation.isPending || updateMutation.isPending ? "Processing..." : (editingCategory ? "Update Category" : "Create Category")}
                                     </button>
                                 </div>
                             </form>
@@ -496,11 +496,11 @@ export function ServiceCategoriesPage() {
                         <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                             <Trash2 size={32} />
                         </div>
-                        <h3 className="brand-name text-2xl">Archive Category?</h3>
+                        <h3 className="brand-name text-2xl">Delete Category?</h3>
                         <p className="muted font-medium mt-2">All sub-services and catalog items within this category will be inaccessible. This action is terminal.</p>
                         <div className="flex gap-4 mt-10">
                             <button className="button secondary flex-1 h-14 rounded-2xl font-black uppercase text-[10px]" onClick={() => setDeleteId(null)}>Cancel</button>
-                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Archive Category</button>
+                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Delete Category</button>
                         </div>
                     </div>
                 </div>
@@ -508,3 +508,4 @@ export function ServiceCategoriesPage() {
         </div>
     );
 }
+

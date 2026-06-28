@@ -239,18 +239,18 @@ export function AppManagementPage({ appKey }: Props) {
                     <Globe size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-[var(--text-main)]">Infrastructure Gateways</h3>
+                    <h3 className="text-xl font-black text-[var(--text-main)]">API Endpoints</h3>
                     <p className="text-sm font-medium text-[var(--text-muted)]">Manage critical API and asset cluster endpoints.</p>
                   </div>
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">API Cluster URL</label>
+                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">API Base URL</label>
                     <input className="w-full h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-100 transition-all" placeholder="e.g. https://api.a1care.247/v1" value={formState.env.apiBaseUrl} onChange={(e) => updatePath("env.apiBaseUrl", e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Asset Cluster URL</label>
+                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Assets Base URL</label>
                     <input className="w-full h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-100 transition-all" placeholder="e.g. https://cdn.a1care.247/uploads" value={formState.env.assetsBaseUrl} onChange={(e) => updatePath("env.assetsBaseUrl", e.target.value)} />
                   </div>
                 </div>
@@ -358,7 +358,7 @@ export function AppManagementPage({ appKey }: Props) {
                           </div>
                           <label className="flex items-center gap-3 cursor-pointer group/check">
                             <input type="checkbox" className="w-6 h-6 rounded-lg border-[var(--border-color)] text-blue-600 dark:text-blue-400 focus:ring-blue-100 transition-all" checked={banner.active} onChange={(e) => updateBanner(index, "active", e.target.checked)} />
-                            <span className="text-sm font-bold text-[var(--text-muted)] group-hover/check:text-[var(--text-main)] transition-colors">Visible in Production</span>
+                            <span className="text-sm font-bold text-[var(--text-muted)] group-hover/check:text-[var(--text-main)] transition-colors">Visible in App</span>
                           </label>
                         </div>
 
@@ -469,7 +469,7 @@ export function AppManagementPage({ appKey }: Props) {
             ) : (
               <Save size={20} className="group-hover:scale-110 transition-transform" />
             )}
-            <span className="text-sm uppercase tracking-wider">Commit Architecture</span>
+            <span className="text-sm uppercase tracking-wider">Save Changes</span>
             <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform opacity-50" />
           </button>
         </div>
@@ -588,3 +588,4 @@ function SystemSettingsSection() {
     </section>
   );
 }
+

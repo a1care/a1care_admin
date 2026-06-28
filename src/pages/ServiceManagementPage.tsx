@@ -131,7 +131,7 @@ export function ServiceManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_categories"] });
-            toast.success("Category archived");
+            toast.success("Category deleted");
         }
     });
 
@@ -147,7 +147,7 @@ export function ServiceManagementPage() {
             queryClient.invalidateQueries({ queryKey: ["admin_subservices", selectedCatId] });
             setIsSubModalOpen(false);
             setSubName(""); setSubDesc(""); setSubFile(null);
-            toast.success("Sub-service added");
+            toast.success("Sub-service created");
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Failed to add sub-service. Check all fields.");
@@ -160,7 +160,7 @@ export function ServiceManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_subservices", selectedCatId] });
-            toast.success("Sub-service archived");
+            toast.success("Sub-service deleted");
         },
         onError: () => toast.error("Failed to delete sub-service.")
     });
@@ -177,7 +177,7 @@ export function ServiceManagementPage() {
             queryClient.invalidateQueries({ queryKey: ["admin_childservices", selectedSubId] });
             setIsChildModalOpen(false);
             setChildName(""); setChildDesc(""); setChildPrice(""); setChildFile(null);
-            toast.success("Service item finalized");
+            toast.success("Service item created");
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Failed to create service item. Check all fields.");
@@ -190,7 +190,7 @@ export function ServiceManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_childservices", selectedSubId] });
-            toast.success("Item removed");
+            toast.success("Service item deleted");
         },
         onError: () => toast.error("Failed to remove item.")
     });
@@ -256,7 +256,7 @@ export function ServiceManagementPage() {
                 <div className="flex items-center gap-3">
                     <div className="icon-box"><LayoutGrid size={20} /></div>
                     <div>
-                        <h3 className="brand-name">Root Categories</h3>
+                        <h3 className="brand-name">Categories</h3>
                         <p className="text-xs muted">1. Select a primary service category</p>
                     </div>
                 </div>
@@ -313,7 +313,7 @@ export function ServiceManagementPage() {
                     <div className="icon-box"><Layers size={20} /></div>
                     <div>
                         <h3 className="brand-name">Sub-Services: {cleanName(currentCat?.name || "Tier 2")}</h3>
-                        <p className="text-xs muted">2. Specialization layer for customers</p>
+                        <p className="text-xs muted">2. Sub-services</p>
                     </div>
                 </div>
                 <button
@@ -375,7 +375,7 @@ export function ServiceManagementPage() {
                     <div className="icon-box"><Tag size={20} /></div>
                     <div>
                         <h2 className="brand-name">Bookable Items: {cleanName(currentSub?.name || "Final Tier")}</h2>
-                        <p className="text-xs muted">3. End-user bookable services and pricing</p>
+                        <p className="text-xs muted">3. Service Items</p>
                     </div>
                 </div>
                 <button
@@ -390,7 +390,7 @@ export function ServiceManagementPage() {
             {!selectedSubId ? (
                 <div className="card-ghost">
                     <Layers size={32} style={{ marginBottom: '12px' }} />
-                    <p>Select a sub-specialization to manage items</p>
+                    <p>Select a sub-service to view items</p>
                 </div>
             ) : (
                 <div className="flex-col gap-2">
@@ -496,7 +496,7 @@ export function ServiceManagementPage() {
                     <div className="modal-content">
                         <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <h3 className="brand-name">Add New Category</h3>
+                                <h3 className="brand-name">Add Banner Category</h3>
                                 <p className="text-xs muted">Define a root service node</p>
                             </div>
                             <button onClick={() => setIsCatModalOpen(false)} className="logout-btn"><X size={24} /></button>
@@ -535,7 +535,7 @@ export function ServiceManagementPage() {
                                 </div>
                             </div>
                             <button disabled={createCatMutation.isPending} className="button primary full-width">
-                                {createCatMutation.isPending ? "Publishing..." : "Finalize Category"}
+                                {createCatMutation.isPending ? "Publishing..." : "Create Category"}
                             </button>
                         </form>
                     </div>
@@ -548,7 +548,7 @@ export function ServiceManagementPage() {
                         <div style={{ padding: '24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
                                 <h3 className="brand-name">Add Sub-Service</h3>
-                                <p className="text-xs muted">Tier 2 specialization for {cleanName(currentCat?.name || "Category")}</p>
+                                <p className="text-xs muted"> for {cleanName(currentCat?.name || "Category")}</p>
                             </div>
                             <button onClick={() => setIsSubModalOpen(false)} className="logout-btn"><X size={24} /></button>
                         </div>
@@ -561,7 +561,7 @@ export function ServiceManagementPage() {
                             createSubMutation.mutate(fd);
                         }}>
                             <div className="input-group">
-                                <label>Specialization Name</label>
+                                <label>Sub-Service Name</label>
                                 <input value={subName} onChange={(e) => setSubName(e.target.value)} placeholder="e.g., General Physician" required />
                             </div>
                             <div className="input-group">
@@ -578,7 +578,7 @@ export function ServiceManagementPage() {
                                 <input type="file" onChange={(e) => setSubFile(e.target.files?.[0] || null)} />
                             </div>
                             <button disabled={createSubMutation.isPending} className="button primary full-width">
-                                {createSubMutation.isPending ? "Adding..." : "Finalize Sub-Service"}
+                                {createSubMutation.isPending ? "Adding..." : "Create Sub-Service"}
                             </button>
                         </form>
                     </div>
@@ -643,7 +643,7 @@ export function ServiceManagementPage() {
                             </div>
 
                             <button disabled={createChildMutation.isPending} className="button primary full-width" style={{ marginTop: '12px' }}>
-                                {createChildMutation.isPending ? "Integrating Item..." : "Publish Bookable Service"}
+                                {createChildMutation.isPending ? "Integrating Item..." : "Create Service Item"}
                             </button>
                         </form>
                     </div>
@@ -663,7 +663,7 @@ export function ServiceManagementPage() {
                         </div>
                         <h3 className="brand-name" style={{ marginBottom: '8px' }}>Archive this {deleteConfig.type}?</h3>
                         <p className="muted" style={{ fontSize: '0.9rem', marginBottom: '32px' }}>
-                            Removing this node will affect all child services and active app listings. This action is permanent.
+                            Deleting this will remove all associated items from the platform and active app listings. This action is permanent.
                         </p>
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button
@@ -678,7 +678,7 @@ export function ServiceManagementPage() {
                                 onClick={confirmGenericDelete}
                                 style={{ background: '#ef4444', color: 'white', height: '48px' }}
                             >
-                                Archive Node
+                                Delete
                             </button>
                         </div>
                     </div>
@@ -687,3 +687,4 @@ export function ServiceManagementPage() {
         </div>
     );
 }
+

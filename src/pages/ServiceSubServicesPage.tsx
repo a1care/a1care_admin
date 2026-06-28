@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, resolveAssetUrl } from "@/lib/api";
 import {
     Plus,
     Trash2,
@@ -125,7 +125,7 @@ export function ServiceSubServicesPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_subservices", selectedCatId] });
             setDeleteId(null);
-            toast.success("Node archived");
+            toast.success("Sub-service deleted");
         }
     });
 
@@ -196,10 +196,22 @@ export function ServiceSubServicesPage() {
                 </aside>
 
                 <main className="lg:col-span-3 flex-col gap-6">
+                    {selectedCatId && (
+                        <div className="relative mb-2">
+                            <Search className="absolute text-slate-400" size={16} style={{ left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                                placeholder="Search sub-services..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-xl text-sm font-medium"
+                                style={{ paddingLeft: 40, height: 44 }}
+                            />
+                        </div>
+                    )}
                     {!selectedCatId ? (
                         <div className="p-20 text-center card-ghost">
                             <Layers size={48} className="mx-auto mb-4 opacity-20" />
-                            <p className="font-bold text-slate-400">Select a primary category to view its organizational units</p>
+                            <p className="font-bold text-slate-400">Select a category to view sub-services</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -213,7 +225,7 @@ export function ServiceSubServicesPage() {
                                     <div className="flex justify-between items-start">
                                         <div className="icon-box overflow-hidden" style={{ width: '52px', height: '52px', borderRadius: '18px', background: '#f5f3ff', color: '#7c3aed' }}>
                                             {sub.imageUrl ? (
-                                                <img src={sub.imageUrl} alt={sub.name} className="w-full h-full object-cover" />
+                                                <img src={resolveAssetUrl(sub.imageUrl)} alt={sub.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 (() => {
                                                     const SubIcon = getSubIcon(sub);
@@ -228,7 +240,7 @@ export function ServiceSubServicesPage() {
                                                     setEditingSub(sub);
                                                     setName(sub.name);
                                                     setDesc(sub.description || "");
-                                                    setPreview(sub.imageUrl || null);
+                                                    setPreview(resolveAssetUrl(sub.imageUrl) || null);
                                                     setIsModalOpen(true);
                                                 }}
                                                 className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm"
@@ -250,16 +262,16 @@ export function ServiceSubServicesPage() {
                                                 {sub.description}
                                             </p>
                                         )}
-                                        <p className="text-[9px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1">Tier 2 Specialization</p>
+                                        <p className="text-[9px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1"></p>
                                     </div>
                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                                        <span className="text-[10px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Child Categories</span>
+                                        <span className="text-[10px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Services</span>
                                         <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1" />
                                     </div>
                                 </article>
                             ))}
                             {filtered?.length === 0 && !isLoading && (
-                                <div className="col-span-2 text-center py-20 opacity-50 font-bold">No units found in this category.</div>
+                                <div className="col-span-2 text-center py-20 opacity-50 font-bold">No sub-services found.</div>
                             )}
                         </div>
                     )}
@@ -274,7 +286,7 @@ export function ServiceSubServicesPage() {
                     <div className="modal-content" style={{ maxWidth: '500px' }}>
                         <div className="p-8 border-b flex justify-between items-center">
                             <div>
-                                <h2 className="brand-name">{editingSub ? 'Refine Unit' : 'New Unit'}</h2>
+                                <h2 className="brand-name">{editingSub ? 'Edit Sub-Service' : 'New Sub-Service'}</h2>
                                 <p className="text-xs muted font-bold uppercase tracking-widest mt-1">{editingSub ? `Updating ${editingSub.name}` : `Expanding ${cleanName(currentCategory?.name || "")}`}</p>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} className="logout-btn"><X size={24} /></button>
@@ -288,11 +300,11 @@ export function ServiceSubServicesPage() {
                             submitMutation.mutate(fd);
                         }}>
                             <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Specialization Name</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Sub-Service Name</label>
                                 <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., General Medicine" required />
                             </div>
                             <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Detailed Brief</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Description</label>
                                 <textarea
                                     className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl font-bold min-h-[100px] placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                                     value={desc}
@@ -321,7 +333,7 @@ export function ServiceSubServicesPage() {
                                 </label>
                             </div>
                             <button disabled={submitMutation.isPending} className="button primary h-14 w-full rounded-2xl mt-4 font-black uppercase tracking-widest text-xs">
-                                {submitMutation.isPending ? "Integrating..." : (editingSub ? "Save Clinical Refinements" : "Finalize Unit Integration")}
+                                {submitMutation.isPending ? "Integrating..." : (editingSub ? "Save Changes" : "Create Sub-Service")}
                             </button>
                         </form>
                     </div>
@@ -336,10 +348,10 @@ export function ServiceSubServicesPage() {
                             <Trash2 size={32} />
                         </div>
                         <h3 className="brand-name text-2xl">Remove Node?</h3>
-                        <p className="muted font-medium mt-2">All children items under this node will be disconnected from the active catalog. This action is final.</p>
+                        <p className="muted font-medium mt-2">All service items under this sub-service will also be removed. This action is final.</p>
                         <div className="flex gap-4 mt-10">
                             <button className="button secondary flex-1 h-14 rounded-2xl font-black uppercase text-[10px]" onClick={() => setDeleteId(null)}>Abort</button>
-                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Final Archive</button>
+                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Delete</button>
                         </div>
                     </div>
                 </div>
@@ -347,3 +359,4 @@ export function ServiceSubServicesPage() {
         </div>
     );
 }
+

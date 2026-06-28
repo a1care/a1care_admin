@@ -10,39 +10,34 @@ import {
 // ─── Default (hardcoded fallback) ────────────────────────────────────────────
 const DEFAULT_CONFIG: SystemConfig = {
     website: {
-        apiKey: "AIzaSyC4OkQrUi2FGx0hIV0fjDyD0Hwv7tQoo8w",
-        authDomain: "a1carewebsite.firebaseapp.com",
-        projectId: "a1carewebsite",
-        storageBucket: "a1carewebsite.firebasestorage.app",
-        messagingSenderId: "742774308338",
-        appId: "1:742774308338:web:a4b403b3ded90987d57f6b",
-        measurementId: "G-ZSZKQTXE94",
+        apiKey: "",
+        authDomain: "",
+        projectId: "",
+        storageBucket: "",
+        messagingSenderId: "",
+        appId: "",
+        measurementId: "",
     },
-    projectNumber: "742774308338",
-    projectId: "a1carewebsite",
-    storageBucket: "a1carewebsite.firebasestorage.app",
-    clients: [
-        { platform: "android", appLabel: "customer", appId: "1:742774308338:android:8d9bed5df8563aded57f6b", apiKey: "AIzaSyBMiouUypgK29NCCIWb7ImaPedjiC4BuDA", packageName: "com.a1care.customer" },
-        { platform: "android", appLabel: "partner", appId: "1:742774308338:android:9e284d859cc3f88ad57f6b", apiKey: "AIzaSyBMiouUypgK29NCCIWb7ImaPedjiC4BuDA", packageName: "com.a1care.partner" },
-        { platform: "ios", appLabel: "customer", appId: "1:742774308338:ios:9851205c6bcfd638d57f6b", apiKey: "AIzaSyDy87QysRYviXSwTTKCjmpM84DxAOc69zM", packageName: "com.a1care.customer.ios" },
-        { platform: "ios", appLabel: "partner", appId: "1:742774308338:ios:d30961469549b8c8d57f6b", apiKey: "AIzaSyDy87QysRYviXSwTTKCjmpM84DxAOc69zM", packageName: "com.a1care.partner.ios" },
-    ],
+    projectNumber: "",
+    projectId: "",
+    storageBucket: "",
+    clients: [],
     firebase: {
         clientEmail: "",
         privateKey: ""
     },
-    googleMapsApiKey: "AIzaSyCQp47kwCVpsPbgSWB-c9HrlsqyiLwe06o",
+    googleMapsApiKey: "",
     easebuzz: {
-        merchantKey: "NQOKGR29D",
-        salt: "DZJLI6TFN",
+        merchantKey: "",
+        salt: "",
         env: "test"
     },
     email: {
-        user: "support@a1care247.com",
+        user: "",
         pass: "",
         host: "smtp.gmail.com",
         port: 587,
-        from: "A1Care <support@a1care247.com>"
+        from: ""
     },
     twilio: {
         accountSid: "",
@@ -552,7 +547,11 @@ export function SystemSettingsPage() {
                     <button
                         type="button"
                         className="h-14 px-8 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20 active:scale-95 transition-all group disabled:opacity-50"
-                        onClick={() => mutation.mutate()}
+                        onClick={() => {
+                            if (window.confirm('Save these settings to production? This will affect all running services immediately.')) {
+                                mutation.mutate();
+                            }
+                        }}
                         disabled={mutation.isPending}
                     >
                         {mutation.isPending ? (
@@ -560,7 +559,7 @@ export function SystemSettingsPage() {
                         ) : (
                             <Save size={20} className="group-hover:scale-110 transition-transform" />
                         )}
-                        <span className="text-sm uppercase tracking-wider">Sync All Secrets</span>
+                        <span className="text-sm uppercase tracking-wider">Save Settings</span>
                         <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform opacity-50" />
                     </button>
                 </div>
@@ -568,3 +567,4 @@ export function SystemSettingsPage() {
         </div >
     );
 }
+

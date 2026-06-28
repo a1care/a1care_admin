@@ -56,13 +56,14 @@ export function AppBannerManagementPage() {
   }, [config, configField]);
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (overrideBanners?: typeof banners) => {
       if (!config) return;
+      const bannersToSave = overrideBanners ?? banners;
       const updatedConfig = {
         ...config,
         landing: {
           ...config.landing,
-          [configField]: banners
+          [configField]: bannersToSave
         }
       };
       const res = await api.put(`/admin/app-management/${appKey}`, updatedConfig);
@@ -107,7 +108,7 @@ export function AppBannerManagementPage() {
     const newBanners = [...banners];
     (newBanners[index] as any)[key] = value;
     setBanners(newBanners);
-    // Auto-save on toggle change for visibility
+    // Auto-save on toggle change — pass updated banners explicitly (mutationFn uses argument, not stale closure)
     if (key === "active") {
       saveMutation.mutate(newBanners);
     }

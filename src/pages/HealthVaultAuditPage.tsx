@@ -26,7 +26,7 @@ export function HealthVaultAuditPage() {
     );
   }
 
-  const { totalRecords, newToday, stats, recentRecords } = data;
+  const { totalRecords = 0, newToday = 0, stats = {}, recentRecords = [] } = data ?? {};
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">

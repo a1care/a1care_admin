@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, resolveAssetUrl } from "@/lib/api";
 import {
     Plus,
     Trash2,
@@ -114,7 +114,7 @@ export function ServiceChildServicesPage() {
             setIsModalOpen(false);
             setEditingItem(null);
             setName(""); setPrice(""); setDesc(""); setFile(null); setPreview(null);
-            toast.success(editingItem ? "Catalog item updated" : "Catalog item live");
+            toast.success(editingItem ? "Service item updated" : "Service item created");
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Operation failed");
@@ -128,7 +128,7 @@ export function ServiceChildServicesPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin_childservices", selectedSubId] });
             setDeleteId(null);
-            toast.success("Item removed from catalog");
+            toast.success("Service item deleted from catalog");
         }
     });
 
@@ -229,10 +229,22 @@ export function ServiceChildServicesPage() {
                 </aside>
 
                 <main className="lg:col-span-3 flex-col gap-6">
+                    {selectedSubId && (
+                        <div className="relative mb-2">
+                            <Search className="absolute text-slate-400" size={16} style={{ left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                            <input
+                                placeholder="Search service items..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-xl text-sm font-medium"
+                                style={{ paddingLeft: 40, height: 44 }}
+                            />
+                        </div>
+                    )}
                     {!selectedSubId ? (
                         <div className="p-20 text-center card bg-white/50 backdrop-blur-md" style={{ borderRadius: '32px' }}>
                             <Tag size={48} className="mx-auto mb-4 opacity-10" />
-                            <p className="font-bold text-slate-400">Select a sub-category from the registry to manage its bookable items</p>
+                            <p className="font-bold text-slate-400">Select a sub-service to view its items</p>
                         </div>
                     ) : (
                         <div className="flex-col gap-3">
@@ -241,7 +253,7 @@ export function ServiceChildServicesPage() {
                                     <div className="flex items-center gap-6">
                                         <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm overflow-hidden">
                                             {child.imageUrl ? (
-                                                <img src={child.imageUrl} alt={child.name} className="w-full h-full object-cover" />
+                                                <img src={resolveAssetUrl(child.imageUrl)} alt={child.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 (() => {
                                                     const ChildIcon = getChildIcon(child);
@@ -268,7 +280,7 @@ export function ServiceChildServicesPage() {
                                                     ₹{child.price}
                                                 </div>
                                                 <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                    <CheckCircle2 size={12} className="text-emerald-500" /> {child.completed || 0} Successful Cycles
+                                                    <CheckCircle2 size={12} className="text-emerald-500" /> {child.completed || 0} Bookings Completed
                                                 </div>
                                             </div>
                                         </div>
@@ -289,7 +301,7 @@ export function ServiceChildServicesPage() {
                                                 setPrice(String(child.price));
                                                 setDesc(child.description || "");
                                                 setFulfillment(child.fulfillmentMode || "HOME_VISIT");
-                                                setPreview(child.imageUrl || null);
+                                                setPreview(resolveAssetUrl(child.imageUrl) || null);
                                                 setIsModalOpen(true);
                                             }}
                                             className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-all shadow-sm"
@@ -306,7 +318,7 @@ export function ServiceChildServicesPage() {
                                 </article>
                             ))}
                             {filtered?.length === 0 && !isLoading && (
-                                <div className="p-20 text-center opacity-30 font-bold">No catalog items defined for this unit.</div>
+                                <div className="p-20 text-center opacity-30 font-bold">No service items found.</div>
                             )}
                         </div>
                     )}
@@ -321,7 +333,7 @@ export function ServiceChildServicesPage() {
                     <div className="modal-content" style={{ maxWidth: '600px' }}>
                         <div className="p-8 border-b flex justify-between items-center">
                             <div>
-                                <h2 className="brand-name">{editingItem ? 'Edit Offering' : 'Publish Item'}</h2>
+                                <h2 className="brand-name">{editingItem ? 'Edit Service' : 'New Service Item'}</h2>
                                 <p className="text-xs muted font-bold uppercase tracking-widest mt-1">{editingItem ? `Refining ${editingItem.name}` : 'Final Tier Catalog Entry'}</p>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} className="logout-btn"><X size={24} /></button>
@@ -339,7 +351,7 @@ export function ServiceChildServicesPage() {
                         }}>
                             <div className="grid-2">
                                 <div className="input-group">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Service Label</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Service Name</label>
                                     <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Blood Sample Collection" required />
                                 </div>
                                 <div className="input-group">
@@ -348,7 +360,7 @@ export function ServiceChildServicesPage() {
                                 </div>
                             </div>
                             <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Fulfillment Vector</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Fulfillment Mode</label>
                                 <select className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold" value={fulfillment} onChange={(e) => setFulfillment(e.target.value)}>
                                     <option value="HOME_VISIT">Home Visit</option>
                                     <option value="HOSPITAL_VISIT">Medical Center Visit</option>
@@ -356,7 +368,7 @@ export function ServiceChildServicesPage() {
                                 </select>
                             </div>
                             <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Protocol Description</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Description</label>
                                 <textarea
                                     className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl font-bold min-h-[80px] placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
                                     value={desc}
@@ -365,14 +377,14 @@ export function ServiceChildServicesPage() {
                                 />
                             </div>
                             <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Catalog Image</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Service Image</label>
                                 <label className={`flex items-center gap-4 w-full h-16 px-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${preview ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-100 hover:border-emerald-200"}`}>
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-slate-200 text-slate-500"}`}>
                                         {preview ? <img src={preview} className="w-full h-full object-cover" /> : <UploadCloud size={20} />}
                                     </div>
                                     <div className="flex-1 overflow-hidden">
                                         <p className={`text-xs font-bold truncate ${preview ? "text-emerald-700" : "text-slate-400"}`}>
-                                            {file ? file.name : (editingItem ? "Update catalog image..." : "Select catalog image...")}
+                                            {file ? file.name : (editingItem ? "Update Service Image..." : "Select Service Image...")}
                                         </p>
                                     </div>
                                     <input type="file" className="hidden" onChange={(e) => {
@@ -385,7 +397,7 @@ export function ServiceChildServicesPage() {
                                 </label>
                             </div>
                             <button disabled={submitMutation.isPending} className="button primary h-14 w-full rounded-2xl mt-4 font-black uppercase tracking-widest text-xs shadow-lg shadow-emerald-100">
-                                {submitMutation.isPending ? "Integrating..." : (editingItem ? "Finalize Clinical Entry" : "Publish Bookable Service")}
+                                {submitMutation.isPending ? "Integrating..." : (editingItem ? "Save Changes" : "Create Service Item")}
                             </button>
                         </form>
                     </div>
@@ -400,10 +412,10 @@ export function ServiceChildServicesPage() {
                             <Trash2 size={32} />
                         </div>
                         <h3 className="brand-name text-2xl">Wipe Catalog Item?</h3>
-                        <p className="muted font-medium mt-2">This bookable entity will be permanently removed from all user application interfaces.</p>
+                        <p className="muted font-medium mt-2">This service item will be permanently deleted.</p>
                         <div className="flex gap-4 mt-10">
                             <button className="button secondary flex-1 h-14 rounded-2xl font-black uppercase text-[10px]" onClick={() => setDeleteId(null)}>Cancel</button>
-                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Purge Item</button>
+                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Delete</button>
                         </div>
                     </div>
                 </div>
@@ -411,3 +423,4 @@ export function ServiceChildServicesPage() {
         </div>
     );
 }
+
