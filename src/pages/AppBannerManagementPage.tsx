@@ -107,6 +107,10 @@ export function AppBannerManagementPage() {
     const newBanners = [...banners];
     (newBanners[index] as any)[key] = value;
     setBanners(newBanners);
+    // Auto-save on toggle change for visibility
+    if (key === "active") {
+      saveMutation.mutate(newBanners);
+    }
   };
 
   const addBanner = () => {
