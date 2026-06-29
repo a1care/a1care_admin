@@ -185,9 +185,9 @@ export function ServiceVerticalsPage() {
                     <h1 className="text-5xl font-black tracking-tight text-[var(--text-main)]"> Service Verticals</h1>
                     {/* <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-60">Architectural Service Definitions</p> */}
                 </div>
-                <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-500/10 px-6 py-3 rounded-2xl border border-blue-100 dark:border-blue-500/20">
-                    <ShieldCheck className="text-blue-600" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-700 dark:text-blue-400">System Verified Framework</span>
+                <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-500/10 px-6 py-3 rounded-2xl border border-amber-200 dark:border-amber-500/20">
+                    <ShieldCheck className="text-amber-600" size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Custom verticals are saved per-browser. Changes here won't sync to other admins.</span>
                 </div>
             </header>
 
