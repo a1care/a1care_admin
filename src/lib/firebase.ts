@@ -1,29 +1,16 @@
-/**
- * firebase.ts
- *
- * Firebase is initialized with hardcoded credentials (the source of truth
- * that matches data/app-config.json on the backend).
- *
- * The admin panel can update those credentials via:
- *   GET  /admin/firebase-config  → read current credentials
- *   PUT  /admin/firebase-config  → update credentials (saved to data/app-config.json)
- *
- * Changes saved from the admin panel take effect on the NEXT app restart,
- * since firebase is initialized once at module load.
- */
-
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
-// ── Hardcoded defaults (always-valid fallback) ────────────────────────────────
+// Firebase config is loaded from environment variables — never hardcode credentials.
+// Set VITE_FIREBASE_* in your .env.local or CI environment.
 const firebaseConfig = {
-    apiKey: "AIzaSyC4OkQrUi2FGx0hIV0fjDyD0Hwv7tQoo8w",
-    authDomain: "a1carewebsite.firebaseapp.com",
-    projectId: "a1carewebsite",
-    storageBucket: "a1carewebsite.firebasestorage.app",
-    messagingSenderId: "742774308338",
-    appId: "1:742774308338:web:a4b403b3ded90987d57f6b",
-    measurementId: "G-ZSZKQTXE94",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase

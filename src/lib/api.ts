@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const PROD_API = "https://api.a1carehospital.in/api";
-const baseURL = import.meta.env.VITE_API_BASE_URL || PROD_API;
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+if (!baseURL) throw new Error("VITE_API_BASE_URL is required but not set. Check your .env file.");
 
 export const api = axios.create({
   baseURL,
@@ -9,8 +9,7 @@ export const api = axios.create({
 });
 
 // Origin that serves static uploads (the API host, without the trailing `/api`).
-// In dev, baseURL is the relative proxy path "/api", so fall back to the prod host.
-const ASSET_ORIGIN = (/^https?:\/\//.test(baseURL) ? baseURL : PROD_API).replace(/\/api\/?$/, "");
+const ASSET_ORIGIN = baseURL.replace(/\/api\/?$/, "");
 
 /**
  * Resolve a stored asset path to a loadable URL.

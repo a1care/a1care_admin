@@ -75,7 +75,7 @@ export function AuditLogsPage() {
       <header className="flex justify-between items-center">
         <div>
           <h1 className="brand-name" style={{ fontSize: '2rem' }}>System Audit Logs</h1>
-          <p className="text-xs muted font-extrabold uppercase tracking-widest mt-1">Immutable Trace of System Operations & Security Events</p>
+          <p className="text-xs muted font-extrabold uppercase tracking-widest mt-1">Activity log for all admin operations & security events</p>
         </div>
         <div className="flex gap-3">
           <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase" onClick={() => refetch()} disabled={isFetching}>
@@ -135,14 +135,8 @@ export function AuditLogsPage() {
                         </div>
                         <time className="text-[10px] font-black muted uppercase tracking-widest">{new Date(log.createdAt).toLocaleTimeString()} · {new Date(log.createdAt).toLocaleDateString()}</time>
                       </div>
-                      <div className="mt-3 p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex items-center justify-between">
-                        <p className="text-[11px] font-medium text-[var(--text-muted)]">Target Identifier: <span className="font-mono text-[var(--text-main)]">{log.targetId || "N/A"}</span></p>
-                        <button 
-                          onClick={() => toast.info(`Trace Protocol: ${log._id}`, { description: "Cryptographic verification in progress..." })}
-                          className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase hover:underline"
-                        >
-                          Full Protocol
-                        </button>
+                      <div className="mt-3 p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                        <p className="text-[11px] font-medium text-[var(--text-muted)]">Target ID: <span className="font-mono text-[var(--text-main)]">{log.targetId || "—"}</span></p>
                       </div>
                     </div>
                   </div>
