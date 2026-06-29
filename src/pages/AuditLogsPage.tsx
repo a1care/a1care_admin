@@ -6,6 +6,7 @@ import {
   Download, RefreshCcw, FileText, Settings
 } from "lucide-react";
 import { toast } from "sonner";
+import { useState, useDeferredValue } from "react";
 
 interface AuditLog {
   _id: string;
@@ -21,6 +22,10 @@ interface AuditLog {
 }
 
 export function AuditLogsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [entityFilter, setEntityFilter] = useState("All");
+  const deferredSearch = useDeferredValue(searchTerm);
+
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["audit-logs"],
     queryFn: async () => {
@@ -28,6 +33,33 @@ export function AuditLogsPage() {
       return res.data.data as AuditLog[];
     }
   });
+
+  const filtered = (data ?? []).filter(log => {
+    const matchesSearch = !deferredSearch ||
+      log.action.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+      log.targetType?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+      log.actorAdminId?.name?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+      log.targetId?.includes(deferredSearch);
+    const matchesEntity = entityFilter === "All" || log.targetType === entityFilter;
+    return matchesSearch && matchesEntity;
+  });
+
+  const allEntities = [...new Set((data ?? []).map(l => l.targetType).filter(Boolean))];
+
+  const exportCSV = () => {
+    if (!data?.length) { toast.error("No logs to export"); return; }
+    const headers = ["Date", "Action", "Entity", "Target ID", "Admin"];
+    const rows = data.map(l => [
+      new Date(l.createdAt).toLocaleString('en-IN'),
+      l.action, l.targetType, l.targetId ?? "", l.actorAdminId?.name ?? "System"
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `audit-logs-${Date.now()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Audit logs exported");
+  };
 
   const getActionIcon = (action: string) => {
     const act = action.toLowerCase();
@@ -50,7 +82,7 @@ export function AuditLogsPage() {
             <RefreshCcw size={16} className={isFetching ? "animate-spin" : ""} />
             <span>Sync Feed</span>
           </button>
-          <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase">
+          <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase" onClick={exportCSV}>
             <Download size={16} />
             <span>Export CSV</span>
           </button>
@@ -62,14 +94,22 @@ export function AuditLogsPage() {
           <div className="card p-4 border-none shadow-sm flex items-center gap-4 bg-[var(--card-bg)]" style={{ borderRadius: '20px' }}>
             <div className="relative flex-1">
               <Search className="absolute text-[var(--text-muted)]" size={18} style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input placeholder="Filter by action, admin, or target UUID..." className="w-full bg-[var(--bg-main)] border-none px-5 py-3 rounded-xl text-sm" style={{ paddingLeft: '48px' }} />
+              <input
+                placeholder="Search by action, admin, or ID..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border-none px-5 py-3 rounded-xl text-sm"
+                style={{ paddingLeft: '48px' }}
+              />
             </div>
-            <button className="button secondary h-11 px-4 rounded-xl gap-2 text-xs font-black">
-              <Filter size={16} /> <span>All Entities</span>
-            </button>
-            <button className="button secondary h-11 px-4 rounded-xl gap-2 text-xs font-black">
-              <Calendar size={16} /> <span>Live Time</span>
-            </button>
+            <select
+              value={entityFilter}
+              onChange={e => setEntityFilter(e.target.value)}
+              className="button secondary h-11 px-4 rounded-xl text-xs font-black border border-[var(--border-color)] bg-[var(--card-bg)]"
+            >
+              <option value="All">All Entities</option>
+              {allEntities.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
           </div>
 
           <div className="card p-8 border-none bg-[var(--card-bg)] min-h-[600px]" style={{ borderRadius: '32px' }}>
@@ -80,7 +120,7 @@ export function AuditLogsPage() {
               </div>
             ) : (
               <div className="timeline mt-4">
-                {(data ?? []).map((log) => (
+                {(filtered).map((log) => (
                   <div key={log._id} className="timeline-item">
                     {getActionIcon(log.action)}
                     <div className="timeline-content">
