@@ -320,15 +320,6 @@ export function NotificationsPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Deep-Link Data (JSON)</label>
-                    <input
-                      className="w-full h-12 bg-slate-50 dark:bg-white/5 border-none rounded-2xl px-5 text-slate-900 dark:text-white font-mono text-xs font-bold focus:ring-2 focus:ring-blue-100 outline-none"
-                      placeholder='{"screen": "offer", "id": "123"}'
-                      value={dataPayload}
-                      onChange={(e) => setDataPayload(e.target.value)}
-                    />
-                  </div>
                 </div>
               </div>
 
