@@ -51,7 +51,9 @@ export function DashboardPage() {
   const { data: performanceData, isLoading: isPerformanceLoading } = useQuery({
     queryKey: ["admin-doctor-performance", performancePage, performanceSearch],
     queryFn: async () => {
-      const res = await api.get(`/admin/dashboard/doctor-performance?page=${performancePage}&limit=50&search=${performanceSearch}`);
+      const params = new URLSearchParams({ page: String(performancePage), limit: "50" });
+      if (performanceSearch) params.set("search", performanceSearch);
+      const res = await api.get(`/admin/dashboard/doctor-performance?${params}`);
       return res.data.data;
     },
     placeholderData: keepPreviousData

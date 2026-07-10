@@ -81,7 +81,9 @@ export function UserManagementPage({ category }: { category: string }) {
     const { data: usersData, isLoading } = useQuery({
         queryKey: ["category_users", category, page, searchTerm, statusFilter],
         queryFn: async () => {
-            const res = await api.get(`/admin/user-list/${category}?page=${page}&limit=50&search=${searchTerm}&status=${statusFilter}`);
+            const params = new URLSearchParams({ page: String(page), limit: "50", status: statusFilter });
+            if (searchTerm) params.set("search", searchTerm);
+            const res = await api.get(`/admin/user-list/${category}?${params}`);
             const payload = res.data?.data;
 
             // Support both response shapes:
@@ -144,6 +146,8 @@ export function UserManagementPage({ category }: { category: string }) {
     const handleAddUser = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newName || !newMobile) return toast.error("Required fields missing.");
+        if (!/^\d{10}$/.test(newMobile.replace(/\D/g, ''))) return toast.error("Enter a valid 10-digit phone number.");
+        if (newEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) return toast.error("Enter a valid email address.");
         createMutation.mutate({
             name: newName,
             mobileNumber: newMobile,
@@ -180,11 +184,11 @@ export function UserManagementPage({ category }: { category: string }) {
     // );
 
     const statCards = [
-        { label: "Total Registered", value: stats?.total || 0, icon: Users2, color: "#1A7FD4", bg: "#EBF3FD" },
-        { label: "Active", value: (category === 'patient' ? stats?.active : stats?.active) || 0, icon: UserCheck, color: "var(--emerald-600)", bg: "#F0FDF4" },
-        { label: "Inactive", value: stats?.inactive || 0, icon: Clock, color: "#64748B", bg: "#F8FAFC" },
-        { label: "This Week", value: stats?.week || 0, icon: BarChart3, color: "#7C3AED", bg: "#F5F3FF" },
-        { label: "This Month", value: stats?.month || 0, icon: CheckCircle2, color: "#EC4899", bg: "#FDF2F8" },
+        { label: "Total Registered", value: stats?.total || 0, icon: Users2, color: "#1A7FD4", bg: "#EBF3FD", filter: "All" },
+        { label: "Active", value: (category === 'patient' ? stats?.active : stats?.active) || 0, icon: UserCheck, color: "var(--emerald-600)", bg: "#F0FDF4", filter: category === 'patient' ? "Verified" : "Active" },
+        { label: "Inactive", value: stats?.inactive || 0, icon: Clock, color: "#64748B", bg: "#F8FAFC", filter: category === 'patient' ? "Pending" : "Inactive" },
+        { label: "This Week", value: stats?.week || 0, icon: BarChart3, color: "#7C3AED", bg: "#F5F3FF", filter: "All" },
+        { label: "This Month", value: stats?.month || 0, icon: CheckCircle2, color: "#EC4899", bg: "#FDF2F8", filter: "All" },
     ];
 
     return (
@@ -208,7 +212,7 @@ export function UserManagementPage({ category }: { category: string }) {
             <div className="flex flex-col gap-4">
                 <div className="grid-5 gap-3">
                     {statCards.map((stat) => (
-                        <div key={stat.label} className="card p-5 flex flex-col gap-3 text-left hover:scale-[1.02] hover:shadow-xl transition-all duration-300" style={{ borderRadius: '20px' }}>
+                        <div key={stat.label} className="card p-5 flex flex-col gap-3 text-left hover:scale-[1.02] hover:shadow-xl transition-all duration-300 cursor-pointer" style={{ borderRadius: '20px' }} onClick={() => { if (stat.filter) { setStatusFilter(stat.filter); setPage(1); } }}>
                             <div className="icon-box" style={{ background: `${stat.color}10`, color: stat.color, width: '52px', height: '52px', borderRadius: '18px', border: `1px solid ${stat.color}20` }}>
                                 <stat.icon size={26} />
                             </div>
@@ -293,8 +297,12 @@ export function UserManagementPage({ category }: { category: string }) {
                                             </td>
                                             <td className="p-6">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 font-black shadow-sm group-hover:scale-110 transition-transform text-xs">
-                                                        {user.name?.charAt(0) || "U"}
+                                                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 font-black shadow-sm group-hover:scale-110 transition-transform text-xs overflow-hidden">
+                                                        {user.profileImage ? (
+                                                            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            user.name?.charAt(0) || "U"
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-[var(--text-main)]" style={{ fontSize: '0.95rem' }}>{user.name || "Anonymous Member"}</div>
@@ -406,8 +414,12 @@ export function UserManagementPage({ category }: { category: string }) {
                     >
                         <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between gap-6">
                             <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-2xl font-black text-white shrink-0">
-                                    {selectedUser.name?.charAt(0) || "U"}
+                                <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden">
+                                    {selectedUser.profileImage ? (
+                                        <img src={selectedUser.profileImage} alt={selectedUser.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        selectedUser.name?.charAt(0) || "U"
+                                    )}
                                 </div>
                                 <div className="min-w-0">
                                     <h2 className="text-slate-900 text-2xl font-black tracking-tight truncate">{selectedUser.name || "Member Profile"}</h2>
@@ -479,23 +491,18 @@ export function UserManagementPage({ category }: { category: string }) {
                             <p className="text-white/30 text-sm font-medium">Adding a new {title.slice(0, -1).toLowerCase()} to the A1Care directory.</p>
                         </div>
                         <form className="w-full space-y-5" onSubmit={handleAddUser}>
-                            {[
-                                { label: "Full Name", value: newName, set: setNewName, type: "text", placeholder: "e.g. John Doe" },
-                                { label: "Mobile Number", value: newMobile, set: setNewMobile, type: "tel", placeholder: "+91 XXXXX XXXXX" },
-                                { label: "Email Address", value: newEmail, set: setNewEmail, type: "email", placeholder: "john@example.com" }
-                            ].map(field => (
-                                <div className="space-y-2" key={field.label}>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">{field.label}</label>
-                                    <input
-                                        type={field.type}
-                                        className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner"
-                                        value={field.value}
-                                        onChange={e => field.set(e.target.value)}
-                                        placeholder={field.placeholder}
-                                        required={field.label !== "Email Address"}
-                                    />
-                                </div>
-                            ))}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Full Name</label>
+                                <input type="text" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. John Doe" required />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Mobile Number</label>
+                                <input type="tel" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newMobile} onChange={e => setNewMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" maxLength={10} required />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Email Address</label>
+                                <input type="email" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="john@example.com" />
+                            </div>
 
                             {category === 'service' && (
                                 <div className="space-y-2">
