@@ -175,11 +175,11 @@ export function NotificationsPage() {
                   <X />
                 </button>
               </div>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <div className="flex items-center bg-slate-50 dark:bg-white/5 rounded-2xl px-4 gap-3 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
+                <Search className="text-slate-400 shrink-0 pointer-events-none" size={18} />
                 <input
                   autoFocus
-                  className="w-full h-14 bg-slate-50 dark:bg-white/5 border-none pl-12 pr-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                  className="flex-1 h-14 bg-transparent border-none font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
                   placeholder="Search by name or number..."
                   value={userSearchTerm}
                   onChange={(e) => setUserSearchTerm(e.target.value)}
