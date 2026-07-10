@@ -119,6 +119,15 @@ export function NotificationsPage() {
     }
   });
 
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (id: string) => api.delete(`/notifications/${id}`),
+    onSuccess: () => {
+      refetchHistory();
+      toast.success("Notification deleted.");
+    },
+    onError: () => toast.error("Failed to delete notification."),
+  });
+
   const selectUser = (u: UserSummary) => {
     setRecipientId(u._id);
     setRecipientName(u.name);
@@ -249,7 +258,7 @@ export function NotificationsPage() {
                         className={`flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all gap-2 cursor-pointer ${audience === item.id ? "bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-100" : "bg-slate-50 dark:bg-white/5 border-transparent text-slate-500 hover:border-blue-200"}`}
                       >
                         <item.icon size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wide">{item.label}</span>
                       </button>
                     ))}
                   </div>
@@ -353,11 +362,24 @@ export function NotificationsPage() {
                 {history?.slice(0, 10).map((item) => (
                   <div key={item._id} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2 hover:bg-white/10 transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 text-[8px] font-black uppercase tracking-widest">{item.recipientType}</span>
-                      <span className="text-[8px] opacity-40 font-bold">{new Date(item.createdAt).toLocaleDateString()}</span>
+                      <span className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 text-[8px] font-black uppercase tracking-widest">{(item.recipientType || '').replace(/_/g, ' ')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[8px] opacity-40 font-bold">{new Date(item.createdAt).toLocaleDateString()}</span>
+                        <button
+                          onClick={() => deleteNotificationMutation.mutate(item._id)}
+                          disabled={deleteNotificationMutation.isPending}
+                          className="w-6 h-6 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
                     </div>
                     <h5 className="font-black text-sm line-clamp-1">{item.title}</h5>
                     <p className="text-[10px] opacity-60 line-clamp-2">{item.body}</p>
+                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${item.fcmStatus === 'sent' ? 'bg-emerald-500/20 text-emerald-400' : item.fcmStatus === 'failed' ? 'bg-red-500/20 text-red-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                      FCM: {item.fcmStatus || 'unknown'}
+                    </span>
                   </div>
                 ))}
               </div>
