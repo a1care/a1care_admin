@@ -116,13 +116,13 @@ export function ReferralsPage() {
             </div>
 
             {/* Search */}
-            <div className="relative mb-5 max-w-md">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="flex items-center gap-3 mb-5 max-w-md bg-[var(--card-bg)] border border-[var(--border-color)] rounded-2xl px-4 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all">
+                <Search size={16} className="text-slate-400 shrink-0 pointer-events-none" />
                 <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by code, name or mobile…"
-                    className="w-full pl-11 pr-4 py-3 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-main)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    className="flex-1 h-12 bg-transparent border-none text-[var(--text-main)] text-sm outline-none placeholder:text-slate-400"
                 />
             </div>
 

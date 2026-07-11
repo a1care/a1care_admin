@@ -108,6 +108,11 @@ export default function ReviewsPage() {
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Moderating Feedback...</p>
             </div>
           </div>
+        ) : reviews?.length === 0 ? (
+          <div className="col-span-full py-8 text-center bg-[var(--card-bg)] rounded-[32px] border border-dashed border-[var(--border-color)]">
+            <MessageSquare size={40} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-slate-400 font-bold">No reviews match your filter.</p>
+          </div>
         ) : reviews?.map((review: any) => (
           <div key={review._id} className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
             <div className="p-6 space-y-4">
@@ -174,12 +179,6 @@ export default function ReviewsPage() {
         ))}
       </div>
 
-      {reviews?.length === 0 && (
-        <div className="py-20 text-center bg-white rounded-[40px] border border-dashed border-slate-200">
-          <MessageSquare size={48} className="mx-auto text-slate-200 mb-4" />
-          <p className="text-slate-500 font-bold">No reviews match your filter.</p>
-        </div>
-      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

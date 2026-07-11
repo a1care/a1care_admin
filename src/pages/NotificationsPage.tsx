@@ -249,7 +249,7 @@ export function NotificationsPage() {
                       { id: "all", label: "Everyone", icon: Users },
                       { id: "patients", label: "Patients", icon: User },
                       { id: "partners", label: "Partners", icon: User },
-                      { id: "individual", label: "Specific User", icon: Search },
+                      { id: "individual", label: "Individual", icon: Search },
                     ].map((item) => (
                       <button
                         key={item.id}

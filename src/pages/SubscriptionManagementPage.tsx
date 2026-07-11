@@ -110,7 +110,7 @@ export function SubscriptionManagementPage() {
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat ? "bg-[var(--card-bg)] text-[#1A7FD4] shadow-lg" : "text-white/60 hover:text-white"
+                                    className={`min-w-[80px] px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-center ${selectedCategory === cat ? "bg-[var(--card-bg)] text-[#1A7FD4] shadow-lg" : "text-white/60 hover:text-white"
                                         }`}
                                 >
                                     {cat}
@@ -190,7 +190,7 @@ export function SubscriptionManagementPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-[var(--border-color)] rounded-[32px] bg-slate-50/30">
+                                    <div className="py-6 flex flex-col items-center justify-center border-2 border-dashed border-[var(--border-color)] rounded-[32px] bg-slate-50/30">
                                         <PlusCircle size={32} className="text-slate-200 mb-3" />
                                         <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest">Initialize Tier</p>
                                     </div>
