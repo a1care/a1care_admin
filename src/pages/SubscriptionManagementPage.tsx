@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
@@ -27,7 +27,7 @@ interface Plan {
 
 const TIER_CONFIG: Record<SubscriptionTier, {
     gradient: string; border: string; badge: string;
-    accent: string; button: string; icon: JSX.Element; glow: string;
+    accent: string; button: string; icon: React.ReactElement; glow: string;
 }> = {
     Basic: {
         gradient: "from-slate-50 to-slate-100 dark:from-slate-800/60 dark:to-slate-900/60",
