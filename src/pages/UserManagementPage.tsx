@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import {
-    Users, Search, Filter, Plus,
+    Users, Search, Plus,
     ChevronLeft, ChevronRight, Phone, Mail,
-    Activity, ShieldCheck, CheckCircle2, Clock,
+    ShieldCheck, CheckCircle2, Clock,
     BarChart3, UserCheck, UserPlus, Users2,
-    X, Trash2, Calendar,
-    FileText, Download, Eye, CreditCard
+    X, Trash2, Eye,
+    FileText, CreditCard, Filter
 } from "lucide-react";
 
 interface CategoryStats {
@@ -118,7 +118,6 @@ export function UserManagementPage({ category }: { category: string }) {
             queryClient.invalidateQueries({ queryKey: ["category_users", category] });
             queryClient.invalidateQueries({ queryKey: ["category_stats", category] });
             if (selectedUser) {
-                // Refresh detail state if open
                 queryClient.invalidateQueries({ queryKey: ["user_details", category, selectedUser._id] });
             }
         }
@@ -156,7 +155,6 @@ export function UserManagementPage({ category }: { category: string }) {
         });
     };
 
-    // Backend driven filtering now
     const filteredUsers = users;
 
     useEffect(() => {
@@ -176,263 +174,293 @@ export function UserManagementPage({ category }: { category: string }) {
 
     const title = getRawTitle();
 
-    // if (isLoading) return (
-    //     <div className="p-4 py-20 text-center">
-    //         <Activity className="animate-pulse mx-auto text-indigo-500 dark:text-indigo-400 mb-4" size={48} />
-    //         <p className="muted font-bold tracking-wider uppercase" style={{ fontSize: '0.75rem' }}>Loading {title} Directory...</p>
-    //     </div>
-    // );
-
     const statCards = [
-        { label: "Total Registered", value: stats?.total || 0, icon: Users2, color: "#1A7FD4", bg: "#EBF3FD", filter: "All" },
-        { label: "Active", value: (category === 'patient' ? stats?.active : stats?.active) || 0, icon: UserCheck, color: "var(--emerald-600)", bg: "#F0FDF4", filter: category === 'patient' ? "Verified" : "Active" },
-        { label: "Inactive", value: stats?.inactive || 0, icon: Clock, color: "#64748B", bg: "#F8FAFC", filter: category === 'patient' ? "Pending" : "Inactive" },
-        { label: "This Week", value: stats?.week || 0, icon: BarChart3, color: "#7C3AED", bg: "#F5F3FF", filter: "All" },
-        { label: "This Month", value: stats?.month || 0, icon: CheckCircle2, color: "#EC4899", bg: "#FDF2F8", filter: "All" },
+        { label: "Total Registered", value: stats?.total || 0, icon: Users2, colorClass: "text-blue-600", bgClass: "bg-blue-50 dark:bg-blue-500/10", filter: "All" },
+        { label: "Active", value: stats?.active || 0, icon: UserCheck, colorClass: "text-emerald-600", bgClass: "bg-emerald-50 dark:bg-emerald-500/10", filter: category === 'patient' ? "Verified" : "Active" },
+        { label: "Inactive", value: stats?.inactive || 0, icon: Clock, colorClass: "text-slate-500", bgClass: "bg-slate-50 dark:bg-slate-500/10", filter: category === 'patient' ? "Pending" : "Inactive" },
+        { label: "This Week", value: stats?.week || 0, icon: BarChart3, colorClass: "text-violet-600", bgClass: "bg-violet-50 dark:bg-violet-500/10", filter: "All" },
+        { label: "This Month", value: stats?.month || 0, icon: CheckCircle2, colorClass: "text-pink-600", bgClass: "bg-pink-50 dark:bg-pink-500/10", filter: "All" },
     ];
 
     return (
-        <div className="flex flex-col gap-4">
-            <header className="flex flex-row items-center justify-between gap-4 bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left" style={{ marginBottom: '4px' }}>
-                <div className="relative z-10 text-left">
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
+                <div className="relative z-10">
                     <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">{title} Registry</h1>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • User Directory • {title}</p>
                     </div>
                 </div>
-                <button className="relative z-10 button primary shadow-2xl h-12 px-8 rounded-2xl group active:scale-95 transition-all uppercase tracking-widest text-[10px] font-black shrink-0" onClick={() => setIsAddModalOpen(true)}>
-                    <UserPlus size={18} className="group-hover:rotate-12 transition-transform" />
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="relative z-10 flex items-center gap-2 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
+                >
+                    <UserPlus size={16} />
                     <span>Add {title.slice(0, -1)}</span>
                 </button>
                 <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            <div className="flex flex-col gap-4">
-                <div className="grid-5 gap-3">
-                    {statCards.map((stat) => (
-                        <div key={stat.label} className="card p-5 flex flex-col gap-3 text-left hover:scale-[1.02] hover:shadow-xl transition-all duration-300 cursor-pointer" style={{ borderRadius: '20px' }} onClick={() => { if (stat.filter) { setStatusFilter(stat.filter); setPage(1); } }}>
-                            <div className="icon-box" style={{ background: `${stat.color}10`, color: stat.color, width: '52px', height: '52px', borderRadius: '18px', border: `1px solid ${stat.color}20` }}>
-                                <stat.icon size={26} />
-                            </div>
-                            <div>
-                                <h3 className="text-3xl font-black text-[var(--text-main)] m-0 tracking-tight">{stat.value}</h3>
-                                <p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em]" style={{ fontSize: '9px', marginTop: '8px' }}>{stat.label}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-4" style={{ marginTop: '4px' }}>
-                <div className="card p-0 overflow-hidden shadow-2xl shadow-blue-900/5" style={{ borderRadius: '24px', border: '1px solid var(--border-color)' }}>
-                    <div className="p-5 border-b border-[var(--border-color)] flex flex-col md:flex-row justify-between items-center bg-[var(--card-bg)] gap-4">
-                        <div className="relative group w-full md:w-[420px]">
-                            <Search className="absolute text-[var(--text-muted)] group-focus-within:text-blue-500 transition-colors" size={20} style={{ left: '24px', top: '50%', transform: 'translateY(-50%)' }} />
-                            <input
-                                placeholder={`Search by name, identity or contact...`}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-[var(--bg-main)] border-none px-6 text-sm font-semibold text-[var(--text-main)] placeholder:text-slate-400"
-                                style={{ paddingLeft: '64px', height: '56px', borderRadius: '18px' }}
-                            />
-                        </div>
-                        <div className="flex gap-4 w-full md:w-auto">
-                            <select
-                                className="bg-[var(--bg-main)] border-none px-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-main)] outline-none focus:ring-2 focus:ring-blue-100"
-                                style={{ height: '56px', borderRadius: '18px', minWidth: '160px' }}
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option value="All">All Status</option>
-                                {category === 'patient' ? (
-                                    <>
-                                        <option value="Verified">Verified</option>
-                                        <option value="Pending">Pending</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option value="Active">Active</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </>
-                                )}
-                            </select>
-                            <button className="button secondary h-14 px-6 text-[10px] font-black uppercase tracking-[0.2em] gap-2 border border-[var(--border-color)] group hover:border-blue-500/50" style={{ borderRadius: '18px' }} onClick={() => toast.info("Advanced filters are enabled automatically based on search criteria.")}>
-                                <Filter size={18} className="group-hover:text-blue-500 transition-colors" />
-                                <span>Advanced Filters</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="management-table">
-                            <thead>
-                                <tr className="bg-[var(--bg-main)]/50">
-                                    <th className="!bg-transparent !text-[var(--text-muted)] p-6 pl-8">#</th>
-                                    <th className="!bg-transparent !text-[var(--text-muted)]">MEMBER NAME</th>
-                                    <th className="!bg-transparent !text-[var(--text-muted)]">CONTACT INFO</th>
-                                    {category !== 'patient' && <th className="!bg-transparent !text-[var(--text-muted)]">SPECIALIZATION</th>}
-                                    <th className="!bg-transparent !text-[var(--text-muted)]">STATUS</th>
-                                    <th className="!bg-transparent !text-[var(--text-muted)]">REG. DATE</th>
-                                    <th className="text-center !bg-transparent !text-[var(--text-muted)] pr-8">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={7} className="p-20 text-center">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Registry...</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : Array.isArray(filteredUsers) && filteredUsers.length > 0 ? (
-                                    filteredUsers.map((user: any, index: number) => (
-                                        <tr key={user._id} className="cursor-pointer group hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all duration-300" onClick={() => setSelectedUser(user)}>
-                                            <td className="p-6 pl-10 font-black text-slate-400 text-xs">
-                                                {((page - 1) * 50 + index + 1).toString().padStart(2, '0')}
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 font-black shadow-sm group-hover:scale-110 transition-transform text-xs overflow-hidden">
-                                                        {user.profileImage ? (
-                                                            <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            user.name?.charAt(0) || "U"
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-[var(--text-main)]" style={{ fontSize: '0.95rem' }}>{user.name || "Anonymous Member"}</div>
-                                                        <div className="flex items-center gap-2 mt-1.5 ">
-                                                            <div className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest">ID: {user._id.slice(-8).toUpperCase()}</div>
-                                                            {category === 'service' && user.specialization?.[0] && (
-                                                                <>
-                                                                    <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                                                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{user.specialization[0]}</span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="flex flex-col gap-1.5">
-                                                    <div className="text-xs font-black text-[var(--text-main)] flex items-center gap-2"><Phone size={13} className="text-blue-500/60" /> {user.mobileNumber}</div>
-                                                    {user.email && <div className="text-[10px] text-[var(--text-muted)] flex items-center gap-2 font-bold tracking-tight"><Mail size={12} className="opacity-40" /> {user.email}</div>}
-                                                </div>
-                                            </td>
-                                            {category !== 'patient' && (
-                                                <td>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {(user.specialization || []).slice(0, 2).map((s: string) => <span key={s} className="px-2.5 py-1 rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)] text-[9px] font-black uppercase tracking-wider border border-[var(--border-color)]">{s}</span>)}
-                                                        {(user.specialization || []).length > 2 && <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 text-[9px] font-black">+{user.specialization.length - 2}</span>}
-                                                        {!(user.specialization || []).length && <span className="text-[9px] font-black tracking-widest uppercase opacity-20">CORE ASSET</span>}
-                                                    </div>
-                                                </td>
-                                            )}
-                                            <td>
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest
-                                                    ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10' :
-                                                        user.status === 'Pending' ? 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10' :
-                                                            'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10'}`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'bg-emerald-500' : user.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
-                                                    {category === 'patient' ? (user.isRegistered ? 'Verified' : 'Pending') : user.status}
-                                                </span>
-                                            </td>
-                                            <td className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-60">
-                                                {new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                            </td>
-                                            <td className="pr-8">
-                                                <div className="justify-end flex items-center gap-2">
-                                                    {(category !== 'patient' && user.status === 'Pending') && (
-                                                        <button
-                                                            className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all border border-emerald-100"
-                                                            onClick={(e) => { e.stopPropagation(); statusMutation.mutate({ id: user._id, status: 'Active', isRegistered: true }); }}
-                                                            title="Approve Member"
-                                                        >
-                                                            <ShieldCheck size={18} />
-                                                        </button>
-                                                    )}
-                                                    <button className="w-10 h-10 rounded-xl bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all" title="Inspect Protocol"><Eye size={18} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={category === 'patient' ? 6 : 7} style={{ padding: '120px 0' }}>
-                                            <div className="flex flex-col items-center gap-6 text-center">
-                                                <div className="w-20 h-20 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-[24px] flex items-center justify-center shadow-inner">
-                                                    <Users size={32} className="text-[var(--text-muted)] opacity-30" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <p className="font-black text-[var(--text-main)] uppercase tracking-[0.3em] text-sm">NO MEMBERS FOUND</p>
-                                                    <p className="text-xs muted font-bold max-w-[280px]">No member records detected matching your current search criteria.</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="p-8 border-t border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-main)]/30 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                        <div className="flex items-center gap-4">
-                            <span className="bg-[var(--card-bg)] px-4 py-2 rounded-xl border border-[var(--border-color)]">Page: <span className="text-[var(--text-main)] ml-2">{page} / {totalPages}</span></span>
-                            <span className="bg-[var(--card-bg)] px-4 py-2 rounded-xl border border-[var(--border-color)]">Total Entries: <span className="text-[var(--text-main)] ml-2">{usersData?.total || 0}</span></span>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* User Detail Modal */}
-            {selectedUser && (
-                <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 md:p-8 overflow-y-auto bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
+            {/* ── Stats Row ── */}
+            <div className="grid grid-cols-5 gap-4">
+                {statCards.map((stat) => (
                     <div
-                        className="bg-white w-full max-w-3xl max-h-[92vh] overflow-y-auto overflow-x-hidden flex flex-col rounded-3xl shadow-2xl border border-slate-200"
+                        key={stat.label}
+                        onClick={() => { if (stat.filter) { setStatusFilter(stat.filter); setPage(1); } }}
+                        className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-3 text-left cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all"
+                    >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.bgClass} ${stat.colorClass}`}>
+                            <stat.icon size={18} />
+                        </div>
+                        <div>
+                            <p className="text-2xl font-black text-[var(--text-main)] tracking-tight">{stat.value}</p>
+                            <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mt-1">{stat.label}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* ── Main Table Card ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+                {/* Toolbar */}
+                <div className="px-5 py-3.5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex flex-row items-center justify-between gap-3">
+                    {/* Search Input */}
+                    <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                        <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                        <input
+                            type="text"
+                            placeholder="Search by TxnID, name, phone..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                                fontFamily: "inherit", boxSizing: "border-box"
+                            }}
+                        />
+                    </div>
+
+                    {/* Status Segment Pills */}
+                    <div className="flex items-center gap-1.5 p-1 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg">
+                        {(category === 'patient'
+                            ? [{ label: "All", value: "All" }, { label: "Verified", value: "Verified" }, { label: "Pending", value: "Pending" }]
+                            : [{ label: "All", value: "All" }, { label: "Active", value: "Active" }, { label: "Pending", value: "Pending" }, { label: "Inactive", value: "Inactive" }]
+                        ).map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => { setStatusFilter(opt.value); setPage(1); }}
+                                className={`h-7 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                    statusFilter === opt.value
+                                        ? "bg-blue-600 text-white shadow-sm"
+                                        : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)]"
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[700px]">
+                        <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                <th className="py-3 px-4 w-12">#</th>
+                                <th className="py-3 px-4">Member Name</th>
+                                <th className="py-3 px-4">Contact Info</th>
+                                {category !== 'patient' && <th className="py-3 px-4">Specialization</th>}
+                                <th className="py-3 px-4">Status</th>
+                                <th className="py-3 px-4">Reg. Date</th>
+                                <th className="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-color)]">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Syncing Registry...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : Array.isArray(filteredUsers) && filteredUsers.length > 0 ? (
+                                filteredUsers.map((user: any, index: number) => (
+                                    <tr
+                                        key={user._id}
+                                        onClick={() => setSelectedUser(user)}
+                                        className="hover:bg-[var(--bg-main)] transition-colors cursor-pointer group"
+                                    >
+                                        <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                                            {((page - 1) * 50 + index + 1).toString().padStart(2, '0')}
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 font-black text-xs shrink-0 overflow-hidden">
+                                                    {user.profileImage ? (
+                                                        <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        user.name?.charAt(0) || "U"
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold text-sm text-[var(--text-main)]">{user.name || "Anonymous Member"}</div>
+                                                    <div className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">#{user._id.slice(-8).toUpperCase()}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <div className="space-y-1">
+                                                <div className="text-xs font-semibold text-[var(--text-main)] flex items-center gap-1.5">
+                                                    <Phone size={11} className="text-blue-500" /> {user.mobileNumber}
+                                                </div>
+                                                {user.email && (
+                                                    <div className="text-[10px] text-[var(--text-muted)] flex items-center gap-1.5">
+                                                        <Mail size={10} className="opacity-50" /> {user.email}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {category !== 'patient' && (
+                                            <td className="py-3.5 px-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(user.specialization || []).slice(0, 2).map((s: string) => (
+                                                        <span key={s} className="px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-[var(--bg-main)] text-[var(--text-muted)] border border-[var(--border-color)]">{s}</span>
+                                                    ))}
+                                                    {(user.specialization || []).length > 2 && (
+                                                        <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">+{user.specialization.length - 2}</span>
+                                                    )}
+                                                    {!(user.specialization || []).length && (
+                                                        <span className="text-[9px] font-semibold uppercase tracking-wider text-[var(--text-muted)] opacity-40">—</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                        <td className="py-3.5 px-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold border
+                                                ${(category === 'patient' ? user.isRegistered : user.status === 'Active')
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                                                    : user.status === 'Pending'
+                                                    ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
+                                                    : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'}`}
+                                            >
+                                                <span className={`w-1.5 h-1.5 rounded-full ${(category === 'patient' ? user.isRegistered : user.status === 'Active') ? 'bg-emerald-500' : user.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                                                {category === 'patient' ? (user.isRegistered ? 'Verified' : 'Pending') : user.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-xs text-[var(--text-muted)] whitespace-nowrap">
+                                            {new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                {(category !== 'patient' && user.status === 'Pending') && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white inline-flex items-center justify-center transition-colors border border-emerald-200 dark:border-emerald-500/20"
+                                                        onClick={(e) => { e.stopPropagation(); statusMutation.mutate({ id: user._id, status: 'Active', isRegistered: true }); }}
+                                                        title="Approve Member"
+                                                    >
+                                                        <ShieldCheck size={14} />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="w-8 h-8 rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 inline-flex items-center justify-center transition-colors border border-[var(--border-color)]"
+                                                    title="View Profile"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={category === 'patient' ? 6 : 7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center text-[var(--text-muted)]">
+                                                <Users size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">No members found</p>
+                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">No records match your current filters.</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="px-5 py-3.5 border-t border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-main)]">
+                    <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] font-semibold">
+                        <span className="px-2.5 py-1 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg">
+                            Page <span className="text-[var(--text-main)] font-bold">{page}</span> / {totalPages}
+                        </span>
+                        <span className="px-2.5 py-1 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg">
+                            Total: <span className="text-[var(--text-main)] font-bold">{usersData?.total || 0}</span>
+                        </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="w-8 h-8 rounded-lg bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30"
+                        >
+                            <ChevronLeft size={15} />
+                        </button>
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="w-8 h-8 rounded-lg bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30"
+                        >
+                            <ChevronRight size={15} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── User Detail Modal ── */}
+            {selectedUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
+                    <div
+                        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl flex flex-col animate-in zoom-in-95 duration-150"
                         onClick={e => e.stopPropagation()}
                     >
-                        <header className="px-8 py-6 border-b border-slate-100 flex items-center justify-between gap-6">
-                            <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-2xl font-black text-white shrink-0 overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shrink-0 overflow-hidden">
                                     {selectedUser.profileImage ? (
                                         <img src={selectedUser.profileImage} alt={selectedUser.name} className="w-full h-full object-cover" />
                                     ) : (
                                         selectedUser.name?.charAt(0) || "U"
                                     )}
                                 </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-slate-900 text-2xl font-black tracking-tight truncate">{selectedUser.name || "Member Profile"}</h2>
-                                    <div className="font-mono text-[10px] text-slate-400 mt-1 truncate">ID: {selectedUser._id}</div>
+                                <div>
+                                    <h2 className="font-bold text-base text-[var(--text-main)]">{selectedUser.name || "Member Profile"}</h2>
+                                    <p className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">ID: {selectedUser._id}</p>
                                 </div>
                             </div>
-                            <button className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 shrink-0" onClick={() => setSelectedUser(null)}><X size={20} /></button>
-                        </header>
+                            <button
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
+                                onClick={() => setSelectedUser(null)}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
 
-                        <div className="p-8 space-y-8">
+                        {/* Body */}
+                        <div className="p-6 space-y-6">
+                            {/* Personal Details */}
                             <section>
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">Personal Details</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Personal Details</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
                                     {[
                                         { label: "Mobile Number", value: selectedUser.mobileNumber },
                                         { label: "Email Address", value: selectedUser.email || "No Email" },
@@ -440,8 +468,8 @@ export function UserManagementPage({ category }: { category: string }) {
                                         { label: "Verification Status", value: category === 'patient' ? (selectedUser.isRegistered ? "Verified" : "Unverified") : selectedUser.status }
                                     ].map(item => (
                                         <div key={item.label}>
-                                            <dt className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</dt>
-                                            <dd className="mt-1 text-slate-800 font-bold break-words">{item.value}</dd>
+                                            <dt className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{item.label}</dt>
+                                            <dd className="mt-1 text-sm text-[var(--text-main)] font-semibold break-words">{item.value}</dd>
                                         </div>
                                     ))}
                                 </div>
@@ -449,28 +477,36 @@ export function UserManagementPage({ category }: { category: string }) {
 
                             <WalletSection user={selectedUser} category={category} />
 
+                            {/* KYC Documents */}
                             <section>
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">KYC Documents</h3>
-                                <div className="space-y-3">
+                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">KYC Documents</h3>
+                                <div className="space-y-2">
                                     {(selectedUser.documents || []).length > 0 ? (
                                         Array.isArray(selectedUser.documents) && selectedUser.documents.map((doc: any, i: number) => (
-                                            <div key={i} className="p-4 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-100">
-                                                <span className="text-xs font-bold text-slate-700 uppercase truncate">{doc.type}</span>
-                                                <button className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase" onClick={() => setViewingDocument(doc)}>View</button>
+                                            <div key={i} className="p-3 bg-[var(--bg-main)] rounded-lg flex items-center justify-between border border-[var(--border-color)]">
+                                                <span className="text-xs font-semibold text-[var(--text-main)] uppercase">{doc.type}</span>
+                                                <button
+                                                    className="text-[10px] font-semibold text-blue-600 hover:underline uppercase"
+                                                    onClick={() => setViewingDocument(doc)}
+                                                >
+                                                    View
+                                                </button>
                                             </div>
                                         ))
-                                    ) : <p className="text-xs text-slate-400 font-bold bg-slate-50 p-4 rounded-2xl border border-slate-100">No documents uploaded.</p>}
+                                    ) : (
+                                        <p className="text-xs text-[var(--text-muted)] font-semibold bg-[var(--bg-main)] p-3 rounded-lg border border-[var(--border-color)]">No documents uploaded.</p>
+                                    )}
                                 </div>
                             </section>
 
+                            {/* Account Management */}
                             <section>
-                                <h3 className="text-[11px] font-black uppercase tracking-widest text-rose-500 mb-4">Account Management</h3>
+                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-rose-500 mb-3">Account Management</h3>
                                 <button
-                                    className="w-full h-12 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-black uppercase tracking-widest border border-rose-200 transition-all"
-                                    onClick={() => {
-                                        setDeleteConfig({ id: selectedUser._id, type: category as any });
-                                    }}
+                                    className="w-full h-10 rounded-lg bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider border border-rose-200 dark:border-rose-500/20 transition-all flex items-center justify-center gap-2"
+                                    onClick={() => setDeleteConfig({ id: selectedUser._id, type: category as any })}
                                 >
+                                    <Trash2 size={13} />
                                     Delete Account
                                 </button>
                             </section>
@@ -479,36 +515,67 @@ export function UserManagementPage({ category }: { category: string }) {
                 </div>
             )}
 
-            {/* Add User Modal */}
+            {/* ── Add User Modal ── */}
             {isAddModalOpen && (
-                <div className="modal-overlay fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md" onClick={() => setIsAddModalOpen(false)}>
-                    <div className="modal-content !bg-slate-900 border border-white/10 w-full max-w-lg p-10 rounded-[40px] shadow-3xl flex flex-col items-center gap-8" onClick={e => e.stopPropagation()}>
-                        <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                            <UserPlus size={40} />
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}>
+                    <div
+                        className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">User Directory</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Add New {title.slice(0, -1)}</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsAddModalOpen(false)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
+                            </button>
                         </div>
-                        <div className="text-center space-y-2">
-                            <h2 className="text-white text-2xl font-black tracking-tight">Add New {title.slice(0, -1)}</h2>
-                            <p className="text-white/30 text-sm font-medium">Adding a new {title.slice(0, -1).toLowerCase()} to the A1Care directory.</p>
-                        </div>
-                        <form className="w-full space-y-5" onSubmit={handleAddUser}>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Full Name</label>
-                                <input type="text" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. John Doe" required />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Mobile Number</label>
-                                <input type="tel" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newMobile} onChange={e => setNewMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" maxLength={10} required />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Email Address</label>
-                                <input type="email" className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold placeholder:text-indigo-900/40 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="john@example.com" />
-                            </div>
 
+                        {/* Form Body */}
+                        <form className="p-6 space-y-4" onSubmit={handleAddUser}>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Full Name <span className="text-rose-500">*</span></label>
+                                <input
+                                    type="text"
+                                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                    value={newName}
+                                    onChange={e => setNewName(e.target.value)}
+                                    placeholder="e.g. John Doe"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Mobile Number <span className="text-rose-500">*</span></label>
+                                <input
+                                    type="tel"
+                                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                    value={newMobile}
+                                    onChange={e => setNewMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                    placeholder="10-digit mobile number"
+                                    maxLength={10}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Email Address</label>
+                                <input
+                                    type="email"
+                                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                    value={newEmail}
+                                    onChange={e => setNewEmail(e.target.value)}
+                                    placeholder="john@example.com"
+                                />
+                            </div>
                             {category === 'service' && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-indigo-200/50 ml-2">Service Specialization</label>
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Service Specialization <span className="text-rose-500">*</span></label>
                                     <select
-                                        className="w-full h-14 bg-white border-none rounded-[20px] px-6 text-slate-900 font-bold focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all shadow-inner"
+                                        className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold cursor-pointer"
                                         value={newSpecialization}
                                         onChange={e => setNewSpecialization(e.target.value)}
                                         required
@@ -520,9 +587,22 @@ export function UserManagementPage({ category }: { category: string }) {
                                     </select>
                                 </div>
                             )}
-                            <div className="pt-4 flex gap-4">
-                                <button type="button" className="flex-1 h-14 rounded-[20px] bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px]" onClick={() => setIsAddModalOpen(false)}>Abort</button>
-                                <button type="submit" disabled={createMutation.isPending} className="flex-1 h-14 rounded-[20px] bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-600/20">
+
+                            {/* Footer */}
+                            <div className="pt-2 flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddModalOpen(false)}
+                                    className="flex-1 h-9 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--bg-main)] transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createMutation.isPending}
+                                    className="flex-1 h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+                                >
+                                    <Plus size={13} />
                                     {createMutation.isPending ? "Saving..." : "Create Record"}
                                 </button>
                             </div>
@@ -531,42 +611,69 @@ export function UserManagementPage({ category }: { category: string }) {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
+            {/* ── Delete Confirmation Modal ── */}
             {deleteConfig && (
-                <div className="modal-overlay fixed inset-0 z-[250] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-xl">
-                    <div className="modal-content !bg-slate-900 border border-white/10 w-full max-w-md p-10 rounded-[40px] shadow-3xl flex flex-col items-center text-center gap-6">
-                        <div className="w-20 h-20 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                            <Trash2 size={40} />
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Account Management</p>
+                            <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Delete Member Record?</h3>
                         </div>
-                        <div className="space-y-2">
-                            <h2 className="text-white text-2xl font-black tracking-tight">Purge Member Signature?</h2>
-                            <p className="text-white/40 text-sm font-medium">This operation will permanently wipe this record from the grid. This action is irreversible.</p>
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 flex items-center justify-center mx-auto text-rose-600">
+                                <Trash2 size={20} />
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)] font-semibold">This will permanently delete this member record. This action cannot be undone.</p>
                         </div>
-                        <div className="flex gap-4 w-full">
-                            <button className="flex-1 h-14 rounded-2xl bg-white/5 text-white/40 font-black uppercase tracking-widest text-[10px]" onClick={() => setDeleteConfig(null)}>Abort</button>
-                            <button className="flex-1 h-14 rounded-2xl bg-rose-600 text-white font-black uppercase tracking-widest text-[10px]" onClick={confirmGenericDelete}>Purge Record</button>
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex gap-2 bg-[var(--bg-main)]">
+                            <button
+                                className="flex-1 h-9 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--bg-main)] transition-all"
+                                onClick={() => setDeleteConfig(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                onClick={confirmGenericDelete}
+                            >
+                                Delete Record
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Document Viewer Modal */}
+            {/* ── Document Viewer Modal ── */}
             {viewingDocument && (
-                <div className="modal-overlay fixed inset-0 z-[200] flex items-center justify-center p-12 bg-slate-950/80 backdrop-blur-2xl" onClick={() => setViewingDocument(null)}>
-                    <div className="modal-content !bg-slate-900 border border-white/10 w-full max-w-4xl max-h-[90vh] rounded-[48px] overflow-hidden flex flex-col p-0 shadow-3xl" onClick={e => e.stopPropagation()}>
-                        <div className="p-8 border-b border-white/5 flex items-center justify-between">
-                            <h2 className="text-white text-2xl font-black">{viewingDocument.type}</h2>
-                            <button className="text-white/20 hover:text-white" onClick={() => setViewingDocument(null)}><X size={32} /></button>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setViewingDocument(null)}>
+                    <div
+                        className="relative w-full max-w-3xl max-h-[90vh] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <h2 className="font-bold text-base text-[var(--text-main)]">{viewingDocument.type}</h2>
+                            <button
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                                onClick={() => setViewingDocument(null)}
+                            >
+                                <X size={16} />
+                            </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-10 flex items-center justify-center bg-black/20">
+                        <div className="flex-1 overflow-y-auto p-6 flex items-center justify-center bg-[var(--bg-main)]">
                             {viewingDocument.url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
-                                <img src={viewingDocument.url} className="w-full h-auto rounded-3xl" alt="Preview" />
+                                <img src={viewingDocument.url} className="w-full h-auto rounded-xl" alt="Preview" />
                             ) : (
-                                <div className="text-center space-y-6">
-                                    <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto text-white/20"><FileText size={64} /></div>
-                                    <p className="text-white font-black text-xl">Encoded Data Stream</p>
-                                    <a href={viewingDocument.url} target="_blank" className="button primary h-14 px-10 rounded-2xl inline-flex items-center gap-3">
-                                        <Eye size={20} /> Open Stream
+                                <div className="text-center space-y-4">
+                                    <div className="w-16 h-16 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                                        <FileText size={28} />
+                                    </div>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">Document File</p>
+                                    <a
+                                        href={viewingDocument.url}
+                                        target="_blank"
+                                        className="inline-flex items-center gap-2 h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                    >
+                                        <Eye size={14} /> Open Document
                                     </a>
                                 </div>
                             )}
@@ -603,35 +710,69 @@ function WalletSection({ user, category }: { user: any, category: string }) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["user_wallet", user._id] });
-            toast.success("Wallet synchronized.");
+            toast.success("Wallet balance updated.");
             setAmount("");
             setDescription("");
             setIsAdjusting(false);
         },
         onError: (err: any) => {
-            toast.error(err?.response?.data?.message || "Sync failed.");
+            toast.error(err?.response?.data?.message || "Wallet update failed.");
         }
     });
 
     return (
         <section>
-            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4">Wallet Management</h3>
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Wallet Management</h3>
+            <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Available Balance</p>
-                    <h4 className="text-4xl font-black text-slate-900">{isLoading ? "---" : `₹${wallet?.balance || 0}`}</h4>
+                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Available Balance</p>
+                    <div className="flex items-center gap-2">
+                        <CreditCard size={16} className="text-blue-500" />
+                        <h4 className="text-2xl font-black text-[var(--text-main)]">
+                            {isLoading ? "---" : `₹${wallet?.balance || 0}`}
+                        </h4>
+                    </div>
                 </div>
 
                 {!isAdjusting ? (
-                    <button onClick={() => setIsAdjusting(true)} className="h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase tracking-widest shadow active:scale-95 transition-all">Adjust Balance</button>
+                    <button
+                        onClick={() => setIsAdjusting(true)}
+                        className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shrink-0"
+                    >
+                        Adjust Balance
+                    </button>
                 ) : (
-                    <div className="w-full md:w-[320px] space-y-3 p-4 bg-white rounded-2xl border border-slate-200">
-                        <input type="number" placeholder="Enter amount..." value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/40 outline-none" />
-                        <input placeholder="Memo (e.g., Bonus, Refund)..." value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-white border border-slate-200 h-11 px-4 rounded-xl text-slate-900 font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/40 outline-none" />
-                        <div className="flex gap-2">
-                            <button onClick={() => adjustMutation.mutate('Credit')} className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Credit (+)</button>
-                            <button onClick={() => adjustMutation.mutate('Debit')} className="flex-1 h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-widest" disabled={adjustMutation.isPending}>Debit (-)</button>
-                            <button onClick={() => setIsAdjusting(false)} className="px-3 rounded-xl bg-slate-100 text-slate-500"><X size={16} /></button>
+                    <div className="w-full sm:w-[280px] space-y-2 p-3 bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)]">
+                        <input
+                            type="number"
+                            placeholder="Enter amount..."
+                            value={amount}
+                            onChange={e => setAmount(e.target.value)}
+                            className="w-full h-9 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold"
+                        />
+                        <input
+                            placeholder="Memo (e.g. Bonus, Refund)..."
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            className="w-full h-9 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold"
+                        />
+                        <div className="flex gap-1.5">
+                            <button
+                                onClick={() => adjustMutation.mutate('Credit')}
+                                disabled={adjustMutation.isPending}
+                                className="flex-1 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 transition-colors"
+                            >Credit (+)</button>
+                            <button
+                                onClick={() => adjustMutation.mutate('Debit')}
+                                disabled={adjustMutation.isPending}
+                                className="flex-1 h-8 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 transition-colors"
+                            >Debit (-)</button>
+                            <button
+                                onClick={() => setIsAdjusting(false)}
+                                className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center transition-colors"
+                            >
+                                <X size={14} />
+                            </button>
                         </div>
                     </div>
                 )}

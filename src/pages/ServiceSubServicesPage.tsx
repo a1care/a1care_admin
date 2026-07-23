@@ -17,7 +17,9 @@ import {
     Syringe,
     FlaskConical,
     Ambulance,
-    Edit2
+    Edit2,
+    Bell,
+    History
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -147,151 +149,210 @@ export function ServiceSubServicesPage() {
     };
 
     return (
-        <div className="flex-col gap-6 space-y-6">
-            <header className="flex justify-between items-center bg-[var(--card-bg)] p-8 rounded-3xl border border-[var(--border-color)] shadow-sm">
-                <div className="flex items-center gap-5">
-                    <button 
-                        onClick={() => navigate("/service-categories")} 
-                        className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all border border-blue-100 shadow-sm shadow-blue-500/10"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-bold tracking-tighter text-[var(--text-main)]">Subcategories</h1>
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => navigate("/service-categories")} 
+                            className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all border border-blue-100 dark:border-blue-500/20"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Subcategories</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Healthcare Catalog • Subcategories
+                                </p>
+                            </div>
+                        </div>
                     </div>
+                    <button
+                        disabled={!selectedCatId}
+                        onClick={() => {
+                            setEditingSub(null);
+                            setName(""); setDesc(""); setFile(null); setPreview(null);
+                            setIsModalOpen(true);
+                        }}
+                        className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0 disabled:opacity-50"
+                    >
+                        <Plus size={16} />
+                        <span>Add Subcategory</span>
+                    </button>
                 </div>
-                <button
-                    disabled={!selectedCatId}
-                    onClick={() => {
-                        setEditingSub(null);
-                        setName(""); setDesc(""); setFile(null); setPreview(null);
-                        setIsModalOpen(true);
-                    }}
-                    className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl flex items-center gap-3 shadow-xl shadow-blue-500/20 transition-all active:scale-95 font-black text-[11px] uppercase tracking-[0.15em] disabled:opacity-50"
-                >
-                    <Plus size={20} />
-                    <span>Add Subcategory</span>
-                </button>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <aside className="lg:col-span-1 flex-col gap-4">
-                    <div className="card p-6 border-none shadow-sm" style={{ borderRadius: '24px' }}>
-                        <div className="flex items-center gap-2 mb-6">
-                            <Filter size={14} className="text-blue-600" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Category Selection</span>
-                        </div>
-                        <div className="flex-col gap-2">
-                            {categories?.map(cat => (
-                                <button
-                                    key={cat._id}
-                                    onClick={() => setSelectedCatId(cat._id)}
-                                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${selectedCatId === cat._id ? "bg-blue-600 text-white shadow-lg" : "hover:bg-slate-50 text-slate-600"}`}
-                                >
-                                    {cleanName(cat.name)}
-                                </button>
-                            ))}
-                        </div>
+            {/* ── Main Catalog Subcategory Table Layout ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                {/* Left filter side */}
+                <aside className="lg:col-span-1 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 shadow-sm text-left">
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[var(--border-color)]">
+                        <Filter size={14} className="text-blue-600" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Select Category</span>
+                    </div>
+                    <div className="space-y-1">
+                        {categories?.map(cat => (
+                            <button
+                                key={cat._id}
+                                onClick={() => setSelectedCatId(cat._id)}
+                                className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all border ${selectedCatId === cat._id ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 border-blue-100 dark:border-blue-500/20" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)] border-transparent"}`}
+                            >
+                                {cleanName(cat.name)}
+                            </button>
+                        ))}
                     </div>
                 </aside>
 
-                <main className="lg:col-span-3 flex-col gap-6">
+                {/* Right table side */}
+                <main className="lg:col-span-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
                     {selectedCatId && (
-                        <div className="relative mb-2">
-                            <Search className="absolute text-slate-400" size={16} style={{ left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-                            <input
-                                placeholder="Search sub-services..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-xl text-sm font-medium"
-                                style={{ paddingLeft: 40, height: 44 }}
-                            />
+                        <div className="p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between gap-3">
+                            <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                                <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                                <input
+                                    placeholder="Search by TxnID, name, phone..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    style={{
+                                        width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                                        background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                                        fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                                        fontFamily: "inherit", boxSizing: "border-box"
+                                    }}
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-muted)]">
+                                {filtered?.length || 0} Subcategories
+                            </span>
                         </div>
                     )}
+
                     {!selectedCatId ? (
-                        <div className="p-20 text-center card-ghost">
-                            <Layers size={48} className="mx-auto mb-4 opacity-20" />
-                            <p className="font-bold text-slate-400">Select a category to view sub-services</p>
+                        <div className="py-20 text-center flex flex-col items-center justify-center space-y-3">
+                            <Layers size={36} className="text-slate-300" />
+                            <div>
+                                <h4 className="text-sm font-bold text-[var(--text-main)]">Select Category</h4>
+                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Please choose a category from the sidebar filter first.</p>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {filtered?.map((sub) => (
-                                <article
-                                    key={sub._id}
-                                    className="card flex-col gap-4 group cursor-pointer hover:scale-[1.01] transition-all border-none shadow-sm"
-                                    onClick={() => navigate(`/service-child-services?subServiceId=${sub._id}&categoryId=${selectedCatId}`)}
-                                    style={{ borderRadius: '28px', padding: '24px' }}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="icon-box overflow-hidden" style={{ width: '52px', height: '52px', borderRadius: '18px', background: '#f5f3ff', color: '#7c3aed' }}>
-                                            {sub.imageUrl ? (
-                                                <img src={resolveAssetUrl(sub.imageUrl)} alt={sub.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                (() => {
-                                                    const SubIcon = getSubIcon(sub);
-                                                    return <SubIcon size={22} />;
-                                                })()
-                                            )}
-                                        </div>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingSub(sub);
-                                                    setName(sub.name);
-                                                    setDesc(sub.description || "");
-                                                    setPreview(resolveAssetUrl(sub.imageUrl) || null);
-                                                    setIsModalOpen(true);
-                                                }}
-                                                className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left min-w-[700px]">
+                                <thead>
+                                    <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                        <th className="py-3 px-4 w-12">#</th>
+                                        <th className="py-3 px-4 w-20">Icon</th>
+                                        <th className="py-3 px-4">Subcategory Name</th>
+                                        <th className="py-3 px-4">Description</th>
+                                        <th className="py-3 px-4">Direct Link</th>
+                                        <th className="py-3 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--border-color)]">
+                                    {filtered && filtered.length > 0 ? (
+                                        filtered.map((sub, index) => (
+                                            <tr 
+                                                key={sub._id} 
+                                                className="hover:bg-[var(--bg-main)]/50 transition-colors group cursor-pointer"
+                                                onClick={() => navigate(`/service-child-services?subServiceId=${sub._id}&categoryId=${selectedCatId}`)}
                                             >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setDeleteId(sub._id); }}
-                                                className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="flex-col gap-2">
-                                        <h3 className="font-black text-slate-800 text-lg">{cleanName(sub.name)}</h3>
-                                        {sub.description && (
-                                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                                                {sub.description}
-                                            </p>
-                                        )}
-                                        <p className="text-[9px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1"></p>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                                        <span className="text-[10px] font-black text-blue-600/40 uppercase tracking-widest group-hover:text-blue-600 transition-colors">Manage Services</span>
-                                        <ChevronRight size={18} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1" />
-                                    </div>
-                                </article>
-                            ))}
-                            {filtered?.length === 0 && !isLoading && (
-                                <div className="col-span-2 text-center py-20 opacity-50 font-bold">No sub-services found.</div>
-                            )}
+                                                {/* Index */}
+                                                <td className="py-4 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                                                    {String(index + 1).padStart(2, '0')}
+                                                </td>
+                                                {/* Icon */}
+                                                <td className="py-4 px-4">
+                                                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 overflow-hidden border border-blue-100/50 dark:border-blue-500/10">
+                                                        {sub.imageUrl ? (
+                                                            <img src={resolveAssetUrl(sub.imageUrl)} alt={sub.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            (() => {
+                                                                const SubIcon = getSubIcon(sub);
+                                                                return <SubIcon size={18} />;
+                                                            })()
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                {/* Name */}
+                                                <td className="py-4 px-4">
+                                                    <h4 className="font-bold text-sm text-[var(--text-main)] group-hover:text-blue-600 transition-colors uppercase tracking-tight">
+                                                        {cleanName(sub.name)}
+                                                    </h4>
+                                                </td>
+                                                {/* Description */}
+                                                <td className="py-4 px-4 text-xs text-[var(--text-muted)] max-w-xs truncate font-medium">
+                                                    {sub.description || "—"}
+                                                </td>
+                                                {/* Direct Link click */}
+                                                <td className="py-4 px-4">
+                                                    <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider group-hover:text-blue-600 transition-colors flex items-center gap-1">
+                                                        Manage Services <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                                                    </span>
+                                                </td>
+                                                {/* Actions */}
+                                                <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingSub(sub);
+                                                                setName(sub.name);
+                                                                setDesc(sub.description || "");
+                                                                setPreview(resolveAssetUrl(sub.imageUrl) || null);
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                            className="w-8 h-8 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--bg-main)] hover:text-blue-600 transition-all"
+                                                        >
+                                                            <Edit2 size={13} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(sub._id)}
+                                                            className="w-8 h-8 rounded-lg border border-red-100 dark:border-red-950/20 bg-red-50/50 dark:bg-red-950/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={6} className="py-16 text-center">
+                                                <div className="flex flex-col items-center justify-center space-y-2">
+                                                    <Layers size={24} className="text-slate-300" />
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-[var(--text-main)]">No Subcategories Found</h4>
+                                                        <p className="text-xs text-[var(--text-muted)] mt-0.5">Try adding a new subcategory to this sector.</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </main>
             </div>
 
-            {isLoading && <div className="p-20 text-center font-bold animate-pulse">Accessing unit registry...</div>}
-
             {/* Create Modal */}
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '500px' }}>
-                        <div className="p-8 border-b flex justify-between items-center">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center">
                             <div>
-                                <h2 className="brand-name">{editingSub ? 'Edit Sub-Service' : 'New Sub-Service'}</h2>
-                                <p className="text-xs muted font-bold uppercase tracking-widest mt-1">{editingSub ? `Updating ${editingSub.name}` : `Expanding ${cleanName(currentCategory?.name || "")}`}</p>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Healthcare Catalog</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">{editingSub ? 'Edit Sub-Service' : 'New Sub-Service'}</h3>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="logout-btn"><X size={24} /></button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all">
+                                <X size={16} />
+                            </button>
                         </div>
-                        <form className="p-8 flex-col gap-5" onSubmit={(e) => {
+                        <form className="p-6 space-y-4" onSubmit={(e) => {
                             e.preventDefault();
                             const fd = new FormData();
                             fd.append("name", name);
@@ -299,27 +360,27 @@ export function ServiceSubServicesPage() {
                             if (file) fd.append("image", file);
                             submitMutation.mutate(fd);
                         }}>
-                            <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Sub-Service Name</label>
-                                <input className="w-full h-14 bg-slate-50 border-none px-5 rounded-2xl font-bold placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., General Medicine" required />
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Subcategory Name</label>
+                                <input className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. General Medicine" required />
                             </div>
-                            <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Description</label>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Description</label>
                                 <textarea
-                                    className="w-full bg-slate-50 border-none px-5 py-4 rounded-2xl font-bold min-h-[100px] placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold min-h-[100px]"
                                     value={desc}
                                     onChange={(e) => setDesc(e.target.value)}
                                     placeholder="Describe the clinical focus..."
                                 />
                             </div>
-                            <div className="input-group">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Identity Visual (Icon)</label>
-                                <label className={`flex items-center gap-4 w-full h-16 px-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${preview ? "bg-indigo-50 border-indigo-200" : "bg-slate-50 border-slate-100 hover:border-indigo-200"}`}>
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-slate-200 text-slate-500"}`}>
-                                        {preview ? <img src={preview} className="w-full h-full object-cover" /> : <UploadCloud size={20} />}
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Icon Visual</label>
+                                <label className={`flex items-center gap-4 w-full h-16 px-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${preview ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-indigo-400"}`}>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-slate-200 text-slate-500"}`}>
+                                        {preview ? <img src={preview} className="w-full h-full object-cover" /> : <UploadCloud size={16} />}
                                     </div>
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className={`text-xs font-bold truncate ${preview ? "text-indigo-700" : "text-slate-400"}`}>
+                                    <div className="flex-1 overflow-hidden text-left">
+                                        <p className={`text-xs font-bold truncate ${preview ? "text-indigo-700 dark:text-indigo-400" : "text-slate-400"}`}>
                                             {file ? file.name : (editingSub ? "Update visual asset..." : "Select unit icon...")}
                                         </p>
                                     </div>
@@ -332,9 +393,11 @@ export function ServiceSubServicesPage() {
                                     }} />
                                 </label>
                             </div>
-                            <button disabled={submitMutation.isPending} className="button primary h-14 w-full rounded-2xl mt-4 font-black uppercase tracking-widest text-xs">
-                                {submitMutation.isPending ? "Integrating..." : (editingSub ? "Save Changes" : "Create Sub-Service")}
-                            </button>
+                            <div className="pt-2">
+                                <button disabled={submitMutation.isPending} className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50">
+                                    {submitMutation.isPending ? "Integrating..." : (editingSub ? "Save Changes" : "Create Sub-Service")}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -342,16 +405,22 @@ export function ServiceSubServicesPage() {
 
             {/* Delete Modal */}
             {deleteId && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '420px', textAlign: 'center', padding: '40px' }}>
-                        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Trash2 size={32} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Catalog Security</p>
+                            <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Remove Node?</h3>
                         </div>
-                        <h3 className="brand-name text-2xl">Remove Node?</h3>
-                        <p className="muted font-medium mt-2">All service items under this sub-service will also be removed. This action is final.</p>
-                        <div className="flex gap-4 mt-10">
-                            <button className="button secondary flex-1 h-14 rounded-2xl font-black uppercase text-[10px]" onClick={() => setDeleteId(null)}>Abort</button>
-                            <button className="button primary flex-1 h-14 rounded-2xl font-black uppercase text-[10px] !bg-red-500" onClick={() => deleteMutation.mutate(deleteId)}>Delete</button>
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center mx-auto border border-red-200">
+                                <Trash2 size={20} />
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)] font-semibold">All service items under this sub-service will also be removed. This action is terminal.</p>
+                        </div>
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex gap-2 bg-[var(--bg-main)]">
+                            <button className="flex-1 h-9 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--bg-main)] transition-all" onClick={() => setDeleteId(null)}>Abort</button>
+                            <button className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors" onClick={() => deleteMutation.mutate(deleteId)}>Delete</button>
                         </div>
                     </div>
                 </div>

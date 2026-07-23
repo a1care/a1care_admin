@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
-    BarChart3,
     IndianRupee,
     CalendarDays,
     TrendingUp,
     Loader2,
     Users,
     Stethoscope,
+    BarChart3
 } from "lucide-react";
 
 interface Overview {
@@ -38,10 +38,10 @@ interface PerformanceRow {
 
 const statusColor = (s: string) => {
     const u = (s || "").toUpperCase();
-    if (u.includes("COMPLET")) return "bg-emerald-500/10 text-emerald-600";
-    if (u.includes("CANCEL")) return "bg-rose-500/10 text-rose-500";
-    if (u.includes("CONFIRM") || u.includes("ACCEPT")) return "bg-blue-500/10 text-blue-600";
-    return "bg-amber-500/10 text-amber-600";
+    if (u.includes("COMPLET")) return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400";
+    if (u.includes("CANCEL")) return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400";
+    if (u.includes("CONFIRM") || u.includes("ACCEPT")) return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400";
+    return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400";
 };
 
 export function ReportsPage() {
@@ -70,80 +70,99 @@ export function ReportsPage() {
     });
 
     const rev = overview?.kpis?.revenue;
-    const cards: { label: string; value?: number; icon: any; color: string; money: boolean }[] = [
-        { label: "Total Revenue", value: rev?.total, icon: IndianRupee, color: "emerald", money: true },
-        { label: "This Month", value: rev?.month, icon: TrendingUp, color: "blue", money: true },
-        { label: "Today", value: rev?.today, icon: CalendarDays, color: "violet", money: true },
-        { label: "Total Bookings", value: overview?.kpis?.totalBookings, icon: Users, color: "amber", money: false },
+    const cards = [
+        { label: "Total Revenue", value: rev?.total, icon: <IndianRupee size={14} />, color: "text-emerald-600 dark:text-emerald-400", money: true },
+        { label: "This Month", value: rev?.month, icon: <TrendingUp size={14} />, color: "text-blue-600 dark:text-blue-400", money: true },
+        { label: "Today", value: rev?.today, icon: <CalendarDays size={14} />, color: "text-indigo-600 dark:text-indigo-400", money: true },
+        { label: "Total Bookings", value: overview?.kpis?.totalBookings, icon: <Users size={14} />, color: "text-amber-600 dark:text-amber-400", money: false },
     ];
-    const colorMap: Record<string, string> = {
-        emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-        blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
-        violet: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
-        amber: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
-    };
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="mb-6">
-                <h1 className="text-2xl font-black text-[var(--text-main)] flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-                        <BarChart3 size={20} />
-                    </span>
-                    Reports
-                </h1>
-                <p className="text-sm text-slate-400 mt-1">Revenue, recent bookings and provider performance.</p>
-            </div>
-
-            {/* Revenue Overview */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {cards.map((c) => (
-                    <div key={c.label} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl p-5">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mb-3 ${colorMap[c.color]}`}>
-                            <c.icon size={18} />
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Reports & Analytics</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Analytics • Reports
+                                </p>
+                            </div>
                         </div>
-                        <p className="text-2xl font-black text-[var(--text-main)]">
-                            {loadingOverview ? "—" : c.money === false ? (c.value ?? 0) : `₹${(c.value ?? 0).toLocaleString("en-IN")}`}
-                        </p>
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mt-1">{c.label}</p>
+                    </div>
+                </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            </header>
+
+            {/* ── Revenue overview cards in a single row ── */}
+            <div className="grid grid-cols-4 gap-3">
+                {cards.map((c) => (
+                    <div key={c.label} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 text-left">
+                        <div className={`flex items-center gap-1.5 text-xs font-medium mb-2 ${c.color}`}>
+                            {c.icon}
+                            {c.label}
+                        </div>
+                        <div className="text-2xl font-bold text-[var(--text-main)]">
+                            {loadingOverview ? (
+                                <span className="text-sm text-[var(--text-muted)] font-normal">Loading…</span>
+                            ) : c.money === false ? (
+                                (c.value ?? 0)
+                            ) : (
+                                `₹${(c.value ?? 0).toLocaleString("en-IN")}`
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
 
+            {/* ── Recent Bookings and Performance Split ── */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Recent Bookings */}
-                <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center gap-2">
-                        <CalendarDays size={16} className="text-blue-600" />
-                        <h2 className="font-black text-[var(--text-main)]">Recent Bookings</h2>
+                {/* Section 1: Recent Bookings */}
+                <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between text-left">
+                    <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center gap-2 bg-[var(--bg-main)]">
+                        <CalendarDays size={15} className="text-blue-500" />
+                        <h3 className="text-sm font-bold text-[var(--text-main)]">Recent Bookings</h3>
                     </div>
+
                     {loadingRecent ? (
-                        <div className="flex items-center justify-center py-16 text-slate-400"><Loader2 className="animate-spin mr-2" size={18} /> Loading…</div>
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                        </div>
                     ) : recent.length === 0 ? (
-                        <div className="text-center py-16 text-slate-400 font-semibold">No recent bookings</div>
+                        <div className="py-20 text-center text-xs text-[var(--text-muted)]">No recent bookings found.</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-left">
                                 <thead>
-                                    <tr className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-[var(--border-color)]">
-                                        <th className="px-5 py-3">Patient</th>
-                                        <th className="px-5 py-3">Provider</th>
-                                        <th className="px-5 py-3">Status</th>
-                                        <th className="px-5 py-3 text-right">Amount</th>
+                                    <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                        <th className="py-3 px-4">Patient</th>
+                                        <th className="py-3 px-4">Provider</th>
+                                        <th className="py-3 px-4">Status</th>
+                                        <th className="py-3 px-4 text-right">Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-[var(--border-color)]">
                                     {recent.map((b) => (
-                                        <tr key={b.id} className="border-b border-[var(--border-color)] last:border-0">
-                                            <td className="px-5 py-3">
-                                                <div className="font-bold text-[var(--text-main)]">{b.patient}</div>
-                                                <div className="text-[10px] uppercase font-black text-slate-400">{b.type}</div>
+                                        <tr key={b.id} className="hover:bg-[var(--bg-main)] transition-colors">
+                                            <td className="py-3 px-4">
+                                                <div className="font-semibold text-sm text-[var(--text-main)]">{b.patient}</div>
+                                                <div className="text-xs text-[var(--text-muted)] mt-0.5 uppercase tracking-wider font-semibold">{b.type}</div>
                                             </td>
-                                            <td className="px-5 py-3 text-slate-500">{b.provider}</td>
-                                            <td className="px-5 py-3">
-                                                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${statusColor(b.status)}`}>{b.status}</span>
+                                            <td className="py-3 px-4 text-sm text-[var(--text-main)]">
+                                                {b.provider}
                                             </td>
-                                            <td className="px-5 py-3 text-right font-bold text-[var(--text-main)]">₹{b.amount ?? 0}</td>
+                                            <td className="py-3 px-4">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${statusColor(b.status)}`}>
+                                                    {b.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-4 text-right text-sm font-bold text-[var(--text-main)]">
+                                                ₹{b.amount ?? 0}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -152,37 +171,46 @@ export function ReportsPage() {
                     )}
                 </section>
 
-                {/* Provider Performance */}
-                <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center gap-2">
-                        <Stethoscope size={16} className="text-emerald-600" />
-                        <h2 className="font-black text-[var(--text-main)]">Provider Performance</h2>
+                {/* Section 2: Provider Performance */}
+                <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between text-left">
+                    <div className="px-5 py-4 border-b border-[var(--border-color)] flex items-center gap-2 bg-[var(--bg-main)]">
+                        <Stethoscope size={15} className="text-emerald-500" />
+                        <h3 className="text-sm font-bold text-[var(--text-main)]">Provider Performance</h3>
                     </div>
+
                     {loadingPerf ? (
-                        <div className="flex items-center justify-center py-16 text-slate-400"><Loader2 className="animate-spin mr-2" size={18} /> Loading…</div>
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                        </div>
                     ) : performance.length === 0 ? (
-                        <div className="text-center py-16 text-slate-400 font-semibold">No provider data</div>
+                        <div className="py-20 text-center text-xs text-[var(--text-muted)]">No provider metrics reported.</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-left">
                                 <thead>
-                                    <tr className="text-left text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-[var(--border-color)]">
-                                        <th className="px-5 py-3">Provider</th>
-                                        <th className="px-5 py-3 text-center">Bookings</th>
-                                        <th className="px-5 py-3 text-center">Completed</th>
-                                        <th className="px-5 py-3 text-right">Revenue</th>
+                                    <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                        <th className="py-3 px-4">Provider</th>
+                                        <th className="py-3 px-4 text-center">Bookings</th>
+                                        <th className="py-3 px-4 text-center">Completed</th>
+                                        <th className="py-3 px-4 text-right">Revenue</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-[var(--border-color)]">
                                     {performance.map((p) => (
-                                        <tr key={p.id} className="border-b border-[var(--border-color)] last:border-0">
-                                            <td className="px-5 py-3">
-                                                <div className="font-bold text-[var(--text-main)]">{p.name || "Unnamed"}</div>
-                                                {p.mobile ? <div className="text-[11px] font-mono text-slate-400">{p.mobile}</div> : null}
+                                        <tr key={p.id} className="hover:bg-[var(--bg-main)] transition-colors">
+                                            <td className="py-3 px-4">
+                                                <div className="font-semibold text-sm text-[var(--text-main)]">{p.name || "Unnamed"}</div>
+                                                {p.mobile && <div className="text-xs text-[var(--text-muted)] mt-0.5 font-mono">{p.mobile}</div>}
                                             </td>
-                                            <td className="px-5 py-3 text-center text-slate-500 font-bold">{p.stats?.total ?? 0}</td>
-                                            <td className="px-5 py-3 text-center text-emerald-600 font-bold">{p.stats?.completed ?? 0}</td>
-                                            <td className="px-5 py-3 text-right font-bold text-[var(--text-main)]">₹{(p.stats?.revenue ?? 0).toLocaleString("en-IN")}</td>
+                                            <td className="py-3 px-4 text-center text-sm font-semibold text-[var(--text-main)]">
+                                                {p.stats?.total ?? 0}
+                                            </td>
+                                            <td className="py-3 px-4 text-center text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                                                {p.stats?.completed ?? 0}
+                                            </td>
+                                            <td className="py-3 px-4 text-right text-sm font-bold text-[var(--text-main)]">
+                                                ₹{(p.stats?.revenue ?? 0).toLocaleString("en-IN")}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

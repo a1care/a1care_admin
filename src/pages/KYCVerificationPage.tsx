@@ -2,9 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useState } from "react";
 import {
-    Users,
     Search,
-    Filter,
     FileText,
     Eye,
     CheckCircle,
@@ -12,9 +10,10 @@ import {
     Loader2,
     ShieldCheck,
     Phone,
-    Calendar,
     X,
-    ExternalLink
+    ExternalLink,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,24 +43,19 @@ export default function KYCVerificationPage() {
         queryFn: async () => {
             const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}`);
             const data = res.data.data;
-            // The backend returns { items, total, ... }
-            // We need to filter for Pending/Inactive on frontend if backend doesn't filter by status=Pending
-            // But I updated backend to support status filter. 
-            // However, the original code had a manual filter. I'll stick to manual filter for now to preserve logic unless I'm sure about status mapping.
             const items = data.items || [];
             return {
                 ...data,
                 items: items.filter((d: any) => {
                     const s = String(d?.status || "").toLowerCase();
-                    // Include legacy "Inactive" records too, since older rejects were stored as Inactive.
                     return s === "pending" || s === "rejected" || s === "inactive";
                 })
             };
         }
     });
 
-    const staff = kycData?.items || [];
-    const totalPages = kycData?.totalPages || 1;
+    const staff: Doctor[] = kycData?.items || [];
+    const totalPages: number = kycData?.totalPages || 1;
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status, rejectionReason }: { id: string, status: string, rejectionReason?: string }) => {
@@ -93,117 +87,133 @@ export default function KYCVerificationPage() {
         });
     };
 
-    // Removed early return to prevent page blinking
-    // if (isLoading) {
-    //     return (
-    //         <div className="flex items-center justify-center p-20">
-    //             <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-    //         </div>
-    //     );
-    // }
-
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-5xl font-black text-slate-900 tracking-tight">KYC Verification</h1>
-                    <p className="text-slate-500 font-medium whitespace-nowrap">Audit and approve new partner applications.</p>
-                </div>
-
-                <div className="flex items-center gap-4 bg-amber-50 border border-amber-100 px-6 py-3 rounded-[20px]">
-                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
-                        <ShieldCheck size={20} />
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">KYC Verification</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Verification • KYC Verification
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 px-4 py-2 rounded-xl shrink-0 self-start sm:self-auto">
+                            <ShieldCheck className="text-amber-500" size={16} />
+                            <div>
+                                <p className="text-[10px] font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Pending Verification</p>
+                                <p className="text-sm font-bold text-amber-900 dark:text-amber-200 mt-0.5 leading-none">{staff?.filter(s => s.status === 'Pending').length || 0}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Pending Verification</p>
-                        <p className="text-xl font-black text-amber-900 leading-none mt-0.5">{staff?.filter((s: Doctor) => s.status === 'Pending').length || 0}</p>
-                    </div>
                 </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            {/* Search Row */}
-            <div className="relative group max-w-xl">
-                {/* <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" /> */}
+            {/* ── Search Toolbar ── */}
+            <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                {isFetching ? (
+                    <Loader2 size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3b82f6", animation: "spin 1s linear infinite", zIndex: 10 }} />
+                ) : (
+                    <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                )}
                 <input
                     type="text"
-                    placeholder="Search by Provider Name, Mobile or Specialization..."
-                    className="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-[28px] text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
+                    placeholder="Search by TxnID, name, phone..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                    style={{
+                        width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                        background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                        fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                        fontFamily: "inherit", boxSizing: "border-box"
+                    }}
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                {isLoading ? (
-                    <div className="col-span-full py-20 text-center">
-                        <div className="flex flex-col items-center gap-4">
-                            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Credentials...</p>
-                        </div>
-                    </div>
-                ) : Array.isArray(staff) && staff.map((doctor) => (
-                    <div key={doctor._id} className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500 group overflow-hidden flex flex-col min-w-[340px]">
-                        <div className="p-6 flex-1 flex flex-col">
-                            <div className="flex items-start justify-between gap-4 mb-4">
-                                <div className="flex gap-3 items-center min-w-0 flex-1">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-sm font-black text-slate-500 group-hover:from-blue-600 group-hover:to-indigo-700 group-hover:text-white transition-all duration-500 shadow-inner">
-                                        {doctor.name?.charAt(0) || 'P'}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="text-sm font-black text-slate-900 truncate leading-tight">{doctor.name || "Provider"}</h3>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                            <Phone size={12} className="text-slate-400" />
-                                            <p className="text-xs font-bold text-slate-500 truncate">{doctor.mobileNumber}</p>
+            {/* ── KYC Cards Grid ── */}
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center p-20 gap-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
+                    <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+                    <p className="text-sm text-[var(--text-muted)]">Reconciling partner credentials...</p>
+                </div>
+            ) : staff.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {staff.map((doctor) => (
+                        <div key={doctor._id} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all duration-200">
+                            <div className="p-5 space-y-4">
+                                {/* Top Identity */}
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex gap-3 items-center min-w-0">
+                                        <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-sm font-bold text-blue-600 shrink-0">
+                                            {doctor.name?.charAt(0) || 'P'}
                                         </div>
-                                    </div>
-                                </div>
-                                <div className={`shrink-0 min-w-[88px] text-center px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
-                                    }`}>
-                                    {doctor.status}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-3 mb-6">
-                                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Expertise</p>
-                                    <p className="text-xs font-black text-slate-700 truncate">{doctor.specialization?.join(', ') || "N/A"}</p>
-                                </div>
-                                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tenure</p>
-                                    <p className="text-xs font-black text-slate-700">
-                                        {doctor.startExperience ? `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years` : "N/A"}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3 mb-6 flex-1">
-                                <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={14} /> Submitted Documents
-                                </h4>
-                                <div className="max-h-32 overflow-y-auto pr-1 space-y-2">
-                                    {Array.isArray(doctor.documents) && doctor.documents.map((doc: { type: string; url: string }, idx: number) => (
-                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:border-blue-200 transition-colors">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <FileText size={16} className="text-slate-400" />
-                                                <p className="text-[10px] font-black text-slate-700 truncate">{doc.type}</p>
+                                        <div className="min-w-0">
+                                            <h3 className="text-sm font-semibold text-[var(--text-main)] truncate leading-snug">{doctor.name || "Provider"}</h3>
+                                            <div className="flex items-center gap-1 mt-0.5 text-xs text-[var(--text-muted)] font-mono">
+                                                <Phone size={12} />
+                                                <span>{doctor.mobileNumber}</span>
                                             </div>
-                                            <button onClick={() => setViewingDoc(doc)} className="text-slate-400 hover:text-blue-600 p-1">
-                                                <Eye size={16} />
-                                            </button>
                                         </div>
-                                    ))}
-                                    {(!doctor.documents || doctor.documents.length === 0) && (
-                                        <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">No Documents</p>
-                                        </div>
-                                    )}
+                                    </div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                        ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400" : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400"}`}
+                                    >
+                                        {doctor.status}
+                                    </span>
+                                </div>
+
+                                {/* Qualifications Info */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
+                                        <p className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Expertise</p>
+                                        <p className="text-xs font-semibold text-[var(--text-main)] truncate mt-0.5">{doctor.specialization?.join(', ') || "N/A"}</p>
+                                    </div>
+                                    <div className="bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
+                                        <p className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Tenure</p>
+                                        <p className="text-xs font-semibold text-[var(--text-main)] truncate mt-0.5">
+                                            {doctor.startExperience ? `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years` : "N/A"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Submitted Documents List */}
+                                <div className="space-y-1.5 pt-2 border-t border-[var(--border-color)]">
+                                    <h4 className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                                        <FileText size={12} />
+                                        Submitted Documents
+                                    </h4>
+                                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                                        {Array.isArray(doctor.documents) && doctor.documents.map((doc, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg hover:border-blue-300 transition-colors">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <FileText size={14} className="text-[var(--text-muted)] shrink-0" />
+                                                    <p className="text-xs text-[var(--text-main)] truncate font-semibold">{doc.type}</p>
+                                                </div>
+                                                <button onClick={() => setViewingDoc(doc)} className="text-[var(--text-muted)] hover:text-blue-500 p-1 transition-colors">
+                                                    <Eye size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!doctor.documents || doctor.documents.length === 0) && (
+                                            <div className="text-center py-4 bg-[var(--bg-main)] rounded-lg border border-dashed border-[var(--border-color)]">
+                                                <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">No Documents Uploaded</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 pt-4 border-t border-slate-50">
+                            {/* Actions Footer */}
+                            <div className="p-5 bg-[var(--bg-main)]/50 border-t border-[var(--border-color)] flex gap-2">
                                 <button
                                     onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Active' })}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 rounded-2xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                                 >
                                     <CheckCircle size={14} /> Approve
                                 </button>
@@ -212,120 +222,150 @@ export default function KYCVerificationPage() {
                                         setRejectingDoctor(doctor);
                                         setRejectReason("");
                                     }}
-                                    className="px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 font-black py-3.5 rounded-2xl text-[10px] uppercase tracking-widest transition-all"
+                                    className="h-9 px-4 border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors"
                                 >
                                     Reject
                                 </button>
                             </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="py-20 text-center bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
+                    <ShieldCheck size={48} className="mx-auto text-[var(--text-muted)] mb-3" />
+                    <h3 className="text-sm font-semibold text-[var(--text-main)]">Audit queue clear</h3>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">All partner KYC applications have been reviewed.</p>
+                </div>
+            )}
 
-            {/* Pagination */}
+            {/* ── Pagination ── */}
             {totalPages > 1 && (
-                <div className="flex justify-between items-center bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 mt-12">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page} of {totalPages}</p>
-                    <div className="flex gap-4">
+                <div className="flex items-center justify-between px-4 py-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-sm">
+                    <p className="text-xs text-[var(--text-muted)]">
+                        Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5">
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-6 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 hover:bg-slate-200 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                            Prev
+                            <ChevronLeft size={14} />
                         </button>
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={page === totalPages}
-                            className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-30 hover:bg-black transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                            Next
+                            <ChevronRight size={14} />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Document Viewer Modal */}
+            {/* ── Document Viewer Modal ── */}
             {viewingDoc && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-5xl h-[85vh] rounded-[48px] overflow-hidden shadow-3xl animate-in zoom-in-95 duration-300 flex flex-col">
-                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewingDoc(null)} />
+                    <div className="relative w-full max-w-5xl h-[85vh] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900">{viewingDoc.type}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Provider Credential Verification</p>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credential Verification</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">{viewingDoc.type}</h3>
                             </div>
                             <button
                                 onClick={() => setViewingDoc(null)}
-                                className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
                             >
-                                <X size={24} />
+                                <X size={16} />
                             </button>
                         </div>
-                        <div className="flex-1 bg-slate-50 p-10 overflow-auto">
+
+                        {/* Body */}
+                        <div className="flex-1 bg-[var(--bg-main)]/50 p-6 overflow-auto flex items-center justify-center">
                             {viewingDoc.url.toLowerCase().endsWith('.pdf') ? (
-                                <iframe src={viewingDoc.url} className="w-full h-full rounded-2xl border border-slate-200" />
+                                <iframe src={viewingDoc.url} className="w-full h-full rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)]" />
                             ) : (
-                                <img src={viewingDoc.url} alt={viewingDoc.type} className="max-w-full mx-auto rounded-2xl shadow-lg shadow-slate-200" />
+                                <img src={viewingDoc.url} alt={viewingDoc.type} className="max-w-full max-h-full object-contain rounded-xl shadow-md" />
                             )}
                         </div>
-                        <div className="p-8 bg-white border-t border-slate-100 flex justify-end">
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
                             <a
                                 href={viewingDoc.url}
                                 target="_blank"
-                                className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-100"
+                                rel="noopener noreferrer"
+                                className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm"
                             >
-                                <ExternalLink size={18} /> Open in New Tab
+                                <ExternalLink size={14} /> Open in New Tab
                             </a>
+                            <button
+                                onClick={() => setViewingDoc(null)}
+                                className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all"
+                            >
+                                Close
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* ── Rejection Modal ── */}
             {rejectingDoctor && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-6">
-                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-black text-slate-900">Reject Application</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRejectingDoctor(null)} />
+                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Credential Verification</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Reject Application</h3>
+                            </div>
                             <button
                                 onClick={() => setRejectingDoctor(null)}
-                                className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
                             >
-                                <X size={18} />
+                                <X size={16} />
                             </button>
                         </div>
-                        <p className="text-sm text-slate-600 mb-3">
-                            Reason for rejecting <span className="font-bold">{rejectingDoctor.name || "this provider"}</span>.
-                        </p>
-                        <textarea
-                            value={rejectReason}
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="Explain clearly what needs re-upload."
-                            className="w-full h-32 p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-100 outline-none text-sm"
-                        />
-                        <div className="flex gap-3 mt-5">
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+                            <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">Target Provider</p>
+                                <p className="text-sm font-semibold text-[var(--text-main)] mt-0.5">{rejectingDoctor.name || "Provider"}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Rejection Reason</label>
+                                <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Explain clearly what credentials or documents need to be re-uploaded..."
+                                    className="w-full h-24 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all resize-none font-semibold"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
                             <button
                                 onClick={() => setRejectingDoctor(null)}
-                                className="flex-1 h-11 rounded-xl bg-slate-100 text-slate-700 font-black text-xs uppercase"
+                                className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={submitReject}
                                 disabled={updateStatusMutation.isPending}
-                                className="flex-1 h-11 rounded-xl bg-rose-600 text-white font-black text-xs uppercase disabled:opacity-60"
+                                className="h-9 px-5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
                             >
-                                {updateStatusMutation.isPending ? "Submitting..." : "Reject with Reason"}
+                                {updateStatusMutation.isPending ? "Submitting..." : "Reject"}
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {staff?.length === 0 && (
-                <div className="py-20 text-center bg-white rounded-[40px] border border-dashed border-slate-200">
-                    <ShieldCheck size={64} className="mx-auto text-slate-200 mb-6" />
-                    <h3 className="text-xl font-black text-slate-900">Audit Queue Clear</h3>
-                    <p className="text-slate-500 font-medium mt-2">All partner KYC applications have been reviewed.</p>
                 </div>
             )}
         </div>

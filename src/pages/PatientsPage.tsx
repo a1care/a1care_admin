@@ -42,14 +42,18 @@ export function PatientsPage() {
 
             <div className="card p-0 overflow-hidden" style={{ border: 'none' }}>
                 <div className="p-4 border-b flex justify-between items-center gap-3 bg-[var(--card-bg)]">
-                    <div className="relative" style={{ width: '320px' }}>
-                        <Search className="absolute text-[var(--text-muted)]" size={16} style={{ left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                        <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
                         <input
-                            placeholder="Search by name or mobile..."
+                            placeholder="Search by TxnID, name, phone..."
                             value={searchTerm}
                             onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-                            className="w-full bg-[var(--bg-main)] border-none px-4 text-sm"
-                            style={{ paddingLeft: '40px', height: '44px', borderRadius: '12px' }}
+                            style={{
+                                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                                fontFamily: "inherit", boxSizing: "border-box"
+                            }}
                         />
                     </div>
                     <select

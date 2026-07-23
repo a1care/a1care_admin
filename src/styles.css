@@ -14,7 +14,7 @@
   --text-muted: #64748b;
   --text-white: #ffffff;
   --border-color: #e2e8f0;
-  --header-bg: rgba(255, 255, 255, 0.8);
+  --header-bg: #ffffff;
   --card-bg: #ffffff;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -62,98 +62,120 @@ body {
 
 /* Sidebar */
 .sidebar {
-  background: var(--bg-sidebar);
+  background: linear-gradient(180deg, var(--bg-sidebar) 0%, rgba(248, 250, 252, 0.5) 100%);
   color: var(--text-main);
   padding: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--sidebar-border);
   height: 100vh;
-  overflow-y: auto;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.02);
 }
 
 .sidebar-brand {
-  padding: 24px 20px;
+  padding: 24px 24px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   border-bottom: 1px solid var(--sidebar-border);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
 }
 
 .logo-box {
-  width: 48px;
-  height: 48px;
-  background: var(--primary);
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+  border-radius: 14px;
   display: grid;
   place-items: center;
-  font-weight: 700;
+  font-weight: 800;
   color: white;
   overflow: hidden;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
 }
 
 .logo-box.large {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
 }
 
 .brand-name {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .role-label {
   margin: 0;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .sidebar nav {
   flex: 1;
-  padding: 20px 12px;
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.sidebar nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 99px;
 }
 
 .nav-section {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 800;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 16px 0 8px 12px;
+  letter-spacing: 0.08em;
+  margin: 20px 0 10px 16px;
 }
 
 .nav-link {
   color: var(--text-muted);
   text-decoration: none;
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link:hover {
-  background: var(--bg-main);
+  background: var(--sidebar-active);
   color: var(--primary);
+  transform: translateX(4px);
 }
 
 .nav-link.active {
   color: var(--text-white);
-  background: var(--primary);
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+  font-weight: 700;
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.35);
 }
 
 .nav-link.active svg {
@@ -166,19 +188,20 @@ body {
   background: transparent;
   color: var(--text-muted);
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   transition: all 0.2s;
 }
 
 .submenu-trigger:hover {
-  background: var(--bg-main);
+  background: var(--sidebar-active);
   color: var(--primary);
+  transform: translateX(4px);
 }
 
 .submenu-trigger.active {
@@ -187,30 +210,31 @@ body {
 }
 
 .submenu-list {
-  margin: 4px 0 8px 28px;
+  margin: 4px 0 8px 30px;
   border-left: 2px solid var(--sidebar-border);
   display: grid;
   gap: 2px;
 }
 
 .sub-link {
-  font-size: 0.8125rem;
-  padding: 8px 16px;
+  font-size: 0.85rem;
+  padding: 10px 18px;
   color: var(--text-muted);
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sub-link:hover {
   color: var(--primary);
-  background: var(--bg-main);
+  background: var(--sidebar-active);
+  transform: translateX(4px);
 }
 
 .sub-link.active {
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
   background: var(--primary-light);
 }
 
@@ -256,11 +280,11 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .content-header {
-  height: 64px;
+  height: 96px;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
   padding: 0 24px;
@@ -342,6 +366,7 @@ body {
 .page-body {
   padding: 24px 32px;
   flex: 1;
+  overflow-y: auto;
 }
 
 /* Components */
@@ -1748,3 +1773,58 @@ textarea:focus {
   color: #475569;
 }
 .full-width { width: 100%; }
+
+/* Global Compact/Industry-Level UI Adjustments */
+h1.text-5xl,
+.text-5xl {
+  font-size: 1.625rem !important; /* Compact titles (approx 26px) */
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+}
+
+h2.text-4xl,
+.text-4xl {
+  font-size: 1.375rem !important; /* Compact h2 titles (approx 22px) */
+}
+
+h3.text-3xl,
+.text-3xl {
+  font-size: 1.15rem !important; /* Compact h3 titles */
+}
+
+/* Reduce massive dashboard container paddings from 40px (p-10) to 24px */
+.p-10 {
+  padding: 1.5rem !important;
+}
+
+/* Reduce massive card/container borders from rounded-[32px] to 16px */
+.rounded-\[32px\] {
+  border-radius: 16px !important;
+}
+
+/* Scale down stats count text from 40px to 24px */
+.text-\[32px\],
+.md\:text-\[40px\] {
+  font-size: 1.5rem !important;
+}
+
+/* Make bulky buttons/inputs slightly more compact */
+.h-14 {
+  height: 44px !important;
+}
+
+.h-12 {
+  height: 40px !important;
+}
+
+/* Make stats cards paddings cleaner and less deep */
+.py-5 {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+/* Make page bodies paddings slightly tighter */
+.page-body {
+  padding: 20px 24px !important;
+}
+

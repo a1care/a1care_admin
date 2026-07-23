@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronRight,
   LogOut,
+  KeyRound,
+  User,
   Ticket,
   AppWindow,
   ClipboardList,
@@ -38,7 +40,8 @@ import {
   Briefcase,
   Trash2,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  ReceiptText
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -51,6 +54,7 @@ const mainNav = (role: string) => [
   ...(role === "super_admin" ? [
     { to: "/partner-revenue-model", label: "Partner Plans", icon: BarChart3 },
     { to: "/payouts", label: "Payouts", icon: Banknote },
+    { to: "/commission-report", label: "Commission Report", icon: ReceiptText },
     { to: "/coupons", label: "Coupons", icon: Tag },
   ] : []),
   { to: "/kyc-verification", label: "KYC Verification", icon: ShieldCheck },
@@ -169,6 +173,14 @@ export function AppLayout() {
   // ── Notification Intelligence ─────────────────────────────────────────────
   const queryClient = useQueryClient();
   const [showBell, setShowBell] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [cpCurrentPw, setCpCurrentPw] = useState("");
+  const [cpNewPw, setCpNewPw] = useState("");
+  const [cpConfirmPw, setCpConfirmPw] = useState("");
+  const [cpLoading, setCpLoading] = useState(false);
+
+  const [activeFloatingAlert, setActiveFloatingAlert] = useState<any>(null);
 
   const { data: alerts = [] } = useQuery({
     queryKey: ["admin-system-alerts"],
@@ -176,8 +188,45 @@ export function AppLayout() {
       const res = await api.get("/admin/notifications?recipientType=admin&limit=10");
       return res.data.data.notifications as any[];
     },
-    refetchInterval: 30000 // Poll every 30s
+    refetchInterval: 10000 // Poll every 10s for faster alerts
   });
+
+  const [dismissTrigger, setDismissTrigger] = useState(0);
+
+  // Re-run evaluation of dismissed timestamps every 10 seconds in case a 60-second window expires
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDismissTrigger(prev => prev + 1);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeAlerts = useMemo(() => {
+    const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
+    const now = Date.now();
+    return alerts.filter(a => {
+      const dismissedTime = dismissedMap[a._id];
+      // If it was dismissed within the last 60 seconds (1 minute), filter it out
+      if (dismissedTime && now - dismissedTime < 60000) {
+        return false;
+      }
+      return (
+        a.refType === "ServiceRequest" && 
+        (
+          a.title?.includes("Expired") || 
+          a.title?.includes("Accept") || 
+          a.title?.includes("Rejected") || 
+          a.title?.includes("Returned") || 
+          a.title?.includes("Missing") ||
+          a.title?.includes("No Partner") ||
+          a.body?.includes("did not accept") ||
+          a.body?.includes("No Partner Accepted") ||
+          a.body?.includes("rejected") ||
+          a.body?.includes("missed")
+        )
+      );
+    });
+  }, [alerts, dismissTrigger]);
 
   const clearAlertsMutation = useMutation({
     mutationFn: async () => api.delete("/admin/notifications/clear"),
@@ -329,11 +378,6 @@ export function AppLayout() {
               )}
             </>
           )}
-
-          <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-            <Settings size={18} />
-            <span>Core Settings</span>
-          </NavLink>
         </nav>
 
         <div className="mt-auto p-4 border-t border-[var(--border-color)]">
@@ -361,7 +405,7 @@ export function AppLayout() {
       </aside>
 
       <main className="content">
-        <header className="content-header h-16 backdrop-blur-xl border-b flex items-center justify-between sticky top-0 z-50">
+        <header className="content-header h-24 backdrop-blur-xl border-b flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-6">
               <div
@@ -394,7 +438,7 @@ export function AppLayout() {
               {showBell && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowBell(false)}></div>
-                  <div className="absolute right-0 mt-4 w-80 bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-4 duration-300">
+                  <div className="absolute right-0 mt-4 w-[450px] bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-4 duration-300">
                     <div className="p-6 border-b bg-slate-50 flex items-center justify-between">
                       <div className="space-y-0.5">
                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">System Alerts</h3>
@@ -411,7 +455,23 @@ export function AppLayout() {
                     <div className="max-h-80 overflow-y-auto custom-scrollbar">
                       {alerts.length > 0 ? (
                         alerts.map((alert) => (
-                          <div key={alert._id} className="p-6 border-b dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group">
+                          <div 
+                            key={alert._id} 
+                            onClick={() => {
+                              const dismissed = JSON.parse(localStorage.getItem("dismissed_admin_alerts") || "[]");
+                              if (!dismissed.includes(alert._id)) {
+                                localStorage.setItem("dismissed_admin_alerts", JSON.stringify([...dismissed, alert._id]));
+                              }
+                              queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                              setShowBell(false);
+                              if (alert.refType === 'DoctorAppointment') {
+                                navigate("/op-bookings");
+                              } else {
+                                navigate("/bookings");
+                              }
+                            }}
+                            className="p-6 border-b dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group"
+                          >
                             <div className="flex gap-4">
                               <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-110 transition-transform">
                                 {alert.refType === 'ServiceRequest' ? <Calendar size={18} /> :
@@ -451,17 +511,76 @@ export function AppLayout() {
               )}
             </div>
 
-            <div className="flex items-center gap-3 pl-2">
-              <div className="text-right hidden sm:block">
-                <p className="text-[13px] font-black text-[var(--text-main)] dark:text-white leading-none">{user?.name || "Admin User"}</p>
-                <div className="flex items-center justify-end gap-1.5 mt-1">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Active Now</p>
+            <div className="relative">
+              <button
+                onClick={() => setShowProfile(p => !p)}
+                className="flex items-center gap-3 pl-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl px-3 py-2 transition-all group"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-[13px] font-black text-[var(--text-main)] dark:text-white leading-none">{user?.name || "Admin User"}</p>
+                  <div className="flex items-center justify-end gap-1.5 mt-1">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Active Now</p>
+                  </div>
                 </div>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-blue-100">
-                {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'}
-              </div>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-blue-100 group-hover:scale-105 transition-transform">
+                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'}
+                </div>
+              </button>
+
+              {showProfile && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowProfile(false)} />
+                  <div className="absolute right-0 top-14 w-72 bg-white dark:bg-[#1a1a2e] rounded-[24px] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden z-50 animate-in slide-in-from-top-4 duration-200">
+                    {/* Profile Header */}
+                    <div className="p-5 bg-gradient-to-br from-blue-600 to-indigo-600">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-white text-lg font-black">
+                          {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-white leading-none">{user?.name || 'Admin User'}</p>
+                          <p className="text-[11px] text-blue-200 mt-0.5 font-medium">{user?.email || 'admin@a1care.com'}</p>
+                          <span className="mt-1.5 inline-block text-[9px] font-black uppercase tracking-widest bg-white/20 text-white px-2 py-0.5 rounded-full">
+                            {user?.role?.replace(/_/g, ' ') || 'Admin'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="p-2">
+                      <button
+                        onClick={() => { setShowProfile(false); setShowChangePassword(true); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[var(--text-main)] hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-left group"
+                      >
+                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                          <KeyRound size={15} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[13px]">Change Password</p>
+                          <p className="text-[10px] text-[var(--text-muted)]">Update your login credentials</p>
+                        </div>
+                      </button>
+
+                      <div className="h-px bg-slate-100 dark:bg-white/5 my-1 mx-2" />
+
+                      <button
+                        onClick={() => { setShowProfile(false); logout(); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left group"
+                      >
+                        <div className="w-8 h-8 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                          <LogOut size={15} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[13px]">Logout</p>
+                          <p className="text-[10px] text-red-400">Sign out of admin panel</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -469,6 +588,114 @@ export function AppLayout() {
         <div className="page-body">
           <Outlet />
         </div>
+
+        {/* ── Change Password Modal ── */}
+        {showChangePassword && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+            <div onClick={() => setShowChangePassword(false)} className="absolute inset-0" />
+            <div className="bg-white dark:bg-[#1a1a2e] w-full max-w-md rounded-[28px] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300">
+              {/* Modal Header */}
+              <div className="p-6 bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <KeyRound size={22} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-white">Change Password</h2>
+                  <p className="text-[11px] text-blue-200">Update your admin login credentials</p>
+                </div>
+                <button
+                  onClick={() => setShowChangePassword(false)}
+                  className="ml-auto w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Current Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter current password"
+                    value={cpCurrentPw}
+                    onChange={e => setCpCurrentPw(e.target.value)}
+                    style={{
+                      width: "100%", height: 44, borderRadius: 12, paddingLeft: 14, paddingRight: 14,
+                      background: "var(--bg-main)", border: "1.5px solid var(--border-color)",
+                      fontSize: "0.9rem", color: "var(--text-main)", outline: "none",
+                      fontFamily: "inherit", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter new password (min 8 chars)"
+                    value={cpNewPw}
+                    onChange={e => setCpNewPw(e.target.value)}
+                    style={{
+                      width: "100%", height: 44, borderRadius: 12, paddingLeft: 14, paddingRight: 14,
+                      background: "var(--bg-main)", border: "1.5px solid var(--border-color)",
+                      fontSize: "0.9rem", color: "var(--text-main)", outline: "none",
+                      fontFamily: "inherit", boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    placeholder="Re-enter new password"
+                    value={cpConfirmPw}
+                    onChange={e => setCpConfirmPw(e.target.value)}
+                    style={{
+                      width: "100%", height: 44, borderRadius: 12, paddingLeft: 14, paddingRight: 14,
+                      background: "var(--bg-main)", border: cpConfirmPw && cpConfirmPw !== cpNewPw ? "1.5px solid #ef4444" : "1.5px solid var(--border-color)",
+                      fontSize: "0.9rem", color: "var(--text-main)", outline: "none",
+                      fontFamily: "inherit", boxSizing: "border-box"
+                    }}
+                  />
+                  {cpConfirmPw && cpConfirmPw !== cpNewPw && (
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">Passwords do not match</p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setShowChangePassword(false); setCpCurrentPw(""); setCpNewPw(""); setCpConfirmPw(""); }}
+                    className="flex-1 h-11 rounded-xl border border-[var(--border-color)] text-[var(--text-muted)] text-sm font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    disabled={cpLoading || !cpCurrentPw || !cpNewPw || cpNewPw !== cpConfirmPw || cpNewPw.length < 8}
+                    onClick={async () => {
+                      if (cpNewPw !== cpConfirmPw) return;
+                      if (cpNewPw.length < 8) { toast.error("New password must be at least 8 characters."); return; }
+                      setCpLoading(true);
+                      try {
+                        await api.post("/admin/auth/change-password", { currentPassword: cpCurrentPw, newPassword: cpNewPw });
+                        toast.success("Password updated successfully!");
+                        setShowChangePassword(false);
+                        setCpCurrentPw(""); setCpNewPw(""); setCpConfirmPw("");
+                      } catch (err: any) {
+                        toast.error(err?.response?.data?.message || "Failed to update password. Check your current password.");
+                      } finally {
+                        setCpLoading(false);
+                      }
+                    }}
+                    className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-black transition-all flex items-center justify-center gap-2"
+                  >
+                    {cpLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <KeyRound size={15} />}
+                    {cpLoading ? "Updating..." : "Update Password"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Global Search / Command Palette Modal */}
         {showSearch && (
@@ -539,6 +766,93 @@ export function AppLayout() {
           </div>
         )}
       </main>
+
+      {activeAlerts.length > 0 && location.pathname !== "/bookings" && !showBell && (
+        <div className="fixed bottom-6 right-6 z-[999] w-[25%] min-w-[350px] h-[70vh] bg-white dark:bg-slate-950 border-2 border-red-500 shadow-2xl rounded-[32px] p-6 animate-in slide-in-from-bottom-8 slide-in-from-right-8 duration-500 flex flex-col">
+          {/* Header */}
+          <div className="flex justify-between items-center pb-4 border-b dark:border-slate-800">
+            <div>
+              <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">⚠️ Critical Action</p>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">{activeAlerts.length} Missed Bookings</h3>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent triggering any parent layouts
+                // Dismiss all active alerts at once with current timestamp
+                const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
+                const now = Date.now();
+                activeAlerts.forEach(a => {
+                  dismissedMap[a._id] = now;
+                });
+                localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
+                setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+              }}
+              className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all border border-slate-100 dark:border-slate-700"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Scrollable list of alerts */}
+          <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+            {activeAlerts.map((alert) => (
+              <div 
+                key={alert._id} 
+                onClick={() => {
+                  navigate("/bookings");
+                  const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
+                  dismissedMap[alert._id] = Date.now();
+                  localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
+                  setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                  queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                }}
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 flex flex-col gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
+              >
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-500 shrink-0">
+                    <Flame size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-black text-slate-900 dark:text-white leading-tight">{alert.title}</p>
+                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-normal mt-1">{alert.body}</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Avoid triggering card-level navigation
+                      navigate("/bookings");
+                      const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
+                      dismissedMap[alert._id] = Date.now();
+                      localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
+                      setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                      queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                    }}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black transition-all text-center uppercase tracking-wider shadow-md shadow-red-500/10"
+                  >
+                    Assign Manually
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Avoid triggering card-level navigation
+                      const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
+                      dismissedMap[alert._id] = Date.now();
+                      localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
+                      setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                      queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                    }}
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-[10px] font-bold transition-all"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,12 +8,16 @@ import {
     XCircle, 
     Search, 
     Filter, 
+    ChevronLeft,
     ChevronRight,
     Loader2,
-    ArrowUpRight,
     Building2,
     User,
-    CreditCard
+    CreditCard,
+    X,
+    TrendingUp,
+    Eye,
+    Check
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +49,7 @@ export function PayoutsPage() {
     const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
     const [adminNote, setAdminNote] = useState("");
     const [isReconciling, setIsReconciling] = useState(false);
+    const [inspectPayout, setInspectPayout] = useState<Payout | null>(null);
 
     const { data: payoutData, isLoading, isFetching } = useQuery({
         queryKey: ["admin_payouts", filter, page, searchQuery],
@@ -67,281 +72,457 @@ export function PayoutsPage() {
             queryClient.invalidateQueries({ queryKey: ["admin_payouts"] });
             toast.success("Settlement record finalized");
             setSelectedPayout(null);
+            setInspectPayout(null);
             setAdminNote("");
         },
         onMutate: () => setIsReconciling(true),
         onSettled: () => setIsReconciling(false)
     });
 
-    if (isLoading && !payouts) return (
-        <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <Loader2 className="animate-spin text-blue-500" size={48} />
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Reconciling Ledger...</p>
-        </div>
-    );
-
     const pendingTotal = payouts?.filter(p => p.status === "PENDING").reduce((acc, p) => acc + p.amount, 0) || 0;
+    const averagePayout = payouts && payouts.length > 0 ? (payouts.reduce((acc, p) => acc + p.amount, 0) / payouts.length) : 0;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-                        Partner Payouts
-                        {isFetching && <Loader2 size={24} className="text-blue-500 animate-spin" />}
-                    </h1>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2 flex items-center gap-2">
-                        <Banknote size={16} className="text-blue-500" /> Review and approve partner payout requests
-                    </p>
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full space-y-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Partner Payouts</h1>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                Home • Payouts • Partner Payouts
+                            </p>
+                        </div>
+                    </div>
+                    {/* Status Switcher */}
+                    <div className="flex flex-wrap gap-1 bg-[var(--bg-main)] border border-[var(--border-color)] p-1 rounded-xl w-fit">
+                        {["All", "PENDING", "COMPLETED", "REJECTED"].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => { setFilter(f); setPage(1); }}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all
+                                    ${filter === f
+                                        ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm border border-[var(--border-color)]"
+                                        : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                                    }`}
+                            >
+                                {f === "PENDING" ? "Pending" : f === "COMPLETED" ? "Completed" : f === "REJECTED" ? "Rejected" : "All"}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                
-                <div className="flex gap-2 bg-slate-100/50 p-1.5 rounded-3xl backdrop-blur-md border border-white/50 shadow-inner">
-                    {["All", "PENDING", "COMPLETED", "REJECTED"].map(f => (
-                        <button 
-                            key={f}
-                            onClick={() => { setFilter(f); setPage(1); }}
-                            className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${filter === f ? 'bg-white text-blue-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
-                        >
-                            {f}
-                        </button>
-                    ))}
-                </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            {/* Search Row */}
-            <div className="relative group max-w-md">
-                {/* <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" /> */}
+            {/* ── Stats Cards Grid ── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Stat 1: Pending */}
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] p-5 rounded-xl flex flex-col gap-2 relative overflow-hidden text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                        <Clock size={14} />
+                        Pending Requests
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">₹{pendingTotal.toLocaleString()}</div>
+                    <div className="text-[11px] text-[var(--text-muted)] mt-1">
+                        Total {payouts?.filter(p => p.status === "PENDING").length} active requests
+                    </div>
+                </div>
+
+                {/* Stat 2: Average */}
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] p-5 rounded-xl flex flex-col gap-2 relative overflow-hidden text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                        <TrendingUp size={14} />
+                        Average Settlement
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">₹{averagePayout.toLocaleString()}</div>
+                    <div className="text-[11px] text-[var(--text-muted)] mt-1">
+                        Calculated across loaded records
+                    </div>
+                </div>
+
+                {/* Stat 3: Typical processing */}
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] p-5 rounded-xl flex flex-col gap-2 relative overflow-hidden text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 size={14} />
+                        Processing Window
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">~4 Hours</div>
+                    <div className="text-[11px] text-[var(--text-muted)] mt-1">
+                        After administrator review
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Search Toolbar ── */}
+            <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                {isFetching ? (
+                    <Loader2 size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3b82f6", animation: "spin 1s linear infinite", zIndex: 10 }} />
+                ) : (
+                    <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                )}
                 <input
                     type="text"
-                    placeholder="Search by Partner, Mobile, Bank or ID..."
-                    className="w-full h-14 pl-16 pr-6 bg-white border border-slate-100 rounded-[28px] text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
+                    placeholder="Search by TxnID, name, phone..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                    style={{
+                        width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                        background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                        fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                        fontFamily: "inherit", boxSizing: "border-box"
+                    }}
                 />
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-[40px] shadow-2xl shadow-blue-200 text-white relative overflow-hidden group">
-                    <div className="relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Pending Payouts</p>
-                        <h2 className="text-4xl font-black">₹{pendingTotal.toLocaleString()}</h2>
-                        <div className="mt-6 flex items-center gap-2 text-xs font-bold bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-sm">
-                            <Clock size={14} /> Total {payouts?.filter(p => p.status === "PENDING").length} Requests
-                        </div>
-                    </div>
-                    <Banknote className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500" size={180} />
-                </div>
-
-                <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50 flex flex-col justify-between">
-                    <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Average Payout</p>
-                        <h2 className="text-4xl font-black text-slate-900">₹{(payouts && payouts.length > 0 ? (payouts.reduce((acc, p) => acc + p.amount, 0) / payouts.length) : 0).toLocaleString()}</h2>
-                    </div>
-                    <div className="mt-4 text-xs font-bold text-emerald-500 flex items-center gap-1">
-                        <ArrowUpRight size={14} /> Across all partners
-                    </div>
-                </div>
-
-                <div className="bg-slate-900 p-8 rounded-[40px] text-white flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Typical Processing</p>
-                            <h2 className="text-4xl font-black">~4h</h2>
-                        </div>
-                        <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                            <Clock className="text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">After admin approval</div>
-                </div>
-            </div>
-
-            <div className="grid gap-6 mt-12">
-                {payouts.map((payout) => (
-                    <div key={payout._id} className="bg-white rounded-[32px] border border-slate-50 shadow-lg hover:shadow-2xl hover:scale-[1.01] transition-all duration-500 overflow-hidden group">
-                        <div className="flex flex-col xl:flex-row">
-                            <div className="p-8 xl:w-1/3 bg-slate-50/30 border-r border-slate-50 relative">
-                                <div className="absolute top-0 right-0 p-4">
-                                     <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                                         payout.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' :
-                                         payout.status === 'REJECTED' ? 'bg-rose-50 text-rose-600' :
-                                         'bg-amber-50 text-amber-600'
-                                     }`}>
-                                         {payout.status === 'COMPLETED' ? 'Paid' : payout.status === 'REJECTED' ? 'Rejected' : 'Pending'}
-                                     </span>
-                                </div>
-                                
-                                <div className="flex items-center gap-6 mb-8">
-                                    <div className="w-20 h-20 rounded-[28px] bg-gradient-to-tr from-slate-100 to-white flex items-center justify-center text-slate-400 border border-white shadow-xl group-hover:rotate-3 transition-transform duration-500">
-                                        <User size={40} className="group-hover:text-blue-500 transition-colors" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-black text-slate-900 leading-tight">{payout.staffId?.name}</h3>
-                                        <p className="text-xs font-black text-blue-500 uppercase tracking-widest mt-1 opacity-70">Service Provider</p>
-                                        <div className="flex items-center gap-1.5 mt-2 text-xs font-bold text-slate-400">
-                                            <CreditCard size={14} /> {payout.staffId?.mobileNumber}
+            {/* ── Payouts Table Card ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[900px]">
+                        <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Partner</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Request Date</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Bank Details</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-color)]">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Loading payouts registry...</p>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Request Date</p>
-                                        <p className="text-xs font-black text-slate-700">{new Date(payout.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ref ID</p>
-                                        <p className="text-xs font-black text-slate-700">#{payout._id.slice(-6).toUpperCase()}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-8 xl:w-1/3 flex flex-col justify-center gap-6">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Building2 size={16} className="text-blue-500" /> Bank Account Details
-                                </h4>
-                                <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100 border-dashed space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-3 bg-white rounded-2xl text-blue-600 shadow-sm">
-                                            <Building2 size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bank Name</p>
-                                            <p className="text-sm font-black text-slate-900">{payout.bankDetails?.bankName}</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-6 pt-2">
-                                        <div>
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Account Number</p>
-                                            <p className="text-xs font-black text-slate-800 tracking-wider">•••• {payout.bankDetails?.accountNumber?.slice(-4)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">IFSC Code</p>
-                                            <p className="text-xs font-black text-slate-800 tracking-wider uppercase">{payout.bankDetails?.ifscCode}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-8 xl:w-1/3 flex flex-col justify-between bg-slate-50/20 border-l border-slate-50">
-                                <div className="flex justify-between items-start">
-                                    <div className="p-4 bg-emerald-50 rounded-2xl text-emerald-600 shadow-inner">
-                                        <ArrowUpRight size={24} />
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payout Amount</p>
-                                        <h2 className="text-4xl font-black text-slate-900 tracking-tight">₹{payout.amount.toLocaleString()}</h2>
-                                    </div>
-                                </div>
-                                
-                                {payout.status === 'PENDING' ? (
-                                    <div className="flex gap-4 mt-12">
-                                        <button 
-                                            onClick={() => {
-                                                toast.info("Confirm Settlement?", {
-                                                    description: "Approve payout of ₹" + payout.amount + " to this partner?",
-                                                    action: {
-                                                        label: "Approve & Pay",
-                                                        onClick: () => updateStatusMutation.mutate({ id: payout._id, status: 'COMPLETED' })
-                                                    }
-                                                });
-                                            }}
-                                            className="flex-1 bg-slate-900 hover:bg-black text-white h-16 rounded-[24px] font-black text-[12px] uppercase tracking-widest shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 active:scale-95"
-                                        >
-                                            <CheckCircle2 size={20} /> Approve & Pay
-                                        </button>
-                                        <button 
-                                            onClick={() => setSelectedPayout(payout)}
-                                            className="w-16 h-16 bg-white border border-slate-100 rounded-[24px] flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all duration-300 shadow-sm"
-                                        >
-                                            <XCircle size={28} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="mt-8 flex flex-col gap-2">
-                                        <div className="p-4 bg-white/50 backdrop-blur-md rounded-2xl border border-slate-100 border-dashed text-center">
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                                                Finalized on {new Date(payout.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        {payout.adminNote && (
-                                            <div className="p-3 bg-rose-50/50 rounded-xl text-[10px] font-bold text-rose-500 italic">
-                                                Note: {payout.adminNote}
+                                    </td>
+                                </tr>
+                            ) : payouts.length > 0 ? (
+                                payouts.map((payout, index) => {
+                                    const isPending = payout.status === "PENDING";
+                                    return (
+                                        <tr key={payout._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                            <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
+                                                {String((page - 1) * 60 + index + 1).padStart(2, '0')}
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 text-xs">
+                                                        {payout.staffId?.name?.charAt(0) || "P"}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-sm text-[var(--text-main)]">
+                                                            {payout.staffId?.name || "Unnamed"}
+                                                        </div>
+                                                        <div className="text-xs text-[var(--text-muted)]">
+                                                            {payout.staffId?.mobileNumber || "—"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-sm text-[var(--text-main)]">
+                                                    {new Date(payout.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </div>
+                                                <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
+                                                    Ref: #{payout._id.slice(-6).toUpperCase()}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <div className="text-sm font-semibold text-[var(--text-main)]">
+                                                    {payout.bankDetails?.bankName || "UPI Mode"}
+                                                </div>
+                                                <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
+                                                    {payout.bankDetails?.accountNumber ? `•••• ${payout.bankDetails.accountNumber.slice(-4)}` : payout.bankDetails?.upiId || "N/A"}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-[var(--text-main)]">
+                                                    ₹{payout.amount.toLocaleString()}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                                                    ${payout.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                                                      payout.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400' :
+                                                      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400'}`}
+                                                >
+                                                    <span className={`w-1.5 h-1.5 rounded-full
+                                                        ${payout.status === 'COMPLETED' ? 'bg-emerald-400' : payout.status === 'REJECTED' ? 'bg-rose-400' : 'bg-amber-400'}`} />
+                                                    {payout.status === 'COMPLETED' ? 'Settled' : payout.status === 'REJECTED' ? 'Rejected' : 'Pending'}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-4 text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    {/* VIEW details */}
+                                                    <button
+                                                        onClick={() => setInspectPayout(payout)}
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={14} />
+                                                    </button>
+                                                    {/* APPROVE AND PAY */}
+                                                    <button
+                                                        disabled={!isPending}
+                                                        onClick={() => {
+                                                            toast.info("Confirm Settlement?", {
+                                                                description: `Approve and finalise payout of ₹${payout.amount} to this provider?`,
+                                                                action: {
+                                                                    label: "Approve & Pay",
+                                                                    onClick: () => updateStatusMutation.mutate({ id: payout._id, status: 'COMPLETED' })
+                                                                }
+                                                            });
+                                                        }}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
+                                                            ${isPending
+                                                                ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 border-[var(--border-color)] hover:border-green-300"
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                            }`}
+                                                        title="Approve & Pay"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                    {/* REJECT */}
+                                                    <button
+                                                        disabled={!isPending}
+                                                        onClick={() => setSelectedPayout(payout)}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
+                                                            ${isPending
+                                                                ? "text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border-[var(--border-color)] hover:border-rose-300"
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                            }`}
+                                                        title="Reject Request"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                                                <Banknote size={20} />
                                             </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                            <div>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">Payout queue reconciled</p>
+                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">No pending withdrawal requests found matching your query.</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-                {payouts.length === 0 && (
-                    <div className="py-32 text-center bg-slate-50/50 border-4 border-dashed border-white rounded-[60px] shadow-inner">
-                        <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
-                            <Banknote size={48} className="text-slate-200" />
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-300 uppercase tracking-[0.2em]">Queue Clean</h3>
-                        <p className="text-xs font-bold text-slate-400 uppercase mt-2 tracking-widest">Waiting for next partner withdrawal request</p>
-                    </div>
-                )}
-
-                {/* Pagination */}
+                {/* ── Pagination ── */}
                 {totalPages > 1 && (
-                    <div className="flex justify-between items-center bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page} of {totalPages}</p>
-                        <div className="flex gap-4">
-                            <button 
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                        <p className="text-xs text-[var(--text-muted)]">
+                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                            <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="px-6 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 hover:bg-slate-200 transition-colors"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
-                                Prev
+                                <ChevronLeft size={14} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-30 hover:bg-black transition-colors"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
-                                Next
+                                <ChevronRight size={14} />
                             </button>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Rejection Modal */}
-            {selectedPayout && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-lg rounded-[48px] p-10 shadow-3xl animate-in zoom-in-95 duration-300">
-                        <div className="flex justify-between items-start mb-8">
+            {/* ── Inspect Details Modal ── */}
+            {inspectPayout && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setInspectPayout(null)} />
+                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
                             <div>
-                                <h3 className="text-3xl font-black text-slate-900">Reject Payout</h3>
-                                <p className="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest">Amount: ₹{selectedPayout.amount}</p>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Payout Details</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">
+                                    Ref ID: #{inspectPayout._id.toUpperCase()}
+                                </h3>
                             </div>
-                            <button onClick={() => setSelectedPayout(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                <XCircle size={32} className="text-slate-200" />
+                            <button
+                                onClick={() => setInspectPayout(null)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
                             </button>
                         </div>
-                        
-                        <div className="space-y-6">
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Provider Name</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{inspectPayout.staffId?.name || "Unnamed Partner"}</p>
+                                </div>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Mobile Contact</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{inspectPayout.staffId?.mobileNumber || "N/A"}</p>
+                                </div>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Bank Name</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{inspectPayout.bankDetails?.bankName || "UPI Mode"}</p>
+                                </div>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Account Holder</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{inspectPayout.bankDetails?.accountHolderName || "N/A"}</p>
+                                </div>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Account Number</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{inspectPayout.bankDetails?.accountNumber || "N/A"}</p>
+                                </div>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">IFSC Code</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)] uppercase">{inspectPayout.bankDetails?.ifscCode || "N/A"}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                <div>
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Payout Amount</p>
+                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">₹{inspectPayout.amount.toLocaleString()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Status</p>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-semibold border
+                                        ${inspectPayout.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                          inspectPayout.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                          'bg-amber-50 text-amber-700 border-amber-200'}`}
+                                    >
+                                        {inspectPayout.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {inspectPayout.adminNote && (
+                                <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl">
+                                    <p className="text-[11px] font-semibold text-yellow-800 dark:text-yellow-500 uppercase tracking-wider mb-1">Admin Notes</p>
+                                    <p className="text-xs font-medium text-yellow-900 dark:text-yellow-100">"{inspectPayout.adminNote}"</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
+                            {inspectPayout.status === 'PENDING' && (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedPayout(inspectPayout);
+                                        }}
+                                        className="h-9 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
+                                    >
+                                        Reject
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            toast.info("Confirm Settlement?", {
+                                                description: `Approve and finalise payout of ₹${inspectPayout.amount} to this provider?`,
+                                                action: {
+                                                    label: "Approve & Pay",
+                                                    onClick: () => updateStatusMutation.mutate({ id: inspectPayout._id, status: 'COMPLETED' })
+                                                }
+                                            });
+                                        }}
+                                        className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
+                                    >
+                                        Approve & Pay
+                                    </button>
+                                </>
+                            )}
+                            <button
+                                onClick={() => setInspectPayout(null)}
+                                className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Rejection Modal ── */}
+            {selectedPayout && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedPayout(null)} />
+                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Rejection Reason</label>
-                                <textarea 
-                                    className="w-full h-40 bg-slate-50 border-none rounded-[32px] p-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
-                                    placeholder="Explain why this payout was rejected (e.g. Invalid bank details, Fraud check needed)..."
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Settlement Protocol</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Reject Payout Request</h3>
+                            </div>
+                            <button
+                                onClick={() => setSelectedPayout(null)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+                            <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex justify-between items-center">
+                                <div>
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">Amount</p>
+                                    <p className="text-base font-bold text-[var(--text-main)] mt-0.5">₹{selectedPayout.amount.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase">Partner</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)] mt-0.5">{selectedPayout.staffId?.name}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Rejection Reason</label>
+                                <textarea
+                                    className="w-full h-24 p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all resize-none font-semibold"
+                                    placeholder="Explain why this request is being rejected (e.g. Invalid bank details)..."
                                     value={adminNote}
                                     onChange={(e) => setAdminNote(e.target.value)}
+                                    required
                                 />
                             </div>
-                            
-                            <button 
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
+                            <button
+                                onClick={() => setSelectedPayout(null)}
+                                className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
                                 onClick={() => updateStatusMutation.mutate({ id: selectedPayout._id, status: 'REJECTED', note: adminNote })}
                                 disabled={updateStatusMutation.isPending}
-                                className="w-full bg-rose-600 hover:bg-rose-700 text-white h-16 rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl shadow-rose-100 transition-all active:scale-95 disabled:opacity-50"
+                                className="h-9 px-5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
                             >
-                                {updateStatusMutation.isPending ? "Finalizing..." : "Confirm Rejection"}
+                                {updateStatusMutation.isPending ? "Syncing..." : "Confirm Rejection"}
                             </button>
                         </div>
                     </div>

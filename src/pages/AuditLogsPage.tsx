@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
   History, User, Activity, ShieldCheck,
-  ArrowRightCircle, Search, Filter, Calendar,
+  ArrowRightCircle, Search,
   Download, RefreshCcw, FileText, Settings
 } from "lucide-react";
 import { toast } from "sonner";
@@ -61,140 +61,181 @@ export function AuditLogsPage() {
     toast.success("Audit logs exported");
   };
 
-  const getActionIcon = (action: string) => {
+  const getActionBadge = (action: string) => {
     const act = action.toLowerCase();
-    if (act.includes('create') || act.includes('add')) return <div className="timeline-dot" style={{ borderColor: '#22c55e', color: '#22c55e' }}><Activity size={14} /></div>;
-    if (act.includes('delete') || act.includes('remove')) return <div className="timeline-dot" style={{ borderColor: '#ef4444', color: '#ef4444' }}><ShieldCheck size={14} /></div>;
-    if (act.includes('update') || act.includes('edit')) return <div className="timeline-dot" style={{ borderColor: '#f59e0b', color: '#f59e0b' }}><RefreshCcw size={14} /></div>;
-    if (act.includes('login') || act.includes('auth')) return <div className="timeline-dot" style={{ borderColor: '#6366f1', color: '#6366f1' }}><User size={14} /></div>;
-    return <div className="timeline-dot"><FileText size={14} /></div>;
+    if (act.includes('create') || act.includes('add')) {
+      return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400">Create</span>;
+    }
+    if (act.includes('delete') || act.includes('remove')) {
+      return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400">Delete</span>;
+    }
+    if (act.includes('update') || act.includes('edit')) {
+      return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400">Update</span>;
+    }
+    if (act.includes('login') || act.includes('auth')) {
+      return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400">Auth</span>;
+    }
+    return <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-400">System</span>;
   };
 
   return (
-    <div className="flex-col gap-8">
-      <header className="flex justify-between items-center">
-        <div>
-          <h1 className="brand-name" style={{ fontSize: '2rem' }}>System Audit Logs</h1>
-          <p className="text-xs muted font-extrabold uppercase tracking-widest mt-1">Activity log for all admin operations & security events</p>
+    <div className="space-y-6 animate-in">
+      {/* ── Page Header ── */}
+      <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+        <div className="relative z-10 w-full">
+          <div className="flex items-center justify-between gap-4 w-full">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">System Audit Logs</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                  Home • Security • Activity Log Registry
+                </p>
+              </div>
+            </div>
+            {/* Header Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                className="button secondary h-10 px-4 rounded-xl gap-1.5 text-xs font-bold uppercase border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)]" 
+                onClick={exportCSV}
+              >
+                <Download size={14} />
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCcw size={16} className={isFetching ? "animate-spin" : ""} />
-            <span>Sync Feed</span>
-          </button>
-          <button className="button secondary h-11 px-5 rounded-xl gap-2 text-xs font-black uppercase" onClick={exportCSV}>
-            <Download size={16} />
-            <span>Export CSV</span>
-          </button>
-        </div>
+        <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
       </header>
 
-      <div className="grid-2" style={{ gridTemplateColumns: 'minmax(0, 1fr) 340px' }}>
-        <div className="flex-col gap-6">
-          <div className="card p-4 border-none shadow-sm flex items-center gap-4 bg-[var(--card-bg)]" style={{ borderRadius: '20px' }}>
-            <div className="relative flex-1">
-              <Search className="absolute text-[var(--text-muted)]" size={18} style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
-              <input
-                placeholder="Search by action, admin, or ID..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-[var(--bg-main)] border-none px-5 py-3 rounded-xl text-sm"
-                style={{ paddingLeft: '48px' }}
-              />
+      {/* ── Filter Toolbar ── */}
+      <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+        <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+          <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+          <input 
+            type="text"
+            placeholder="Search by TxnID, name, phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                fontFamily: "inherit", boxSizing: "border-box"
+            }}
+          />
+        </div>
+        <select
+          value={entityFilter}
+          onChange={e => setEntityFilter(e.target.value)}
+          className="h-10 px-3.5 rounded-lg text-xs font-bold border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] outline-none cursor-pointer"
+        >
+          <option value="All">All Entities</option>
+          {allEntities.map(e => <option key={e} value={e}>{e}</option>)}
+        </select>
+      </div>
+
+      {/* ── Table Layout (Notification Log Style) ── */}
+      <div className="w-full">
+        {/* Left Side: Audit Table */}
+        <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <History size={15} className="text-indigo-500" />
+              <h3 className="text-sm font-bold text-[var(--text-main)]">Operational Log Queue</h3>
             </div>
-            <select
-              value={entityFilter}
-              onChange={e => setEntityFilter(e.target.value)}
-              className="button secondary h-11 px-4 rounded-xl text-xs font-black border border-[var(--border-color)] bg-[var(--card-bg)]"
-            >
-              <option value="All">All Entities</option>
-              {allEntities.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
+            <span className="text-xs font-bold text-[var(--text-muted)]">
+              {filtered.length} Log Entries
+            </span>
           </div>
 
-          <div className="card p-8 border-none bg-[var(--card-bg)] min-h-[600px]" style={{ borderRadius: '32px' }}>
-            {isLoading ? (
-              <div className="flex-col items-center py-20 text-center gap-4">
-                <RefreshCcw className="animate-spin text-indigo-500 dark:text-indigo-400" size={40} />
-                <p className="font-bold text-xs muted uppercase tracking-[0.2em]">Tracing System Footprints...</p>
-              </div>
-            ) : (
-              <div className="timeline mt-4">
-                {(filtered).map((log) => (
-                  <div key={log._id} className="timeline-item">
-                    {getActionIcon(log.action)}
-                    <div className="timeline-content">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <p className="log-action">{log.action}</p>
-                          <div className="log-meta">
-                            <span className="flex items-center gap-1.5"><User size={12} /> {log.actorAdminId?.name || "System Automated"}</span>
-                            <span className="flex items-center gap-1.5"><ArrowRightCircle size={12} /> {log.targetType}</span>
-                            <span className="badge secondary text-[9px] uppercase font-black" style={{ padding: '2px 8px' }}>#{log._id.slice(-6)}</span>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                  <th className="py-3 px-4 w-12">#</th>
+                  <th className="py-3 px-4 w-28">Type</th>
+                  <th className="py-3 px-4">Action Detail</th>
+                  <th className="py-3 px-4">Actor (Admin)</th>
+                  <th className="py-3 px-4">Target Entity</th>
+                  <th className="py-3 px-4 w-44">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-color)]">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="py-16 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <RefreshCcw className="animate-spin text-indigo-500" size={24} />
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Syncing Audit Records...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filtered.length > 0 ? (
+                  filtered.map((log, index) => (
+                    <tr key={log._id} className="hover:bg-[var(--bg-main)]/50 transition-colors">
+                      {/* Index */}
+                      <td className="py-4 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                        {String(index + 1).padStart(2, '0')}
+                      </td>
+                      {/* Type Badge */}
+                      <td className="py-4 px-4">
+                        {getActionBadge(log.action)}
+                      </td>
+                      {/* Action & Target ID */}
+                      <td className="py-4 px-4">
+                        <div>
+                          <p className="font-bold text-xs text-[var(--text-main)]">{log.action}</p>
+                          {log.targetId && (
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono block mt-0.5">
+                              ID: {log.targetId}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Actor */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[10px] font-bold text-[var(--text-main)]">
+                            {(log.actorAdminId?.name || "S")[0]}
+                          </div>
+                          <div>
+                            <p className="font-bold text-xs text-[var(--text-main)]">{log.actorAdminId?.name || "System Automated"}</p>
+                            <span className="text-[9px] text-[var(--text-muted)] block">{log.actorAdminId?.email || "System Engine"}</span>
                           </div>
                         </div>
-                        <time className="text-[10px] font-black muted uppercase tracking-widest">{new Date(log.createdAt).toLocaleTimeString()} · {new Date(log.createdAt).toLocaleDateString()}</time>
+                      </td>
+                      {/* Target Entity */}
+                      <td className="py-4 px-4">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300">
+                          {log.targetType || "—"}
+                        </span>
+                      </td>
+                      {/* Timestamp */}
+                      <td className="py-4 px-4">
+                        <span className="text-xs font-semibold text-[var(--text-muted)]">
+                          {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <History size={24} className="text-slate-300" />
+                        <div>
+                          <h4 className="text-xs font-bold text-[var(--text-main)]">No Audit Logs Found</h4>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Adjust filter query options or refresh system feed.</p>
+                        </div>
                       </div>
-                      <div className="mt-3 p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                        <p className="text-[11px] font-medium text-[var(--text-muted)]">Target ID: <span className="font-mono text-[var(--text-main)]">{log.targetId || "—"}</span></p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {(!data || data.length === 0) && (
-                  <div className="py-20 text-center">
-                    <History size={48} className="mx-auto text-slate-200 mb-4" />
-                    <p className="font-bold text-[var(--text-muted)] uppercase tracking-widest text-xs">No audit signals captured in this cluster.</p>
-                  </div>
+                    </td>
+                  </tr>
                 )}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <aside className="space-y-6">
-          <div className="card p-6 border-none bg-slate-900 text-white" style={{ borderRadius: '32px' }}>
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Security Pulse</p>
-              <ShieldCheck size={18} className="text-green-400" />
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <h2 className="text-3xl font-black">100%</h2>
-                <span className="text-[10px] font-black text-green-400 uppercase mb-1">Integrity Secure</span>
-              </div>
-              <p className="text-xs text-[var(--text-muted)] leading-relaxed">The audit log store is protected by cryptographic hashes. All operations are logged with server-side timestamps.</p>
-            </div>
-          </div>
-
-          <div className="card p-6 border-none bg-[var(--card-bg)] shadow-sm" style={{ borderRadius: '32px' }}>
-            <p className="text-[10px] font-black uppercase tracking-widest muted mb-6">Action Frequency</p>
-            <div className="space-y-5">
-              {[
-                { label: 'Admin Logins', count: 42, color: '#6366f1' },
-                { label: 'Registry Updates', count: 128, color: '#f59e0b' },
-                { label: 'Security Alerts', count: 0, color: '#ef4444' }
-              ].map(item => (
-                <div key={item.label} className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
-                    <span>{item.label}</span>
-                    <span className="muted">{item.count}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-[var(--bg-main)] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${(item.count / 150) * 100}% `, background: item.color }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card p-6 border-none bg-indigo-50 dark:bg-indigo-500/10" style={{ borderRadius: '32px' }}>
-            <Settings size={24} className="text-indigo-600 dark:text-indigo-400 mb-4" />
-            <h3 className="font-black text-sm text-[var(--text-main)] uppercase tracking-widest mb-2">Audit Config</h3>
-            <p className="text-xs text-[var(--text-muted)] mb-4">You are currently viewing the Standard Retention Cluster (90 Days).</p>
-            <button className="button primary w-full h-11 rounded-xl text-xs font-black uppercase tracking-widest">Manage Storage</button>
-          </div>
-        </aside>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import {
   Globe, Palette, Phone, Layout, Image as ImageIcon,
   Save, AlertCircle, CheckCircle2, Upload, Trash2, Plus,
   Monitor, Smartphone, Link, Shield, ChevronRight, Sparkles,
-  Activity
+  Activity, Loader2
 } from "lucide-react";
 
 const createDefaultConfig = (appKey: ManagedAppKey): ManagedAppConfig => {
@@ -110,7 +110,7 @@ export function AppManagementPage({ appKey }: Props) {
     },
     onSuccess: (next) => {
       setFormState(next);
-      setStatus(`Configuration synchronized successfully at ${new Date(next.updatedAt).toLocaleTimeString()}`);
+      setStatus(`Configuration synced successfully at ${new Date(next.updatedAt).toLocaleTimeString()}`);
       setTimeout(() => setStatus(""), 5000);
     },
     onError: () => {
@@ -199,281 +199,327 @@ export function AppManagementPage({ appKey }: Props) {
   };
 
   return (
-    <div className="space-y-10 animate-in">
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[var(--card-bg)] p-10 rounded-[32px] border border-[var(--border-color)] shadow-sm shadow-blue-50">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
-            <h1 className="text-3xl font-black text-[var(--text-main)] tracking-tight">{title} <span className="text-blue-600 dark:text-blue-400">Registry</span></h1>
+    <div className="space-y-6 animate-in">
+      {/* ── Page Header ── */}
+      <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
+        <div className="relative z-10 text-left">
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">
+            {title} Config
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • App Management • Config Control Center</p>
           </div>
-          <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] ml-5">CENTRALIZED APP CONFIGURATION STORE</p>
         </div>
-
-        <div className="flex bg-[var(--bg-main)]/80 p-1.5 rounded-2xl overflow-x-auto">
-          {sections.map((section) => (
-            <button
-              key={section.key}
-              type="button"
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 shrink-0 ${activeSection === section.key ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-              onClick={() => setActiveSection(section.key)}
-            >
-              <section.icon size={16} />
-              <span>{section.label}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 relative z-10 shrink-0">
+          <button
+            type="button"
+            className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl flex items-center gap-2 shadow-sm disabled:opacity-60 transition-all"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+          >
+            {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <span>Save Settings</span>
+          </button>
         </div>
+        <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
       </header>
 
-      <main className="max-w-6xl mx-auto pb-32">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center p-20 space-y-4 bg-[var(--card-bg)] rounded-[40px] border border-[var(--border-color)] shadow-sm">
-            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-            <p className="font-black text-[10px] text-[var(--text-muted)] uppercase tracking-widest animate-pulse">Querying Platform Store...</p>
+      {/* ── Main Layout Grid (Left Tabs, Right Panel Content) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Left Sidebar Tab Navigation Card */}
+        <div className="md:col-span-1 space-y-2">
+          <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-3 shadow-sm space-y-1.5 flex flex-col">
+            <div className="px-3 py-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider border-b border-[var(--border-color)] mb-1 text-left">
+              App Sections
+            </div>
+            {sections.map((section) => (
+              <button
+                key={section.key}
+                type="button"
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-all text-left w-full ${activeSection === section.key ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 border border-blue-100 dark:border-blue-500/20" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)] border border-transparent"}`}
+                onClick={() => setActiveSection(section.key)}
+              >
+                <section.icon size={15} className={activeSection === section.key ? "text-blue-500" : ""} />
+                <span>{section.label}</span>
+              </button>
+            ))}
           </div>
-        ) : (
-          <div className="space-y-6">
-            {activeSection === "env" && (
-              <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center">
-                    <Globe size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-[var(--text-main)]">API Endpoints</h3>
-                    <p className="text-sm font-medium text-[var(--text-muted)]">Manage critical API and asset cluster endpoints.</p>
-                  </div>
-                </div>
+        </div>
 
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">API Base URL</label>
-                    <input className="w-full h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-100 transition-all" placeholder="e.g. https://api.a1care.247/v1" value={formState.env.apiBaseUrl} onChange={(e) => updatePath("env.apiBaseUrl", e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Assets Base URL</label>
-                    <input className="w-full h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-blue-100 transition-all" placeholder="e.g. https://cdn.a1care.247/uploads" value={formState.env.assetsBaseUrl} onChange={(e) => updatePath("env.assetsBaseUrl", e.target.value)} />
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {activeSection === "branding" && (
-              <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center">
-                    <Palette size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-[var(--text-main)]">Identity & Theme</h3>
-                    <p className="text-sm font-medium text-[var(--text-muted)]">Visual brand identity and application color tokens.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Logo URL</label>
-                      <div className="flex gap-2">
-                        <input className="flex-1 h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold focus:ring-2 focus:ring-blue-100 transition-all" placeholder="Path to SVG/PNG logo" value={formState.branding.logoUrl} onChange={(e) => updatePath("branding.logoUrl", e.target.value)} />
-                        <label className="h-14 px-6 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all">
-                          <Upload size={20} />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadToPath("branding.logoUrl", e.target.files?.[0] ?? null, "Branding Logo")} />
-                        </label>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Splash Art URL</label>
-                      <div className="flex gap-2">
-                        <input className="flex-1 h-14 bg-[var(--bg-main)] border-none rounded-2xl px-6 text-[var(--text-main)] font-bold focus:ring-2 focus:ring-blue-100 transition-all" placeholder="Path to Launch image" value={formState.branding.splashImageUrl} onChange={(e) => updatePath("branding.splashImageUrl", e.target.value)} />
-                        <label className="h-14 px-6 bg-slate-900 text-white rounded-2xl flex items-center justify-center cursor-pointer active:scale-95 transition-all">
-                          <Upload size={20} />
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadToPath("branding.splashImageUrl", e.target.files?.[0] ?? null, "Splash Art")} />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-8 pt-4">
-                    {[
-                      { label: "Primary Tint", path: "branding.primaryColor", value: formState.branding.primaryColor },
-                      { label: "Secondary", path: "branding.secondaryColor", value: formState.branding.secondaryColor },
-                      { label: "Accent", path: "branding.accentColor", value: formState.branding.accentColor },
-                    ].map(color => (
-                      <div key={color.path} className="flex items-center gap-4 bg-[var(--bg-main)] p-4 rounded-3xl border border-[var(--border-color)] group">
-                        <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-inner cursor-pointer group-hover:scale-105 transition-transform">
-                          <input type="color" className="absolute -inset-2 w-[200%] h-[200%] cursor-pointer border-none" value={color.value || "#000000"} onChange={(e) => updatePath(color.path, e.target.value)} />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{color.label}</p>
-                          <p className="text-sm font-black text-[var(--text-main)] font-mono mt-0.5">{color.value?.toUpperCase() || "#000000"}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {activeSection === "banners" && (
-              <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-pink-50 dark:bg-pink-500/10 text-pink-600 rounded-2xl flex items-center justify-center">
-                      <ImageIcon size={24} />
+        {/* Right Content Panel Column */}
+        <div className="md:col-span-3">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center p-20 bg-[var(--card-bg)] rounded-xl border border-[var(--border-color)] space-y-4 shadow-sm">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider animate-pulse">Querying Platform Store...</p>
+            </div>
+          ) : (
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-6 md:p-8 shadow-sm">
+              {activeSection === "env" && (
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
+                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center">
+                      <Globe size={20} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-[var(--text-main)]">Dynamic Banners</h3>
-                      <p className="text-sm font-medium text-[var(--text-muted)]">Promotional flashes appearing on the app dashboard.</p>
+                      <h3 className="text-sm font-bold text-[var(--text-main)]">API Endpoints</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Manage critical API and asset cluster endpoints.</p>
                     </div>
                   </div>
-                  <button className="h-12 px-6 bg-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-100" onClick={addBanner}>
-                    <Plus size={18} /> Add Banner
-                  </button>
-                </div>
 
-                <div className="grid gap-6">
-                  {formState.landing.festivalBanners.map((banner, index) => (
-                    <div key={banner.id} className="relative group bg-[var(--bg-main)] rounded-3xl p-8 border border-[var(--border-color)] hover:border-blue-200 transition-all">
-                      <button className="absolute top-6 right-6 p-2 text-[var(--text-muted)] hover:text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 dark:bg-red-500/10 rounded-xl transition-all" onClick={() => removeBanner(index)}>
-                        <Trash2 size={18} />
-                      </button>
+                  <div className="grid sm:grid-cols-2 gap-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">API Base URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" placeholder="e.g. https://api.a1care.247/v1" value={formState.env.apiBaseUrl} onChange={(e) => updatePath("env.apiBaseUrl", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Assets Base URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" placeholder="e.g. https://cdn.a1care.247/uploads" value={formState.env.assetsBaseUrl} onChange={(e) => updatePath("env.assetsBaseUrl", e.target.value)} />
+                    </div>
+                  </div>
+                </section>
+              )}
 
-                      <div className="grid lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-1 space-y-6">
-                          <div className="w-full aspect-[21/9] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] overflow-hidden flex items-center justify-center relative">
-                            {banner.imageUrl ? (
-                              <img src={resolveAssetUrl(banner.imageUrl)} className="w-full h-full object-cover" alt="Preview" />
-                            ) : (
-                              <div className="text-slate-200 flex flex-col items-center gap-2">
-                                <ImageIcon size={32} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">No Image</span>
-                              </div>
-                            )}
-                            <label className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                              <span className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                <Upload size={16} /> Replace
-                              </span>
-                              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleBannerImageUpload(index, e.target.files?.[0] ?? null)} />
-                            </label>
-                          </div>
-                          <label className="flex items-center gap-3 cursor-pointer group/check">
-                            <input type="checkbox" className="w-6 h-6 rounded-lg border-[var(--border-color)] text-blue-600 dark:text-blue-400 focus:ring-blue-100 transition-all" checked={banner.active} onChange={(e) => updateBanner(index, "active", e.target.checked)} />
-                            <span className="text-sm font-bold text-[var(--text-muted)] group-hover/check:text-[var(--text-main)] transition-colors">Visible in App</span>
+              {activeSection === "branding" && (
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
+                    <div className="w-10 h-10 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg flex items-center justify-center">
+                      <Palette size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-main)]">Identity & Theme</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Visual brand identity and application color tokens.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 text-left">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Logo URL</label>
+                        <div className="flex gap-2">
+                          <input className="flex-1 h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" placeholder="Path to SVG/PNG logo" value={formState.branding.logoUrl} onChange={(e) => updatePath("branding.logoUrl", e.target.value)} />
+                          <label className="h-10 px-4 bg-slate-900 text-white rounded-lg flex items-center justify-center cursor-pointer active:scale-95 transition-all">
+                            <Upload size={16} />
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadToPath("branding.logoUrl", e.target.files?.[0] ?? null, "Branding Logo")} />
                           </label>
                         </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Splash Art URL</label>
+                        <div className="flex gap-2">
+                          <input className="flex-1 h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" placeholder="Path to Launch image" value={formState.branding.splashImageUrl} onChange={(e) => updatePath("branding.splashImageUrl", e.target.value)} />
+                          <label className="h-10 px-4 bg-slate-900 text-white rounded-lg flex items-center justify-center cursor-pointer active:scale-95 transition-all">
+                            <Upload size={16} />
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleUploadToPath("branding.splashImageUrl", e.target.files?.[0] ?? null, "Splash Art")} />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
 
-                        <div className="lg:col-span-2 grid gap-6">
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Internal Label</label>
-                            <input className="w-full h-12 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-4 font-bold text-[var(--text-main)] focus:ring-2 focus:ring-blue-100" placeholder="e.g. Summer Health Campaign" value={banner.title} onChange={(e) => updateBanner(index, "title", e.target.value)} />
+                    <div className="flex flex-wrap gap-6 pt-2">
+                      {[
+                        { label: "Primary Tint", path: "branding.primaryColor", value: formState.branding.primaryColor },
+                        { label: "Secondary", path: "branding.secondaryColor", value: formState.branding.secondaryColor },
+                        { label: "Accent", path: "branding.accentColor", value: formState.branding.accentColor },
+                      ].map((theme) => (
+                        <div key={theme.path} className="flex items-center gap-3 bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
+                          <input type="color" className="w-8 h-8 rounded border-none cursor-pointer" value={theme.value} onChange={(e) => updatePath(theme.path, e.target.value)} />
+                          <div className="text-left">
+                            <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">{theme.label}</p>
+                            <p className="text-xs font-mono font-bold text-[var(--text-main)]">{theme.value}</p>
                           </div>
-                          <div className="space-y-2">
-                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Redirect Action (Deep Link)</label>
-                            <div className="relative">
-                              <Link className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
-                              <input className="w-full h-12 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl pl-12 pr-4 font-bold text-[var(--text-main)] focus:ring-2 focus:ring-blue-100" placeholder="a1care://services/category/..." value={banner.redirectUrl} onChange={(e) => updateBanner(index, "redirectUrl", e.target.value)} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {activeSection === "contact" && (
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
+                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center">
+                      <Phone size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-main)]">Support & Contact</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Manage customer care, email, and social help desks.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Support Email</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.supportEmail} onChange={(e) => updatePath("contact.supportEmail", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Support Phone</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.supportPhone} onChange={(e) => updatePath("contact.supportPhone", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">WhatsApp Hotline</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.whatsappNumber} onChange={(e) => updatePath("contact.whatsappNumber", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Official Website</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.website} onChange={(e) => updatePath("contact.website", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Office Address</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.address} onChange={(e) => updatePath("contact.address", e.target.value)} />
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {activeSection === "landing" && (
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
+                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center">
+                      <Layout size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-main)]">Marketing Landing</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Configure copy headlines and links to application stores.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">App Headline Title</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.landing.headline} onChange={(e) => updatePath("landing.headline", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Play Store URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.landing.playStoreUrl} onChange={(e) => updatePath("landing.playStoreUrl", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">App Store URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.landing.appStoreUrl} onChange={(e) => updatePath("landing.appStoreUrl", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Sub-headline Description</label>
+                      <textarea className="w-full h-24 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg p-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.landing.subHeadline} onChange={(e) => updatePath("landing.subHeadline", e.target.value)} />
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {activeSection === "banners" && (
+                <section className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
+                    <div className="flex items-center gap-3 text-left">
+                      <div className="w-10 h-10 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-lg flex items-center justify-center">
+                        <ImageIcon size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--text-main)]">Festival Promotions</h3>
+                        <p className="text-xs text-[var(--text-muted)]">Configure seasonal app dashboard banners.</p>
+                      </div>
+                    </div>
+                    <button type="button" onClick={addBanner} className="h-8 px-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all">
+                      <Plus size={12} /> Add Banner
+                    </button>
+                  </div>
+
+                  <div className="grid gap-6">
+                    {formState.landing.festivalBanners.map((banner, index) => (
+                      <div key={banner.id} className="relative bg-[var(--bg-main)] rounded-xl p-5 border border-[var(--border-color)] space-y-4 text-left">
+                        <button type="button" onClick={() => removeBanner(index)} className="absolute top-4 right-4 w-7 h-7 rounded-lg border border-red-200 bg-red-50/50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                          <Trash2 size={13} />
+                        </button>
+
+                        <div className="grid sm:grid-cols-3 gap-5">
+                          <div className="space-y-3">
+                            <div className="w-full aspect-[21/9] bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)] overflow-hidden flex items-center justify-center relative">
+                              {banner.imageUrl ? (
+                                <img src={resolveAssetUrl(banner.imageUrl)} className="w-full h-full object-cover" alt="Preview" />
+                              ) : (
+                                <ImageIcon size={24} className="text-[var(--text-muted)] opacity-35" />
+                              )}
+                              <label className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                                <span className="text-white text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <Upload size={12} /> Upload
+                                </span>
+                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleBannerImageUpload(index, e.target.files?.[0] ?? null)} />
+                              </label>
+                            </div>
+                            <label className="inline-flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" className="w-4 h-4 rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500/20 transition-all" checked={banner.active} onChange={(e) => updateBanner(index, "active", e.target.checked)} />
+                              <span className="text-[10px] font-bold text-[var(--text-muted)]">Active Visually</span>
+                            </label>
+                          </div>
+
+                          <div className="sm:col-span-2 space-y-4">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Alt text / Title</label>
+                              <input className="w-full h-9 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg px-3 text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500 transition-all" placeholder="Alt Title text" value={banner.title} onChange={(e) => updateBanner(index, "title", e.target.value)} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Deep Link redirect</label>
+                              <input className="w-full h-9 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg px-3 text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500 transition-all" placeholder="a1care://redirect-url" value={banner.redirectUrl} onChange={(e) => updateBanner(index, "redirectUrl", e.target.value)} />
                             </div>
                           </div>
                         </div>
                       </div>
+                    ))}
+                    {formState.landing.festivalBanners.length === 0 && (
+                      <div className="py-12 text-center bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] text-[var(--text-muted)] flex flex-col items-center gap-2">
+                        <Sparkles size={28} className="opacity-40" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider">No active promotional banners</span>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {activeSection === "legal" && (
+                <section className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
+                    <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center">
+                      <Shield size={20} />
                     </div>
-                  ))}
-                  {formState.landing.festivalBanners.length === 0 && (
-                    <div className="p-20 text-center bg-[var(--bg-main)] rounded-[40px] border-4 border-dashed border-[var(--border-color)] text-[var(--text-muted)]">
-                      <Sparkles size={48} className="mx-auto mb-4 opacity-40" />
-                      <p className="text-sm font-black uppercase tracking-[0.2em]">Launch your first promotional pulse</p>
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--text-main)]">Legal Agreements</h3>
+                      <p className="text-xs text-[var(--text-muted)]">Configure official terms, conditions, and FAQ document paths.</p>
                     </div>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {activeSection === "legal" && (
-              <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 rounded-2xl flex items-center justify-center">
-                    <Shield size={24} />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-[var(--text-main)]">Legal Documents</h3>
-                    <p className="text-sm font-medium text-[var(--text-muted)]">Manage public FAQ, Privacy, and Terms text.</p>
-                  </div>
-                </div>
 
-                <div className="grid gap-8">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Frequently Asked Questions (HTML/Text)</label>
-                    <textarea 
-                      className="w-full h-40 bg-[var(--bg-main)] border-none rounded-2xl p-6 text-[var(--text-main)] font-medium focus:ring-2 focus:ring-blue-100 transition-all font-mono text-xs" 
-                      value={formState.contact.faq} 
-                      onChange={(e) => updatePath("contact.faq", e.target.value)} 
-                    />
+                  <div className="grid sm:grid-cols-2 gap-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Privacy Policy URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.privacyPolicy} onChange={(e) => updatePath("contact.privacyPolicy", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Terms & Conditions URL</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.termsAndConditions} onChange={(e) => updatePath("contact.termsAndConditions", e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Frequently Asked Questions (FAQ) Link</label>
+                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.faq} onChange={(e) => updatePath("contact.faq", e.target.value)} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Privacy Policy Protocol</label>
-                    <textarea 
-                      className="w-full h-40 bg-[var(--bg-main)] border-none rounded-2xl p-6 text-[var(--text-main)] font-medium focus:ring-2 focus:ring-blue-100 transition-all font-mono text-xs" 
-                      value={formState.contact.privacyPolicy} 
-                      onChange={(e) => updatePath("contact.privacyPolicy", e.target.value)} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Terms & Conditions Agreement</label>
-                    <textarea 
-                      className="w-full h-40 bg-[var(--bg-main)] border-none rounded-2xl p-6 text-[var(--text-main)] font-medium focus:ring-2 focus:ring-blue-100 transition-all font-mono text-xs" 
-                      value={formState.contact.termsAndConditions} 
-                      onChange={(e) => updatePath("contact.termsAndConditions", e.target.value)} 
-                    />
-                  </div>
-                </div>
-              </section>
-            )}
+                </section>
+              )}
 
-            {(activeSection as string) === "system" && (
-              <SystemSettingsSection />
-            )}
-            {/* Other sections would follow same premium pattern... */}
-          </div>
-        )}
-      </main>
-
-      {/* Synchronous Global Action Bar */}
-      <footer className="mt-12 mb-20 w-full max-w-4xl mx-auto px-4">
-        <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[32px] p-4 flex items-center justify-between shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
-          <div className="flex-1 pl-6">
-            {uploadingTarget ? (
-              <div className="flex items-center gap-3 text-blue-400 animate-pulse">
-                <Upload size={18} />
-                <span className="text-xs font-black uppercase tracking-widest">Syncing Asset: {uploadingTarget}</span>
-              </div>
-            ) : status ? (
-              <div className="flex items-center gap-3 text-emerald-400">
-                <CheckCircle2 size={18} />
-                <span className="text-xs font-black uppercase tracking-widest">{status}</span>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                <p className="text-white font-black text-sm tracking-tight">Deployment Ready</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Push local modifications to registry cluster</p>
-              </div>
-            )}
-          </div>
-
-          <button
-            className="h-14 px-8 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-blue-600/20 active:scale-95 transition-all group disabled:opacity-50"
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <Save size={20} className="group-hover:scale-110 transition-transform" />
-            )}
-            <span className="text-sm uppercase tracking-wider">Save Changes</span>
-            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform opacity-50" />
-          </button>
+              {activeSection === ("system" as any) && (
+                <SystemSettingsSection />
+              )}
+            </div>
+          )}
         </div>
-      </footer>
+      </div>
+
+      {status && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
+          <div className="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2.5 border border-white/10 text-xs font-bold">
+            <CheckCircle2 size={16} className="text-emerald-400" />
+            <span>{status}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -504,88 +550,87 @@ function SystemSettingsSection() {
   if (!system) return null;
 
   return (
-    <section className="bg-[var(--card-bg)] rounded-[40px] p-10 lg:p-14 border border-[var(--border-color)] shadow-sm space-y-12 animate-in fade-in zoom-in-95">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 text-red-600 rounded-2xl flex items-center justify-center">
-            <Monitor size={24} />
+    <section className="space-y-6 text-left animate-in fade-in zoom-in-95">
+      <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 text-red-650 rounded-lg flex items-center justify-center">
+            <Monitor size={20} />
           </div>
           <div>
-            <h3 className="text-xl font-black text-[var(--text-main)]">System Control</h3>
-            <p className="text-sm font-medium text-[var(--text-muted)]">Global network override and maintenance protocols.</p>
+            <h3 className="text-sm font-bold text-[var(--text-main)]">System Control</h3>
+            <p className="text-xs text-[var(--text-muted)]">Global network override and maintenance protocols.</p>
           </div>
         </div>
 
         {status && (
-          <div className="px-4 py-2 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest rounded-xl border border-emerald-100 flex items-center gap-2">
-            <CheckCircle2 size={14} /> {status}
+          <div className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider rounded-lg border border-emerald-100 flex items-center gap-1.5">
+            <CheckCircle2 size={12} /> {status}
           </div>
         )}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-10">
-        <div className="p-10 bg-slate-50 dark:bg-slate-900/50 rounded-[40px] border border-slate-100 space-y-6">
-          <div className="space-y-2">
-             <h4 className="text-lg font-black text-slate-900 dark:text-white">Maintenance Command</h4>
-             <p className="text-sm text-slate-500 font-medium leading-relaxed">Activating this will block all patient and provider traffic, returning a 503 Maintenance response globally. Use for critical infrastructure updates.</p>
+      <div className="grid sm:grid-cols-2 gap-6">
+        <div className="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] space-y-4">
+          <div className="space-y-1">
+             <h4 className="text-sm font-bold text-[var(--text-main)]">Maintenance Command</h4>
+             <p className="text-xs text-[var(--text-muted)] font-medium leading-relaxed">Activating this will block all patient and provider traffic, returning a 503 Maintenance response globally.</p>
           </div>
 
           <div 
             onClick={() => updateMutation.mutate({ maintenanceMode: !system.maintenanceMode })}
-            className={`h-24 px-8 rounded-3xl flex items-center justify-between cursor-pointer transition-all duration-500 border-2 ${system.maintenanceMode ? 'bg-red-600 border-red-500 shadow-xl shadow-red-200' : 'bg-white border-slate-200 hover:border-blue-400 shadow-sm'}`}
+            className={`h-16 px-5 rounded-xl flex items-center justify-between cursor-pointer transition-all duration-350 border ${system.maintenanceMode ? 'bg-red-600 border-red-500 shadow-sm' : 'bg-[var(--card-bg)] border-[var(--border-color)] hover:border-blue-400'}`}
           >
-            <div className="flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${system.maintenanceMode ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <AlertCircle size={22} />
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${system.maintenanceMode ? 'bg-white/20 text-white' : 'bg-[var(--bg-main)] text-[var(--text-muted)]'}`}>
+                <AlertCircle size={16} />
               </div>
               <div>
-                <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${system.maintenanceMode ? 'text-white/60' : 'text-slate-400'}`}>System Status</p>
-                <p className={`text-xl font-black ${system.maintenanceMode ? 'text-white' : 'text-slate-900'}`}>{system.maintenanceMode ? "OFFLINE / MAINTENANCE" : "OPERATIONAL"}</p>
+                <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${system.maintenanceMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>System Status</p>
+                <p className={`text-xs font-black ${system.maintenanceMode ? 'text-white' : 'text-[var(--text-main)]'}`}>{system.maintenanceMode ? "OFFLINE / MAINTENANCE" : "OPERATIONAL"}</p>
               </div>
             </div>
             
-            <div className={`w-14 h-7 rounded-full relative transition-colors ${system.maintenanceMode ? 'bg-white/20' : 'bg-slate-200'}`}>
-                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300 ${system.maintenanceMode ? 'right-1' : 'left-1'}`}></div>
+            <div className={`w-10 h-5 rounded-full relative transition-colors ${system.maintenanceMode ? 'bg-white/20' : 'bg-[var(--border-color)]'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all duration-300 ${system.maintenanceMode ? 'right-0.5' : 'left-0.5'}`}></div>
             </div>
           </div>
         </div>
 
-        <div className="p-10 bg-slate-950 rounded-[40px] text-white space-y-8 relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[60px]"></div>
-           <div className="flex items-center gap-3">
-             <Activity size={20} className="text-blue-400" />
-             <h4 className="font-black uppercase tracking-widest text-xs opacity-60">System Health Stream</h4>
+        <div className="p-6 bg-slate-950 rounded-xl text-white space-y-6 relative overflow-hidden text-left">
+           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 blur-xl"></div>
+           <div className="flex items-center gap-2">
+             <Activity size={16} className="text-blue-400" />
+             <h4 className="font-bold uppercase tracking-wider text-[10px] opacity-60">System Health Stream</h4>
            </div>
 
-           <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Global Uptime</p>
-                <p className="text-2xl font-black">99.98%</p>
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-bold opacity-45 uppercase tracking-wider">Global Uptime</p>
+                <p className="text-lg font-black">99.98%</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Avg Latency</p>
-                <p className="text-2xl font-black">12ms</p>
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-bold opacity-45 uppercase tracking-wider">Avg Latency</p>
+                <p className="text-lg font-black">12ms</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Active Threads</p>
-                <p className="text-2xl font-black">1024</p>
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-bold opacity-45 uppercase tracking-wider">Active Threads</p>
+                <p className="text-lg font-black">1024</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Auto Scale</p>
-                <p className="text-2xl font-black text-emerald-400 uppercase tracking-tighter">Enabled</p>
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-bold opacity-45 uppercase tracking-wider">Auto Scale</p>
+                <p className="text-lg font-black text-emerald-400 uppercase tracking-tighter">Enabled</p>
               </div>
            </div>
 
-           <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Connected to HK-Cluster-7</span>
+           <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-[9px] font-bold uppercase tracking-wider opacity-60">Connected to HK-Cluster-7</span>
               </div>
-              <button onClick={() => refetch()} className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors">Hard Re-sync</button>
+              <button onClick={() => refetch()} className="text-[9px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 transition-colors">Hard Re-sync</button>
            </div>
         </div>
       </div>
     </section>
   );
 }
-

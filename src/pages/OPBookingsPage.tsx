@@ -1,8 +1,9 @@
-import { useState, useDeferredValue, useEffect } from "react";
+import { useState, useDeferredValue } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Clock, CheckCircle2, XCircle, Calendar, CreditCard, Search, Eye, Check, CheckCheck, X, Filter, ChevronDown, RefreshCw, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, Calendar, CreditCard, Search, Eye, Check, CheckCheck, X, Filter, ChevronDown, RefreshCw, Loader2, TrendingUp, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatDate, formatDateTime, formatTime } from "@/lib/format";
 
 interface ServiceBooking {
     _id: string;
@@ -89,8 +90,6 @@ export function OPBookingsPage() {
                 const fallbackName = item?.serviceId?.name || item?.doctorId?.name || "Doctor Consultation";
                 return {
                     ...item,
-                    // For doctor appointments, serviceName or specialization should be the primary label
-                    // so departments like ENT don't get replaced by stale generic service names.
                     serviceId: { ...(item?.serviceId || {}), name: specialization || fallbackName },
                 };
             });
@@ -148,183 +147,174 @@ export function OPBookingsPage() {
         return map[status] || status.replace(/_/g, ' ');
     };
 
-    // Removed early return to prevent flickering
-    // if (loadingServices && !serviceBookings) return (
-    //     <div className="flex flex-col items-center justify-center p-20 space-y-4">
-    //         <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-    //         <p className="font-bold text-[var(--text-muted)] animate-pulse">Syncing operations desk...</p>
-    //     </div>
-    // );
-
     const filteredTokens = serviceBookings;
 
-    const statsCards = [
-        { label: "All", count: stats.all, value: "All" },
-        { label: "Pending", count: stats.pending, value: "PENDING" },
-        { label: "Confirmed", count: stats.confirmed, value: "CONFIRMED" },
-        { label: "Completed", count: stats.completed, value: "COMPLETED" },
-        { label: "Cancelled", count: stats.cancelled, value: "CANCELLED" },
+    const STAT_CARDS = [
+        { label: "Total",     value: "All",       count: stats.all || 0,       color: "text-slate-700 dark:text-slate-300", icon: <TrendingUp size={14} /> },
+        { label: "Pending",   value: "PENDING",   count: stats.pending || 0,   color: "text-amber-600 dark:text-amber-400", icon: <Clock size={14} /> },
+        { label: "Confirmed", value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:text-blue-400",   icon: <CheckCircle2 size={14} /> },
+        { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:text-emerald-400", icon: <CheckCircle2 size={14} /> },
+        { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
     ];
 
     return (
         <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
             <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
-                <div className="relative z-10 text-left items-start">
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Doctor Appointments</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • Bookings • Doctor Appointments</p>
+                <div className="relative z-10 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Doctor Appointments</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Bookings • Doctor Appointments &nbsp;•&nbsp; Auto-refreshes every 15s
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {/* Decorative background element reminiscent of the user's screenshot */}
                 <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            {/* Stat Cards Row */}
-            <div className="flex flex-wrap gap-4">
-                {statsCards.map((stat) => (
+            {/* ── Stats Row ── */}
+            <div className="grid grid-cols-5 gap-3">
+                {STAT_CARDS.map(s => (
                     <button
-                        key={stat.value}
-                        onClick={() => setStatusFilter(stat.value)}
-                        className={`group flex-1 min-w-[140px] flex flex-col items-center justify-center py-5 px-4 rounded-2xl border transition-all duration-300 ${statusFilter === stat.value
-                            ? "bg-[var(--card-bg)] border-[var(--text-main)] shadow-md ring-1 ring-[var(--text-main)] scale-[1.02]"
-                            : "bg-[var(--card-bg)] border-[var(--border-color)] hover:border-[var(--text-muted)] shadow-sm"
+                        key={s.value}
+                        onClick={() => { setStatusFilter(s.value); setPage(1); }}
+                        className={`bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
+                            ${statusFilter === s.value
+                                ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30"
+                                : "border-[var(--border-color)] hover:border-[var(--text-muted)]"
                             }`}
                     >
-                        <span className={`text-[32px] md:text-[40px] leading-none font-black mb-1 transition-colors ${statusFilter === stat.value ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}`}>
-                            {stat.count}
-                        </span>
-                        <span className={`text-xs font-semibold capitalize tracking-wide ${statusFilter === stat.value ? "text-[var(--text-main)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-main)]"}`}>
-                            {stat.label}
-                        </span>
+                        <div className={`flex items-center gap-1.5 text-xs font-medium mb-2 ${s.color}`}>
+                            {s.icon}
+                            {s.label}
+                        </div>
+                        <div className="text-2xl font-bold text-[var(--text-main)]">{s.count}</div>
                     </button>
                 ))}
             </div>
 
-            {/* Filters Row */}
-            <div className="flex flex-row items-center gap-4">
-                <div className="relative flex-1">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                        {fetchingServices ? <Loader2 size={18} className="text-blue-500 animate-spin" /> : <Search size={18} className="text-[var(--text-muted)]" />}
-                    </div>
+            {/* ── Toolbar ── */}
+            <div className="flex flex-row items-center justify-between gap-3 p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                    {fetchingServices ? (
+                        <Loader2 size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3b82f6", animation: "spin 1s linear infinite", zIndex: 10 }} />
+                    ) : (
+                        <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                    )}
                     <input
                         type="text"
-                        placeholder="Search by Order ID, Patient name..."
-                        className="w-full pr-4 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl h-12 text-sm focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20 outline-none text-[var(--text-main)] transition-shadow shadow-sm"
-                        style={{ paddingLeft: '3rem' }}
+                        placeholder="Search by TxnID, name, phone..."
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                        style={{
+                            width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                            background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                            fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                            fontFamily: "inherit", boxSizing: "border-box"
+                        }}
                     />
                 </div>
 
-                <div className="relative w-[180px] shrink-0">
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                        className="w-full h-12 pl-4 pr-10 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl text-sm font-semibold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/20 appearance-none shadow-sm cursor-pointer"
-                    >
-                        {statsCards.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">▼</div>
-                </div>
-
+                {/* Filter Button */}
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`h-12 px-5 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all shadow-sm ${showFilters ? 'bg-blue-600 text-white border-blue-600' : 'bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-main)] hover:bg-[var(--bg-main)]'}`}
+                    className={`flex items-center gap-1.5 h-9 px-4 rounded-lg text-xs font-semibold border transition-all shrink-0
+                        ${showFilters
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-[var(--card-bg)] text-[var(--text-main)] border-[var(--border-color)] hover:border-blue-400"
+                        }`}
                 >
-                    <Filter size={16} />
-                    <span className="hidden sm:inline">Filters</span>
+                    <Filter size={13} />
+                    Filters
+                    <ChevronDown size={13} className={`transition-transform ${showFilters ? "rotate-180" : ""}`} />
                 </button>
             </div>
 
-            {/* Advanced Filters Panel */}
+            {/* ── Advanced Filters Panel ── */}
             {showFilters && (
-                <div className="bg-[var(--card-bg)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm animate-in slide-in-from-top-4 fade-in duration-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)]">Advanced Filters</h3>
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 animate-in slide-in-from-top-2 fade-in duration-150">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Advanced Filters</span>
                         <button
                             onClick={() => {
                                 setDateFrom(""); setDateTo(""); setPaymentFilter("All");
                                 setSourceFilter("All"); setDoctorFilter("All"); setDepartmentFilter("All");
                                 setPatientTypeFilter("All"); setSlotFilter("All"); setPage(1);
                             }}
-                            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
                         >
-                            <RefreshCw size={12} /> Reset All
+                            <RefreshCw size={11} /> Reset All
                         </button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Date Range */}
-                        <div className="col-span-1 lg:col-span-2 grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">From Date</label>
-                                <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]" />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">To Date</label>
-                                <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]" />
-                            </div>
-                        </div>
-
-                        {/* Payment Status */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Payment</label>
-                            <select value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">From Date</label>
+                            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">To Date</label>
+                            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Payment</label>
+                            <select value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Statuses</option>
                                 <option value="COMPLETED">Paid</option>
                                 <option value="PENDING">Pending</option>
                                 <option value="FAILED">Failed</option>
                             </select>
                         </div>
-
-                        {/* Doctor */}
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Doctor Assigned</label>
-                            <select value={doctorFilter} onChange={e => { setDoctorFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Doctor Assigned</label>
+                            <select value={doctorFilter} onChange={e => { setDoctorFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Doctors</option>
                                 <option value="Unassigned">Unassigned</option>
                             </select>
                         </div>
-
-                        {/* Department */}
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Department Specialization</label>
-                            <select value={departmentFilter} onChange={e => { setDepartmentFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Department</label>
+                            <select value={departmentFilter} onChange={e => { setDepartmentFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Departments</option>
                                 {Array.isArray(categories) && categories.filter(c => c.type === 'doctor' || c.name.toLowerCase().includes('doctor')).map(c => (
                                     <option key={c._id} value={c.name}>{c.name}</option>
                                 ))}
                             </select>
                         </div>
-
-                        {/* Slot Time */}
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Slot Time</label>
-                            <select value={slotFilter} onChange={e => { setSlotFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Slot Time</label>
+                            <select value={slotFilter} onChange={e => { setSlotFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Slots</option>
                                 <option value="Morning">Morning (8AM - 12PM)</option>
                                 <option value="Afternoon">Afternoon (12PM - 4PM)</option>
                                 <option value="Evening">Evening (4PM - 8PM)</option>
                             </select>
                         </div>
-
-                        {/* Booking Source */}
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Source</label>
-                            <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Source</label>
+                            <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Sources</option>
                                 <option value="App">Mobile App</option>
                                 <option value="Walk-in">Walk-in</option>
                                 <option value="Admin">Admin Portal</option>
                             </select>
                         </div>
-
-                        {/* Patient Type */}
                         <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Patient Type</label>
-                            <select value={patientTypeFilter} onChange={e => { setPatientTypeFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
+                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Patient Type</label>
+                            <select value={patientTypeFilter} onChange={e => { setPatientTypeFilter(e.target.value); setPage(1); }}
+                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
                                 <option value="All">All Types</option>
                                 <option value="New">New Patient</option>
                                 <option value="Returning">Returning Patient</option>
@@ -334,29 +324,29 @@ export function OPBookingsPage() {
                 </div>
             )}
 
-            {/* Data Table */}
-            <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--border-color)] overflow-hidden shadow-sm">
+            {/* ── Data Table ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <table className="w-full text-left min-w-[900px]">
                         <thead>
-                            <tr className="bg-[var(--bg-main)] border-b border-[var(--border-color)] text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-black">
-                                <th className="py-5 px-6 whitespace-nowrap w-[60px]">Sl No</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Order ID</th>
-                                <th className="py-5 px-6 whitespace-nowrap min-w-[200px]">Service</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Patient Name</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Date & Time</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Status</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Amount</th>
-                                <th className="py-5 px-6 whitespace-nowrap text-right">Actions</th>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Order</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-[180px]">Service / specialty</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Patient</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Date & Time</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {loadingServices ? (
                                 <tr>
-                                    <td colSpan={8} className="py-24 text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Synchronizing Appointments...</p>
+                                    <td colSpan={8} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Loading appointments...</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -365,108 +355,114 @@ export function OPBookingsPage() {
                                     const isPending = booking.status?.toUpperCase() === "PENDING" || booking.status?.toUpperCase() === "RETURNED_TO_ADMIN";
                                     const isConfirmed = booking.status?.toUpperCase() === "CONFIRMED";
                                     return (
-                                        <tr key={booking._id} className="hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors group">
-                                            <td className="py-5 px-6 text-sm font-black text-[var(--text-muted)]">
+                                        <tr key={booking._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                            <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
                                                 {String((page - 1) * 60 + index + 1).padStart(2, '0')}
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded inline-block">
+                                            <td className="py-3.5 px-4">
+                                                <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
                                                     #{booking._id.slice(-8).toUpperCase()}
-                                                </div>
+                                                </span>
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-bold text-[var(--text-main)] truncate max-w-[250px]" title={booking.serviceId?.name}>
+                                            <td className="py-3.5 px-4">
+                                                <div className="text-sm font-medium text-[var(--text-main)] truncate max-w-[200px]" title={booking.serviceId?.name}>
                                                     {booking.serviceName || booking.serviceId?.name || "Doctor Consult"}
-                                                    {booking.doctorId?.name && (
-                                                        <span className="text-[10px] text-[var(--text-muted)] block mt-0.5">
-                                                            with Dr. {booking.doctorId.name}
-                                                        </span>
-                                                    )}
+                                                </div>
+                                                {booking.doctorId?.name && (
+                                                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                                                        Dr. {booking.doctorId.name}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <div className="text-sm font-medium text-[var(--text-main)]">
+                                                    {booking.patientId?.name || booking.patientId?.mobile || "Anonymous"}
+                                                </div>
+                                                <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
+                                                    {booking.patientId?.mobile || "—"}
                                                 </div>
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-semibold text-[var(--text-main)]">
-                                                    {booking.patientId?.name || booking.patientId?.mobile || "Anonymous Member"}
-                                                </div>
-                                                <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
-                                                    {booking.patientId?.mobile || "N/A"}
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-medium text-[var(--text-main)] whitespace-nowrap">
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-[var(--text-main)]">
                                                     {new Date(booking.date || booking.createdAt).toLocaleDateString()}
                                                 </div>
-                                                <div className="text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] mt-0.5 whitespace-nowrap">
+                                                <div className="text-xs text-[var(--text-muted)] mt-0.5">
                                                     {booking.startingTime || new Date(booking.createdAt).toLocaleTimeString()}
                                                 </div>
                                             </td>
-                                            <td className="py-5 px-6 whitespace-nowrap">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest
-                                                    ${booking.status?.toUpperCase() === 'PENDING' ? 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20' : ''}
-                                                    ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'COMPLETED' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'CANCELLED' ? 'text-[var(--text-muted)] bg-[var(--bg-main)]' : ''}
+                                            <td className="py-3.5 px-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                                                    ${booking.status?.toUpperCase() === 'PENDING' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' : ''}
+                                                    ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20' : ''}
+                                                    ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' : ''}
+                                                    ${booking.status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : ''}
+                                                    ${booking.status?.toUpperCase() === 'CANCELLED' ? 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20' : ''}
                                                 `}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full
+                                                        ${booking.status?.toUpperCase() === 'PENDING' ? 'bg-orange-400' : ''}
+                                                        ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'bg-rose-400' : ''}
+                                                        ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'bg-blue-400' : ''}
+                                                        ${booking.status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-400' : ''}
+                                                        ${booking.status?.toUpperCase() === 'CANCELLED' ? 'bg-slate-400' : ''}
+                                                    `} />
                                                     {getStatusLabel(booking.status || '')}
                                                 </span>
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className={`text-sm font-black whitespace-nowrap ${booking.paymentStatus === 'COMPLETED' ? 'text-green-600 dark:text-green-400' : 'text-[var(--text-main)]'}`}>
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className={`text-sm font-semibold ${booking.paymentStatus === 'COMPLETED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-main)]'}`}>
                                                     ₹{booking.totalAmount}
                                                 </div>
-                                                <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider mt-0.5">
-                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Awaiting Payment' : (booking.paymentStatus || 'N/A')}
+                                                <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Unpaid' : (booking.paymentStatus || '—')}
                                                 </div>
                                             </td>
-                                            <td className="py-5 px-6 text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="py-3.5 px-4 text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={() => setSelectedBooking(booking)}
-                                                        className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-500 dark:hover:text-white flex items-center justify-center transition-all border border-blue-200 dark:border-blue-500/20 shadow-sm" title="View Details">
-                                                        <Eye size={16} />
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 border border-[var(--border-color)] hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={14} />
                                                     </button>
-
                                                     <button
                                                         disabled={!isPending}
                                                         onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}
-                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-sm
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
                                                             ${isPending
-                                                                ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white dark:hover:bg-amber-500 dark:hover:text-white border-amber-200 dark:border-amber-500/20"
-                                                                : "bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50"
+                                                                ? "text-[var(--text-muted)] hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 border-[var(--border-color)] hover:border-amber-300"
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
                                                             }`}
                                                         title="Confirm Appointment"
                                                     >
-                                                        <Check size={16} />
+                                                        <Check size={14} />
                                                     </button>
-
                                                     <button
                                                         disabled={!(isConfirmed || isPending)}
                                                         onClick={() => handleUpdateStatus(booking._id, "COMPLETED")}
-                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-sm
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
                                                             ${(isConfirmed || isPending)
-                                                                ? "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-600 hover:text-white dark:hover:bg-green-500 dark:hover:text-white border-green-200 dark:border-green-500/20"
-                                                                : "bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50"
+                                                                ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 border-[var(--border-color)] hover:border-green-300"
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
                                                             }`}
                                                         title="Mark as Completed"
                                                     >
-                                                        <CheckCheck size={16} />
+                                                        <CheckCheck size={14} />
                                                     </button>
-
                                                     <button
                                                         disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
                                                         onClick={() => {
-                                                            if (!window.confirm(`Cancel this appointment for ${booking.patientId?.name || 'this patient'}? This cannot be undone.`)) return;
+                                                            if (!window.confirm(`Cancel this appointment for ${booking.patientId?.name || 'this patient'}?`)) return;
                                                             handleUpdateStatus(booking._id, "CANCELLED");
                                                         }}
-                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border shadow-sm
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
                                                             ${(booking.status?.toUpperCase() !== "CANCELLED" && booking.status?.toUpperCase() !== "COMPLETED")
-                                                                ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white border-red-200 dark:border-red-500/20"
-                                                                : "bg-slate-50 dark:bg-slate-800/50 text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800 cursor-not-allowed opacity-50"
+                                                                ? "text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 border-[var(--border-color)] hover:border-red-300"
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
                                                             }`}
                                                         title="Cancel Appointment"
                                                     >
-                                                        <X size={16} />
+                                                        <X size={14} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -475,117 +471,140 @@ export function OPBookingsPage() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="py-24 text-center">
-                                        <div className="w-20 h-20 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
-                                            <Calendar size={32} className="text-[var(--text-muted)]" />
+                                    <td colSpan={8} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                                                <Calendar size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">No appointments found</p>
+                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Try adjusting your filters or search query.</p>
+                                            </div>
                                         </div>
-                                        <h3 className="text-xl font-black tracking-tight text-[var(--text-main)]">No Appointments Found</h3>
-                                        <p className="text-[var(--text-muted)] mt-2 max-w-sm mx-auto text-sm font-medium">No hospital tokens match your current filters. Try changing your search query or status filter.</p>
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-                {/* Pagination Controls */}
+
+                {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="p-8 border-t border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-main)]/30 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
-                        <div className="flex items-center gap-4">
-                            <span className="bg-[var(--card-bg)] px-4 py-2 rounded-xl border border-[var(--border-color)]">Page <span className="text-[var(--text-main)] ml-2">{page} / {totalPages}</span></span>
-                        </div>
-                        <div className="flex gap-2">
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                        <p className="text-xs text-[var(--text-muted)]">
+                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
+                        </p>
+                        <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
-                                <ChevronDown size={18} className="rotate-90" />
+                                <ChevronLeft size={14} />
                             </button>
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                             >
-                                <ChevronDown size={18} className="-rotate-90" />
+                                <ChevronRight size={14} />
                             </button>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Modal Popup */}
+            {/* ── View Details Modal ── */}
             {selectedBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-5 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedBooking(null)} />
+                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
                             <div>
-                                <h3 className="text-lg font-black text-[var(--text-main)] leading-none">Token Details</h3>
-                                <p className="text-xs font-semibold text-[var(--text-muted)] font-mono mt-1">Ref: {selectedBooking._id.toUpperCase()}</p>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Token Details</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">
+                                    #{selectedBooking._id.toUpperCase()}
+                                </h3>
                             </div>
                             <button
                                 onClick={() => setSelectedBooking(null)}
-                                className="w-8 h-8 rounded-full bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-red-500 hover:border-red-200 transition-all shadow-sm"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
                             >
                                 <X size={16} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-6">
-                            {/* Info Grid */}
-                            <div className="grid grid-cols-2 gap-y-5 gap-x-4">
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Patient</p>
-                                    <p className="text-sm font-bold text-[var(--text-main)]">{selectedBooking.patientId?.name || selectedBooking.patientId?.mobile || "Guest User"}</p>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Patient</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.name || "Guest User"}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Mobile</p>
-                                    <p className="text-sm font-bold text-[var(--text-main)]">{selectedBooking.patientId?.mobile || "N/A"}</p>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Mobile</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.mobile || "N/A"}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Service</p>
-                                    <p className="text-sm font-bold text-[var(--text-main)]">{selectedBooking.serviceId?.name}</p>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Service</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.serviceId?.name}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Fulfillment</p>
-                                    <p className="text-xs font-bold bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] px-2.5 py-1 rounded-md inline-block">{({'HOME_VISIT':'Home Visit','HOSPITAL_VISIT':'Hospital Visit','VIRTUAL':'Virtual / Online'} as Record<string,string>)[selectedBooking.fulfillmentMode] || selectedBooking.fulfillmentMode?.replace(/_/g,' ')}</p>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Fulfillment</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{( {'HOME_VISIT':'Home Visit','HOSPITAL_VISIT':'Hospital Visit','VIRTUAL':'Virtual / Online'} as Record<string,string> )[selectedBooking.fulfillmentMode] || selectedBooking.fulfillmentMode}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Date & Time</p>
-                                    <p className="text-sm font-bold text-[var(--text-main)]">{new Date(selectedBooking.date || selectedBooking.createdAt).toLocaleDateString()}</p>
-                                    <p className="text-xs font-semibold text-[var(--text-muted)] mt-0.5">{selectedBooking.startingTime || new Date(selectedBooking.createdAt).toLocaleTimeString()}</p>
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Appointment Date</p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{new Date(selectedBooking.date || selectedBooking.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">{selectedBooking.startingTime || new Date(selectedBooking.createdAt).toLocaleTimeString()}</p>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1">Status</p>
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest
-                                        ${selectedBooking.status === 'Pending' ? 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/10' : ''}
-                                        ${selectedBooking.status === 'Confirmed' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
-                                        ${selectedBooking.status === 'Completed' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
-                                        ${selectedBooking.status === 'Cancelled' ? 'text-[var(--text-muted)] bg-[var(--bg-main)] border border-[var(--border-color)]' : ''}
+                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Status</p>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                                        ${selectedBooking.status === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200' : ''}
+                                        ${selectedBooking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
+                                        ${selectedBooking.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
+                                        ${selectedBooking.status === 'Cancelled' ? 'bg-slate-50 text-slate-600 border-slate-200' : ''}
                                     `}>
+                                        <span className={`w-1.5 h-1.5 rounded-full
+                                            ${selectedBooking.status === 'Pending' ? 'bg-orange-400' : ''}
+                                            ${selectedBooking.status === 'Confirmed' ? 'bg-blue-400' : ''}
+                                            ${selectedBooking.status === 'Completed' ? 'bg-emerald-400' : ''}
+                                            ${selectedBooking.status === 'Cancelled' ? 'bg-slate-400' : ''}
+                                        `} />
                                         {selectedBooking.status}
                                     </span>
                                 </div>
                             </div>
 
-                            <hr className="border-[var(--border-color)]" />
-
-                            <div className="flex items-center justify-between bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--border-color)]">
+                            <div className="flex items-center justify-between p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
                                 <div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-0.5">Total Amount</p>
-                                    <p className="text-xl font-black text-blue-600 dark:text-blue-400">₹{selectedBooking.totalAmount}</p>
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Total Amount</p>
+                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">₹{selectedBooking.totalAmount}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)] mb-1.5">Payment Status</p>
-                                    <p className={`text-[11px] font-black uppercase tracking-widest px-2.5 py-1 inline-block rounded-md ${selectedBooking.paymentStatus === 'COMPLETED' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-muted)]'}`}>{selectedBooking.paymentStatus}</p>
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Payment Status</p>
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${selectedBooking.paymentStatus === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{selectedBooking.paymentStatus}</span>
                                 </div>
                             </div>
 
                             {selectedBooking.notes && (
-                                <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 p-4 rounded-xl">
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-yellow-800 dark:text-yellow-500 mb-1">Notes / Reason</p>
-                                    <p className="text-xs font-semibold text-yellow-900 dark:text-yellow-100">{selectedBooking.notes}</p>
+                                <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl">
+                                    <p className="text-[11px] font-semibold text-yellow-800 dark:text-yellow-500 uppercase tracking-wider mb-1">Notes</p>
+                                    <p className="text-xs font-medium text-yellow-900 dark:text-yellow-100">"{selectedBooking.notes}"</p>
                                 </div>
                             )}
+                        </div>
 
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end">
+                            <button
+                                onClick={() => setSelectedBooking(null)}
+                                className="h-9 px-6 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] text-sm font-semibold rounded-lg hover:bg-[var(--border-color)] transition-all"
+                            >
+                                Close
+                            </button>
                         </div>
                     </div>
                 </div>

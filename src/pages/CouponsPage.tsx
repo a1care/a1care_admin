@@ -8,9 +8,10 @@ import {
     X,
     Ticket,
     Percent,
-    IndianRupee,
     Search,
     Loader2,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -76,7 +77,6 @@ export function CouponsPage() {
         queryFn: async () => {
             const res = await api.get("/admin/coupons", { params: { limit: 200 } });
             const data = res.data?.data ?? res.data;
-            // Supports both the paginated shape ({ items, total, ... }) and a raw array.
             return Array.isArray(data) ? data : (data?.items ?? []);
         },
     });
@@ -152,7 +152,7 @@ export function CouponsPage() {
     };
 
     const handleDelete = (c: Coupon) => {
-        if (window.confirm(`Delete coupon "${c.code}"? This cannot be undone.`)) {
+        if (window.confirm(`Delete coupon "${c.code}"?`)) {
             deleteMutation.mutate(c._id);
         }
     };
@@ -165,275 +165,336 @@ export function CouponsPage() {
     const num = (v: string) => (v === "" ? 0 : Number(v));
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-black text-[var(--text-main)] flex items-center gap-3">
-                        <span className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-                            <Ticket size={20} />
-                        </span>
-                        Coupons
-                    </h1>
-                    <p className="text-sm text-slate-400 mt-1 ml-13">Create and manage discount coupons for bookings.</p>
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full">
+                    <div className="flex items-center justify-between gap-4 w-full">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Coupons</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Campaigns • Coupons
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                            <button
+                                onClick={openCreate}
+                                className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm"
+                            >
+                                <Plus size={16} />
+                                <span>New Coupon</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button
-                    onClick={openCreate}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-2xl transition-all shadow-lg shadow-blue-600/20"
-                >
-                    <Plus size={18} /> New Coupon
-                </button>
-            </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            </header>
 
-            {/* Search */}
-            <div className="flex items-center gap-3 mb-5 max-w-md bg-[var(--card-bg)] border border-[var(--border-color)] rounded-2xl px-4 focus-within:ring-2 focus-within:ring-blue-500/40 transition-all">
-                <Search size={16} className="text-slate-400 shrink-0 pointer-events-none" />
+            {/* ── Search Toolbar ── */}
+            <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
                 <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by code or description…"
-                    className="flex-1 h-12 bg-transparent border-none text-[var(--text-main)] text-sm outline-none placeholder:text-slate-400"
+                    placeholder="Search by TxnID, name, phone..."
+                    style={{
+                        width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                        background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                        fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                        fontFamily: "inherit", boxSizing: "border-box"
+                    }}
                 />
             </div>
 
-            {/* Table */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl overflow-hidden">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-20 text-slate-400">
-                        <Loader2 className="animate-spin mr-2" size={20} /> Loading coupons…
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div className="text-center py-20">
-                        <Ticket size={40} className="mx-auto text-slate-300 mb-3" />
-                        <p className="text-slate-400 font-semibold">No coupons found</p>
-                        <button onClick={openCreate} className="text-blue-600 text-sm font-bold mt-2 hover:underline">
-                            Create your first coupon
-                        </button>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-[var(--border-color)] text-left text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    <th className="px-5 py-4">Code</th>
-                                    <th className="px-5 py-4">Discount</th>
-                                    <th className="px-5 py-4">Min / Cap</th>
-                                    <th className="px-5 py-4">Usage</th>
-                                    <th className="px-5 py-4">Applies To</th>
-                                    <th className="px-5 py-4">Validity</th>
-                                    <th className="px-5 py-4">Status</th>
-                                    <th className="px-5 py-4 text-right">Actions</th>
+            {/* ── Coupons Table Card ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[800px]">
+                        <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-12">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Coupon Code</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Discount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Min Order / Cap</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Usage Info</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Applies To</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Validity</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-color)]">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={9} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Loading campaign coupons...</p>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.map((c) => (
-                                    <tr key={c._id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-blue-500/5 transition-colors">
-                                        <td className="px-5 py-4">
-                                            <div className="font-black text-[var(--text-main)] tracking-wide">{c.code}</div>
-                                            {c.description && <div className="text-xs text-slate-400 mt-0.5 max-w-[180px] truncate">{c.description}</div>}
+                            ) : filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                                                <Ticket size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">No active coupons found</p>
+                                                <button onClick={openCreate} className="text-xs text-blue-500 font-semibold mt-1 hover:underline">
+                                                    Initialize your first coupon template
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map((c, index) => (
+                                    <tr key={c._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                        <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
+                                            {String(index + 1).padStart(2, '0')}
                                         </td>
-                                        <td className="px-5 py-4">
-                                            <span className="inline-flex items-center gap-1 font-bold text-[var(--text-main)]">
-                                                {c.discountType === "PERCENTAGE" ? <Percent size={13} className="text-emerald-500" /> : <IndianRupee size={13} className="text-emerald-500" />}
+                                        <td className="py-3.5 px-4">
+                                            <div className="font-semibold text-sm text-[var(--text-main)] tracking-wide">{c.code}</div>
+                                            {c.description && <div className="text-xs text-[var(--text-muted)] mt-0.5 truncate max-w-[200px]" title={c.description}>{c.description}</div>}
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-[var(--text-main)]">
                                                 {c.discountType === "PERCENTAGE" ? `${c.discountValue}%` : `₹${c.discountValue}`}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 text-slate-500 text-xs">
-                                            <div>Min ₹{c.minOrderAmount || 0}</div>
-                                            {c.discountType === "PERCENTAGE" && c.maxDiscountAmount ? <div>Cap ₹{c.maxDiscountAmount}</div> : null}
+                                        <td className="py-3.5 px-4 text-xs text-[var(--text-main)]">
+                                            <div>Min: ₹{c.minOrderAmount || 0}</div>
+                                            {c.discountType === "PERCENTAGE" && c.maxDiscountAmount ? <div className="text-[11px] text-[var(--text-muted)] mt-0.5">Cap: ₹{c.maxDiscountAmount}</div> : null}
                                         </td>
-                                        <td className="px-5 py-4 text-slate-500 text-xs">
-                                            <div>{c.usedCount || 0}{c.usageLimit ? ` / ${c.usageLimit}` : " used"}</div>
-                                            <div className="text-[10px] text-slate-400">{c.usagePerUser || 1}/user</div>
+                                        <td className="py-3.5 px-4 text-xs text-[var(--text-main)]">
+                                            <div>Used: {c.usedCount || 0}{c.usageLimit ? ` / ${c.usageLimit}` : " / ∞"}</div>
+                                            <div className="text-[10px] text-[var(--text-muted)] mt-0.5">User Limit: {c.usagePerUser || 1}</div>
                                         </td>
-                                        <td className="px-5 py-4">
-                                            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-500/10 text-slate-500">
+                                        <td className="py-3.5 px-4">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 dark:bg-slate-850 dark:text-slate-400 border border-[var(--border-color)]">
                                                 {c.applicableTo || "ALL"}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 text-slate-500 text-xs">
-                                            {c.validTo ? `Till ${new Date(c.validTo).toLocaleDateString()}` : "No expiry"}
+                                        <td className="py-3.5 px-4 text-xs text-[var(--text-muted)] whitespace-nowrap">
+                                            {c.validTo ? `Expires ${new Date(c.validTo).toLocaleDateString()}` : "No Expiry"}
                                         </td>
-                                        <td className="px-5 py-4">
-                                            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg ${c.isActive ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-500"}`}>
+                                        <td className="py-3.5 px-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                                                ${c.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400"}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${c.isActive ? "bg-emerald-400" : "bg-rose-400"}`} />
                                                 {c.isActive ? "Active" : "Inactive"}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4">
-                                            <div className="flex gap-1.5 justify-end">
+                                        <td className="py-3.5 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
                                                 <button
                                                     onClick={() => openEdit(c)}
-                                                    className="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
-                                                    title="Edit"
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all"
+                                                    title="Configure Coupon"
                                                 >
-                                                    <Edit2 size={15} />
+                                                    <Edit2 size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(c)}
-                                                    className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
-                                                    title="Delete"
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 border border-[var(--border-color)] hover:border-red-300 transition-all"
+                                                    title="Delete Coupon"
                                                 >
-                                                    <Trash2 size={15} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {/* Create / Edit Modal */}
+            {/* ── Create / Edit Modal ── */}
             {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
-                    <div
-                        className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)] sticky top-0 bg-[var(--card-bg)] z-10">
-                            <h2 className="text-lg font-black text-[var(--text-main)]">{editingId ? "Edit Coupon" : "New Coupon"}</h2>
-                            <button onClick={closeModal} className="w-9 h-9 rounded-xl hover:bg-slate-500/10 flex items-center justify-center text-slate-400">
-                                <X size={18} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
+                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Campaign Registry</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">
+                                    {editingId ? "Modify Coupon Profile" : "Initialize New Coupon"}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={closeModal}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Field label="Coupon Code *">
+                        {/* Body */}
+                        <form onSubmit={handleSubmit}>
+                            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Coupon Code *</label>
+                                        <input
+                                            value={form.code}
+                                            onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                                            placeholder="e.g. SAVE50"
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold uppercase"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Applicable To</label>
+                                        <select
+                                            value={form.applicableTo}
+                                            onChange={(e) => setForm({ ...form, applicableTo: e.target.value as CouponForm["applicableTo"] })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        >
+                                            <option value="ALL">All Bookings</option>
+                                            <option value="SERVICE">Service Only</option>
+                                            <option value="DOCTOR">Doctor Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Description</label>
                                     <input
-                                        value={form.code}
-                                        onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                                        placeholder="WELCOME50"
-                                        className="input-base uppercase font-black tracking-wide"
+                                        value={form.description}
+                                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                                        placeholder="e.g. Save flat ₹50 on doctor consult bookings"
+                                        className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
                                     />
-                                </Field>
-                                <Field label="Applicable To">
-                                    <select
-                                        value={form.applicableTo}
-                                        onChange={(e) => setForm({ ...form, applicableTo: e.target.value as CouponForm["applicableTo"] })}
-                                        className="input-base"
-                                    >
-                                        <option value="ALL">All Bookings</option>
-                                        <option value="SERVICE">Service Only</option>
-                                        <option value="DOCTOR">Doctor Only</option>
-                                    </select>
-                                </Field>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Discount Type</label>
+                                        <select
+                                            value={form.discountType}
+                                            onChange={(e) => setForm({ ...form, discountType: e.target.value as CouponForm["discountType"] })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        >
+                                            <option value="PERCENTAGE">Percentage (%)</option>
+                                            <option value="FLAT">Flat Rate (₹)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                                            {form.discountType === "PERCENTAGE" ? "Discount %" : "Discount Value (₹)"}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={form.discountValue || ""}
+                                            onChange={(e) => setForm({ ...form, discountValue: num(e.target.value) })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Min Order (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={form.minOrderAmount || ""}
+                                            onChange={(e) => setForm({ ...form, minOrderAmount: num(e.target.value) })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Discount Cap (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={form.maxDiscountAmount || ""}
+                                            onChange={(e) => setForm({ ...form, maxDiscountAmount: num(e.target.value) })}
+                                            disabled={form.discountType === "FLAT"}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold disabled:opacity-40"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Usage Limit</label>
+                                        <input
+                                            type="number"
+                                            value={form.usageLimit || ""}
+                                            onChange={(e) => setForm({ ...form, usageLimit: num(e.target.value) })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                            placeholder="0 = Unlimited"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Usage Limit Per User</label>
+                                        <input
+                                            type="number"
+                                            value={form.usagePerUser || ""}
+                                            onChange={(e) => setForm({ ...form, usagePerUser: num(e.target.value) })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Valid From</label>
+                                        <input
+                                            type="date"
+                                            value={form.validFrom}
+                                            onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Valid To</label>
+                                        <input
+                                            type="date"
+                                            value={form.validTo}
+                                            onChange={(e) => setForm({ ...form, validTo: e.target.value })}
+                                            className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={form.isActive}
+                                            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                                            className="w-4 h-4 rounded accent-blue-600 cursor-pointer"
+                                        />
+                                        <span className="text-xs font-semibold text-[var(--text-main)]">Enable coupon template for immediate use</span>
+                                    </label>
+                                </div>
                             </div>
 
-                            <Field label="Description">
-                                <input
-                                    value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    placeholder="50% off on your first booking"
-                                    className="input-base"
-                                />
-                            </Field>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Field label="Discount Type">
-                                    <select
-                                        value={form.discountType}
-                                        onChange={(e) => setForm({ ...form, discountType: e.target.value as CouponForm["discountType"] })}
-                                        className="input-base"
-                                    >
-                                        <option value="PERCENTAGE">Percentage (%)</option>
-                                        <option value="FLAT">Flat (₹)</option>
-                                    </select>
-                                </Field>
-                                <Field label={form.discountType === "PERCENTAGE" ? "Discount %" : "Discount ₹"}>
-                                    <input
-                                        type="number"
-                                        value={form.discountValue}
-                                        onChange={(e) => setForm({ ...form, discountValue: num(e.target.value) })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Field label="Min Order Amount (₹)">
-                                    <input
-                                        type="number"
-                                        value={form.minOrderAmount}
-                                        onChange={(e) => setForm({ ...form, minOrderAmount: num(e.target.value) })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                                <Field label="Max Discount Cap (₹) — 0 = no cap">
-                                    <input
-                                        type="number"
-                                        value={form.maxDiscountAmount}
-                                        onChange={(e) => setForm({ ...form, maxDiscountAmount: num(e.target.value) })}
-                                        disabled={form.discountType === "FLAT"}
-                                        className="input-base disabled:opacity-40"
-                                    />
-                                </Field>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Field label="Total Usage Limit — 0 = unlimited">
-                                    <input
-                                        type="number"
-                                        value={form.usageLimit}
-                                        onChange={(e) => setForm({ ...form, usageLimit: num(e.target.value) })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                                <Field label="Usage Per User">
-                                    <input
-                                        type="number"
-                                        value={form.usagePerUser}
-                                        onChange={(e) => setForm({ ...form, usagePerUser: num(e.target.value) })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Field label="Valid From">
-                                    <input
-                                        type="date"
-                                        value={form.validFrom}
-                                        onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                                <Field label="Valid To">
-                                    <input
-                                        type="date"
-                                        value={form.validTo}
-                                        onChange={(e) => setForm({ ...form, validTo: e.target.value })}
-                                        className="input-base"
-                                    />
-                                </Field>
-                            </div>
-
-                            <label className="flex items-center gap-3 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={form.isActive}
-                                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                                    className="w-5 h-5 rounded accent-blue-600"
-                                />
-                                <span className="text-sm font-semibold text-[var(--text-main)]">Active (available to customers)</span>
-                            </label>
-
-                            <div className="flex gap-3 pt-2">
+                            {/* Footer */}
+                            <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="flex-1 py-3 rounded-2xl border border-[var(--border-color)] text-[var(--text-main)] font-bold hover:bg-slate-500/10 transition-all"
+                                    className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saveMutation.isPending}
-                                    className="flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                                    className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
                                 >
-                                    {saveMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+                                    {saveMutation.isPending && <Loader2 size={13} className="animate-spin" />}
                                     {editingId ? "Save Changes" : "Create Coupon"}
                                 </button>
                             </div>
@@ -441,29 +502,6 @@ export function CouponsPage() {
                     </div>
                 </div>
             )}
-
-            <style>{`
-                .input-base {
-                    width: 100%;
-                    padding: 0.7rem 0.9rem;
-                    border-radius: 0.9rem;
-                    background: var(--input-bg, rgba(120,120,120,0.05));
-                    border: 1px solid var(--border-color);
-                    color: var(--text-main);
-                    font-size: 0.875rem;
-                    outline: none;
-                }
-                .input-base:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.4); }
-            `}</style>
-        </div>
-    );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div>
-            <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">{label}</label>
-            {children}
         </div>
     );
 }

@@ -1,10 +1,7 @@
-
-
 import { useState, useEffect } from "react";
-import { Search, Info, MessageSquare, AlertCircle, CheckCircle2, Ticket, ChevronRight, Send, X, Loader2 } from "lucide-react";
+import { Search, Info, MessageSquare, AlertCircle, CheckCircle2, Ticket, Send, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "../lib/api";
 import { toast } from "sonner";
-
 
 interface Ticket {
     _id: string;
@@ -63,7 +60,6 @@ export function TicketsPage() {
         api.get(`/tickets/all?${params.toString()}`)
             .then(res => {
                 const payload = res?.data?.data;
-
                 const items = Array.isArray(payload)
                     ? payload
                     : Array.isArray(payload?.items)
@@ -95,26 +91,16 @@ export function TicketsPage() {
             });
     }, [refreshQueue, page, searchQuery, statusFilter]);
 
-
     const updateStatus = async (id: string, newStatus: string) => {
         try {
             const res = await api.put(`/tickets/status/${id}`, { status: newStatus });
             if (res.status === 200) {
                 setRefreshQueue(prev => prev + 1);
+                toast.success("Ticket status updated");
             }
         } catch (err) {
             console.error(err);
-        }
-    };
-
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Pending': return 'bg-yellow-100 text-yellow-800';
-            case 'In Progress': return 'bg-blue-100 text-blue-800';
-            case 'Resolved': return 'bg-green-100 text-green-800';
-            case 'Closed': return 'bg-gray-100 text-gray-800';
-            default: return 'bg-gray-100 text-gray-800';
+            toast.error("Failed to update status");
         }
     };
 
@@ -156,52 +142,82 @@ export function TicketsPage() {
         }
     }, [selectedTicket]);
 
-    // Remove early return to prevent page blinking
-    // if (loading) {
-    //     return <div className="page-container p-6">Loading tickets...</div>;
-    // }
-
-    const stats = {
-        total: tickets.length,
-        active: tickets.filter(t => t.status?.toLowerCase() !== 'resolved' && t.status?.toLowerCase() !== 'closed').length,
-        resolved: tickets.filter(t => t.status?.toLowerCase() === 'resolved').length
-    };
+    const openCount = tickets.filter(t => t.status?.toLowerCase() !== 'resolved' && t.status?.toLowerCase() !== 'closed').length;
+    const resolvedCount = tickets.filter(t => t.status?.toLowerCase() === 'resolved').length;
 
     return (
-        <div className="space-y-8 min-h-screen">
-            {/* Header */}
-            <div>
-                <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">
-                    <span>Support</span>
-                    <ChevronRight size={12} className="opacity-50" />
-                    <span className="text-slate-600">Tickets</span>
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Support Tickets</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Support • Tickets
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <h1 className="text-4xl font-black tracking-tight text-slate-800">Support Tickets</h1>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            </header>
+
+            {/* ── Stats Grid ── */}
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
+                        <Ticket size={14} />
+                        Total Tickets
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">{tickets.length}</div>
+                </div>
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 mb-2">
+                        <AlertCircle size={14} />
+                        Open Tickets
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">{openCount}</div>
+                </div>
+                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 text-left">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-2">
+                        <CheckCircle2 size={14} />
+                        Resolved Tickets
+                    </div>
+                    <div className="text-2xl font-bold text-[var(--text-main)]">{resolvedCount}</div>
+                </div>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex flex-row items-center gap-4">
-                <div className="relative group flex-1 min-w-0">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-                        {/* <Search className="text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} /> */}
-                    </div>
+            {/* ── Search & Filter Toolbar ── */}
+            <div className="flex items-center justify-between gap-3 w-full">
+                <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                    <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
                     <input
                         type="text"
-                        placeholder="Search by ID, Subject, Description or Node Details..."
-                        className="w-full h-16 pl-16 pr-6 bg-white border border-slate-100 rounded-[28px] text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
+                        placeholder="Search by TxnID, name, phone..."
                         value={searchQuery}
                         onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                        style={{
+                            width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                            background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                            fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                            fontFamily: "inherit", boxSizing: "border-box"
+                        }}
                     />
                 </div>
-
-                <div className="flex items-center shrink-0 bg-white p-2 rounded-[24px] border border-slate-100 shadow-sm">
+                <div className="flex items-center bg-[var(--card-bg)] border border-[var(--border-color)] p-1 rounded-xl shrink-0">
                     {['All', 'Pending', 'In Progress', 'Resolved'].map((s) => (
                         <button
                             key={s}
                             onClick={() => { setStatusFilter(s); setPage(1); }}
-                            className={`px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${
-                                statusFilter === s ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'text-slate-400 hover:text-slate-600'
-                            }`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all
+                                ${statusFilter === s
+                                    ? 'bg-[var(--bg-main)] text-blue-600 dark:text-blue-400 shadow-sm'
+                                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                                }`}
                         >
                             {s}
                         </button>
@@ -209,122 +225,106 @@ export function TicketsPage() {
                 </div>
             </div>
 
-            {/* Operational Intelligence Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                    { label: 'Total Tickets', val: tickets.length, icon: <Ticket size={24} />, color: '#3b82f6', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-                    { label: 'Open Tickets', val: tickets.filter(t => t.status?.toLowerCase() !== 'resolved' && t.status?.toLowerCase() !== 'closed').length, icon: <AlertCircle size={24} />, color: '#f59e0b', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                    { label: 'Resolved', val: tickets.filter(t => t.status?.toLowerCase() === 'resolved').length, icon: <CheckCircle2 size={24} />, color: '#10b981', bg: 'bg-emerald-50 dark:bg-emerald-500/10' }
-                ].map((s, i) => (
-                    <div key={i} className="card p-7 border-none shadow-blue-100/50 flex items-center justify-between hover:translate-y-[-4px] transition-all">
-                        <div className="flex items-center gap-5">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${s.bg} dark:bg-white/5`} style={{ color: s.color }}>
-                                {s.icon}
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">{s.label}</p>
-                                <h2 className="text-3xl font-black text-[var(--text-main)] dark:text-white">{s.val}</h2>
-                            </div>
-                        </div>
-                        <div></div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Refined Management Interface */}
-            <div className="card p-0 overflow-hidden shadow-2xl border-none" style={{ borderRadius: '32px' }}>
+            {/* ── Tickets Table Card ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left min-w-[800px]">
                         <thead>
-                            <tr className="bg-[var(--bg-main)] border-b border-[var(--border-color)] text-[10px] uppercase font-black tracking-widest text-[var(--text-muted)]">
-                                <th className="px-6 py-4">#</th>
-                                <th className="px-6 py-4">Submitted By</th>
-                                <th className="px-6 py-4">Subject</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-12">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Submitted By</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Subject & details</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                        <tbody className="divide-y divide-[var(--border-color)]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="p-20 text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading tickets...</p>
+                                    <td colSpan={5} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Loading tickets...</p>
                                         </div>
                                     </td>
                                 </tr>
-                            ) : tickets.map((t, index) => (
-                                <tr key={t._id} className="hover:bg-[var(--bg-main)] dark:hover:bg-slate-900/40 transition-all duration-300">
-                                    <td className="px-6 py-5 font-black text-slate-400 text-xs">
-                                        {(index + 1).toString().padStart(2, '0')}
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-[var(--bg-main)] dark:bg-white/5 flex items-center justify-center font-black text-[#1A7FD4] shadow-sm">
-                                                {t.staffId?.name?.charAt(0) || t.userId?.name?.charAt(0) || "U"}
+                            ) : tickets.length > 0 ? (
+                                tickets.map((t, index) => (
+                                    <tr key={t._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                        <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                                            {String((page - 1) * 50 + index + 1).padStart(2, '0')}
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center font-bold text-blue-600 text-xs">
+                                                    {t.staffId?.name?.charAt(0) || t.userId?.name?.charAt(0) || "U"}
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-sm text-[var(--text-main)]">
+                                                        {t.staffId?.name || t.userId?.name || "Unknown Sender"}
+                                                    </p>
+                                                    <p className="text-xs text-[var(--text-muted)] mt-0.5 font-mono">
+                                                        {t.staffId?.mobileNumber || t.userId?.mobileNumber || "—"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <h4 className="font-semibold text-sm text-[var(--text-main)]">{t.subject}</h4>
+                                            <p className="text-xs text-[var(--text-muted)] mt-0.5 max-w-xs truncate" title={t.description}>
+                                                {t.description}
+                                            </p>
+                                        </td>
+                                        <td className="py-3.5 px-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                                                ${t.status?.toLowerCase() === 'resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                                                  t.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 text-[#1A7FD4] border-blue-200 dark:bg-blue-500/10 dark:text-blue-400' :
+                                                  t.status?.toLowerCase() === 'closed' ? 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400' :
+                                                  'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400'
+                                                }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full
+                                                    ${t.status?.toLowerCase() === 'resolved' ? 'bg-emerald-400' :
+                                                      t.status?.toLowerCase() === 'in progress' ? 'bg-blue-400 animate-pulse' :
+                                                      t.status?.toLowerCase() === 'closed' ? 'bg-slate-400' :
+                                                      'bg-amber-400 animate-bounce'
+                                                    }`} />
+                                                {t.status}
+                                            </span>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    onClick={() => setSelectedTicket(t)}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all"
+                                                    title="Reply to Ticket"
+                                                >
+                                                    <MessageSquare size={14} />
+                                                </button>
+                                                <select
+                                                    value={t.status}
+                                                    onChange={(e) => updateStatus(t._id, e.target.value)}
+                                                    className="h-8 px-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer uppercase tracking-wider"
+                                                >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Resolved">Resolved</option>
+                                                    <option value="Closed">Closed</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                                                <MessageSquare size={20} />
                                             </div>
                                             <div>
-                                                <p className="font-black text-[var(--text-main)] dark:text-white text-sm">
-                                                    {t.staffId?.name || t.userId?.name || "Unknown Sender"}
-                                                </p>
-                                                <p className="text-[10px] font-bold text-[var(--text-muted)] dark:text-[var(--text-muted)] uppercase tracking-widest mt-0.5">
-                                                    {t.staffId?.mobileNumber || t.userId?.mobileNumber || "—"}
-                                                </p>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">No support tickets found</p>
+                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">The support inquiries queue is currently empty.</p>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <h4 className="font-black text-[var(--text-main)] dark:text-slate-200 text-sm">{t.subject}</h4>
-                                        <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs truncate font-medium tracking-tight opacity-80" title={t.description}>
-                                            {t.description}
-                                        </p>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest ${t.status?.toLowerCase() === 'resolved' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                                            t.status?.toLowerCase() === 'in progress' ? 'bg-blue-50 dark:bg-blue-500/10 text-[#1A7FD4]' :
-                                                t.status?.toLowerCase() === 'closed' ? 'bg-slate-100 dark:bg-slate-800 text-slate-500' :
-                                                    'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                            }`}>
-                                            <div className={`w-2 h-2 rounded-full ${t.status?.toLowerCase() === 'resolved' ? 'bg-emerald-500' :
-                                                t.status?.toLowerCase() === 'in progress' ? 'bg-blue-500 animate-pulse' :
-                                                    t.status?.toLowerCase() === 'closed' ? 'bg-slate-500' :
-                                                        'bg-amber-500 animate-bounce'
-                                                }`}></div>
-                                            {t.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        <div className="flex items-center justify-center gap-3">
-                                            <button
-                                                onClick={() => setSelectedTicket(t)}
-                                                className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-                                                title="Reply to Ticket"
-                                            >
-                                                <MessageSquare size={16} />
-                                            </button>
-                                            <select
-                                                value={t.status}
-                                                onChange={(e) => updateStatus(t._id, e.target.value)}
-                                                className="bg-[var(--bg-main)] dark:bg-white/5 border-none rounded-2xl px-5 py-3 text-[11px] font-black uppercase tracking-widest cursor-pointer shadow-sm hover:translate-y-[-2px] hover:shadow-lg transition-all outline-none text-[var(--text-muted)] dark:text-slate-200"
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="In Progress">In Progress</option>
-                                                <option value="Resolved">Resolved</option>
-                                                <option value="Closed">Closed</option>
-                                            </select>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {tickets.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="p-16 text-center">
-                                        <div className="flex flex-col items-center gap-4 opacity-40">
-                                            <div className="w-20 h-20 rounded-full bg-[var(--bg-main)] dark:bg-white/5 flex items-center justify-center">
-                                                <MessageSquare size={40} className="text-[var(--text-muted)]" />
-                                            </div>
-                                            <p className="text-[var(--text-muted)] font-black text-sm tracking-[0.2em] uppercase">No support tickets found</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -332,72 +332,80 @@ export function TicketsPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* ── Pagination ── */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                        <p className="text-xs text-[var(--text-muted)]">
+                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronLeft size={14} />
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronRight size={14} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="flex justify-between items-center bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-100/50">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Page {page} of {totalPages}</p>
-                    <div className="flex gap-4">
-                        <button 
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="px-6 py-3 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 disabled:opacity-30 hover:bg-slate-200 transition-colors"
-                        >
-                            Prev
-                        </button>
-                        <button 
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="px-6 py-3 rounded-2xl bg-slate-900 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-30 hover:bg-black transition-colors"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Chat Intervention Modal */}
+            {/* ── Chat Intervention Modal ── */}
             {selectedTicket && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col h-[80vh]">
-                        {/* Modal Header */}
-                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur-md">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                    <MessageSquare size={24} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedTicket(null)} />
+                    <div className="relative w-full max-w-2xl h-[80vh] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600">
+                                    <MessageSquare size={18} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-slate-900 line-clamp-1">{selectedTicket.subject}</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Support Ticket • {selectedTicket.staffId?.name || selectedTicket.userId?.name || "Patient"}</p>
+                                    <h3 className="text-sm font-bold text-[var(--text-main)] leading-snug line-clamp-1">{selectedTicket.subject}</h3>
+                                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">
+                                        Support Ticket • {selectedTicket.staffId?.name || selectedTicket.userId?.name || "Patient"}
+                                    </p>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedTicket(null)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors">
-                                <X size={20} />
+                            <button
+                                onClick={() => setSelectedTicket(null)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
                             </button>
                         </div>
 
-                        {/* Chat Messages */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50/30">
+                        {/* Body / Chat Thread */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[var(--bg-main)]/30">
                             {fetchingMessages && messages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full gap-4">
-                                    <Loader2 className="animate-spin text-blue-500" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Thread...</p>
+                                <div className="flex flex-col items-center justify-center h-full gap-3">
+                                    <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                                    <p className="text-xs text-[var(--text-muted)] font-semibold">Syncing thread...</p>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-6 mb-8 text-center space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Original Inquiry</p>
-                                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 italic">" {selectedTicket?.description} "</p>
+                                    <div className="bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/10 dark:border-blue-500/20 rounded-xl p-4 text-center">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1">Original Inquiry</p>
+                                        <p className="text-xs font-semibold text-[var(--text-main)] italic">"{selectedTicket.description}"</p>
                                     </div>
 
                                     {Array.isArray(messages) && messages.map((m) => {
                                         const isMe = m.senderType === 'User';
                                         return (
                                             <div key={m._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[80%] p-5 rounded-3xl ${isMe ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white rounded-tl-none shadow-sm'}`}>
-                                                    <p className="text-sm font-medium leading-relaxed">{m.message}</p>
-                                                    <p className={`text-[8px] mt-2 font-bold uppercase tracking-widest ${isMe ? 'text-blue-100/60' : 'text-slate-400'}`}>
+                                                <div className={`max-w-[80%] p-4 rounded-xl shadow-sm border ${isMe ? 'bg-blue-600 text-white border-blue-600 rounded-tr-none' : 'bg-[var(--card-bg)] border-[var(--border-color)] text-[var(--text-main)] rounded-tl-none'}`}>
+                                                    <p className="text-xs font-semibold leading-relaxed">{m.message}</p>
+                                                    <p className={`text-[8px] mt-1.5 font-bold uppercase tracking-wider ${isMe ? 'text-blue-200' : 'text-[var(--text-muted)]'}`}>
                                                         {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
@@ -405,9 +413,9 @@ export function TicketsPage() {
                                         );
                                     })}
                                     {messages.length === 0 && (
-                                        <div className="flex flex-col items-center justify-center h-full opacity-30 py-20">
-                                            <Info size={40} className="mb-4" />
-                                            <p className="font-black uppercase tracking-widest text-xs">No active conversation yet</p>
+                                        <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] py-10 gap-2">
+                                            <Info size={32} />
+                                            <p className="text-xs font-semibold">No active conversation thread yet</p>
                                         </div>
                                     )}
                                 </>
@@ -415,10 +423,10 @@ export function TicketsPage() {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-8 bg-white border-t border-slate-100">
+                        <div className="p-6 bg-[var(--card-bg)] border-t border-[var(--border-color)]">
                             <div className="relative">
                                 <textarea
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-3xl p-6 pr-20 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all resize-none min-h-[80px]"
+                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl p-4 pr-16 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all resize-none min-h-[70px] font-semibold"
                                     placeholder="Type your response..."
                                     value={replyMsg}
                                     onChange={(e) => setReplyMsg(e.target.value)}
@@ -432,12 +440,12 @@ export function TicketsPage() {
                                 <button
                                     disabled={sending || !replyMsg.trim()}
                                     onClick={handleSendMessage}
-                                    className="absolute right-3 bottom-3 w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 hover:bg-blue-500 active:scale-95 transition-all disabled:opacity-50"
+                                    className="absolute right-3.5 bottom-3.5 w-9 h-9 bg-blue-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50"
                                 >
-                                    {sending ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                                    {sending ? <Loader2 className="animate-spin" size={16} /> : <Send size={15} />}
                                 </button>
                             </div>
-                            <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-[0.1em] text-center">Press Enter to send response • Esc to close</p>
+                            <p className="text-[9px] font-semibold text-[var(--text-muted)] mt-3 uppercase tracking-wider text-center">Press Enter to send response • Esc to close</p>
                         </div>
                     </div>
                 </div>
@@ -445,3 +453,5 @@ export function TicketsPage() {
         </div>
     );
 }
+
+export default TicketsPage;

@@ -219,235 +219,291 @@ export function HealthPackagesPage() {
     }, []);
 
     return (
-        <div className="flex-col gap-4">
-            {/* Header */}
-            <header className="flex justify-between items-center" style={{ marginBottom: "24px" }}>
-                <div>
-                    <h1 className="brand-name" style={{ fontSize: "1.75rem" }}>Health Packages</h1>
-                    <p className="muted font-bold tracking-wider" style={{ fontSize: "0.75rem", textTransform: "uppercase", marginTop: "4px" }}>
-                        Manage bundled health checkup packages shown in the user app
-                    </p>
-                </div>
-                <div style={{ display: "flex", gap: "10px" }}>
-                    {(!packages || packages.length === 0) && (
-                        <button
-                            className="button secondary"
-                            onClick={() => seedMutation.mutate()}
-                            disabled={seedMutation.isPending}
+        <div className="space-y-6 animate-in">
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full flex items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Health Packages</h1>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                Home • Healthcare Catalog • Checkup Packages
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {(!packages || packages.length === 0) && (
+                            <button
+                                className="button secondary h-10 px-4 rounded-xl gap-1.5 text-xs font-bold uppercase border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)]"
+                                onClick={() => seedMutation.mutate()}
+                                disabled={seedMutation.isPending}
+                            >
+                                {seedMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                                <span>Seed Defaults</span>
+                            </button>
+                        )}
+                        <button 
+                            className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0" 
+                            onClick={openCreate}
                         >
-                            {seedMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                            Seed Default Packages
+                            <Plus size={16} />
+                            <span>Add Package</span>
                         </button>
-                    )}
-                    <button className="button primary" onClick={openCreate}>
-                        <Plus size={18} /> New Package
-                    </button>
+                    </div>
                 </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             </header>
 
-            {/* Stats Bar */}
+            {/* ── Stats Bar widgets ── */}
             {packages && packages.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "24px" }}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                        { label: "Total Packages", value: packages.length, icon: Package },
-                        { label: "Active", value: packages.filter(p => p.isActive).length, icon: CheckCircle2 },
-                        { label: "Featured", value: packages.filter(p => p.isFeatured).length, icon: Star },
-                    ].map(({ label, value, icon: Icon }) => (
-                        <div key={label} className="card flex items-center gap-4" style={{ padding: "20px 24px" }}>
-                            <div className="icon-box"><Icon size={20} /></div>
+                        { label: "Total Packages", value: packages.length, icon: Package, color: "text-blue-500" },
+                        { label: "Active Packages", value: packages.filter(p => p.isActive).length, icon: CheckCircle2, color: "text-emerald-500" },
+                        { label: "Featured Showcase", value: packages.filter(p => p.isFeatured).length, icon: Star, color: "text-amber-500" },
+                    ].map(({ label, value, icon: Icon, color }) => (
+                        <div key={label} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 flex items-center gap-4 shadow-sm text-left">
+                            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-[var(--text-main)] border border-[var(--border-color)]">
+                                <Icon size={18} className={color} />
+                            </div>
                             <div>
-                                <p className="text-xs muted font-bold uppercase tracking-wider">{label}</p>
-                                <p className="brand-name" style={{ fontSize: "1.5rem", margin: 0 }}>{value}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">{label}</p>
+                                <p className="text-xl font-black text-[var(--text-main)] mt-0.5">{value}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Package Grid */}
-            {isLoading ? (
-                <div className="card-ghost">Loading packages...</div>
-            ) : packages && packages.length > 0 ? (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "16px" }}>
-                    {packages.map((pkg) => (
-                        <article key={pkg._id} className="card flex-col gap-0" style={{ padding: 0, overflow: "hidden", opacity: pkg.isActive ? 1 : 0.6 }}>
-                            {/* Color Header */}
-                            <div style={{
-                                background: `linear-gradient(135deg, ${pkg.color}, ${pkg.color}cc)`,
-                                padding: "20px 20px 16px",
-                                position: "relative",
-                            }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                    <div>
-                                        {pkg.badge && (
-                                            <span style={{ fontSize: "0.65rem", background: "rgba(255,255,255,0.25)", color: "#fff", padding: "3px 10px", borderRadius: "999px", fontWeight: 700, letterSpacing: "0.08em", display: "inline-block", marginBottom: "8px" }}>
-                                                {pkg.badge}
-                                            </span>
-                                        )}
-                                        <h3 style={{ color: "#fff", fontWeight: 800, fontSize: "1.1rem", margin: 0 }}>{pkg.name}</h3>
-                                        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.78rem", marginTop: "4px" }}>{pkg.validityDays} days validity</p>
-                                    </div>
-                                    <div style={{ textAlign: "right" }}>
-                                        <p style={{ color: "#fff", fontWeight: 900, fontSize: "1.4rem", margin: 0 }}>₹{pkg.price}</p>
-                                        {discount(pkg.originalPrice, pkg.price) > 0 && (
-                                            <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.75rem", textDecoration: "line-through" }}>₹{pkg.originalPrice}</p>
-                                        )}
-                                        {discount(pkg.originalPrice, pkg.price) > 0 && (
-                                            <span style={{ background: "#22c55e", color: "#fff", fontSize: "0.65rem", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
-                                                {discount(pkg.originalPrice, pkg.price)}% OFF
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tests List */}
-                            <div style={{ padding: "16px 20px", flex: 1 }}>
-                                <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
-                                    {pkg.testsIncluded.length} Tests Included
-                                </p>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                                    {pkg.testsIncluded.slice(0, 4).map((test) => (
-                                        <span key={test} style={{ fontSize: "0.72rem", background: "#f1f5f9", color: "#475569", padding: "4px 10px", borderRadius: "999px" }}>
-                                            {test}
-                                        </span>
-                                    ))}
-                                    {pkg.testsIncluded.length > 4 && (
-                                        <span style={{ fontSize: "0.72rem", background: "#e2e8f0", color: "#64748b", padding: "4px 10px", borderRadius: "999px" }}>
-                                            +{pkg.testsIncluded.length - 4} more
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div style={{ padding: "12px 16px", borderTop: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}>
-                                {/* Featured toggle */}
-                                <button
-                                    title={pkg.isFeatured ? "Remove from featured" : "Mark as featured"}
-                                    onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
-                                    style={{ padding: "8px", borderRadius: "8px", border: "none", cursor: "pointer", background: pkg.isFeatured ? "#fef9c3" : "transparent", color: pkg.isFeatured ? "#f59e0b" : "#94a3b8" }}
-                                >
-                                    <Star size={18} fill={pkg.isFeatured ? "#f59e0b" : "none"} />
-                                </button>
-
-                                {/* Active toggle */}
-                                <button
-                                    title={pkg.isActive ? "Deactivate" : "Activate"}
-                                    onClick={() => toggleActiveMutation.mutate(pkg._id)}
-                                    style={{ padding: "8px", borderRadius: "8px", border: "none", cursor: "pointer", background: "transparent", color: pkg.isActive ? "#22c55e" : "#94a3b8" }}
-                                >
-                                    {pkg.isActive ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                                </button>
-
-                                <div style={{ flex: 1 }} />
-
-                                {/* Edit */}
-                                <button
-                                    onClick={() => openEdit(pkg)}
-                                    className="button secondary"
-                                    style={{ height: "36px", padding: "0 12px", fontSize: "0.8rem" }}
-                                >
-                                    <Pencil size={14} /> Edit
-                                </button>
-
-                                {/* Delete */}
-                                <button
-                                    onClick={() => setDeleteTargetId(pkg._id)}
-                                    className="logout-btn"
-                                    style={{ padding: "8px", color: "#ef4444" }}
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </article>
-                    ))}
+            {/* ── Main Catalog Table Listing ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-[var(--text-main)]">Checkup Packages Directory</h3>
+                    <span className="text-xs font-bold text-[var(--text-muted)]">{packages?.length || 0} Registered Bundles</span>
                 </div>
-            ) : (
-                <div className="card-ghost" style={{ flexDirection: "column", gap: "16px" }}>
-                    <Package size={40} style={{ opacity: 0.4 }} />
-                    <p>No health packages yet.</p>
-                    <button className="button primary" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
-                        <Sparkles size={16} /> Seed 6 Default Packages
-                    </button>
+
+                <div className="overflow-x-auto">
+                    {isLoading ? (
+                        <div className="py-20 text-center flex flex-col items-center gap-2">
+                            <Loader2 className="animate-spin text-blue-500" size={24} />
+                            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Syncing health packages...</span>
+                        </div>
+                    ) : packages && packages.length > 0 ? (
+                        <table className="w-full text-left min-w-[850px]">
+                            <thead>
+                                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                    <th className="py-3 px-4 w-12">#</th>
+                                    <th className="py-3 px-4">Package Identity</th>
+                                    <th className="py-3 px-4">Cost (INR)</th>
+                                    <th className="py-3 px-4">Validity</th>
+                                    <th className="py-3 px-4">Tests Included</th>
+                                    <th className="py-3 px-4 text-center">Featured</th>
+                                    <th className="py-3 px-4 text-center">Status</th>
+                                    <th className="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[var(--border-color)]">
+                                {packages.map((pkg, index) => (
+                                    <tr key={pkg._id} className="hover:bg-[var(--bg-main)]/50 transition-colors group">
+                                        {/* Index */}
+                                        <td className="py-4 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </td>
+                                        {/* Identity (Color label dot & name) */}
+                                        <td className="py-4 px-4">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: pkg.color }} />
+                                                    <span className="font-bold text-sm text-[var(--text-main)] uppercase tracking-tight">{pkg.name}</span>
+                                                    {pkg.badge && (
+                                                        <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400">
+                                                            {pkg.badge}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-[var(--text-muted)] max-w-xs truncate mt-0.5">{pkg.description}</p>
+                                            </div>
+                                        </td>
+                                        {/* Cost */}
+                                        <td className="py-4 px-4">
+                                            <div className="flex items-baseline gap-1.5">
+                                                <span className="font-bold text-xs text-[var(--text-main)]">₹{pkg.price}</span>
+                                                {discount(pkg.originalPrice, pkg.price) > 0 && (
+                                                    <span className="text-[10px] text-[var(--text-muted)] text-decoration-line-through">₹{pkg.originalPrice}</span>
+                                                )}
+                                                {discount(pkg.originalPrice, pkg.price) > 0 && (
+                                                    <span className="text-[9px] font-bold text-green-600 bg-green-50 dark:bg-green-950/20 px-1.5 py-0.5 rounded">
+                                                        -{discount(pkg.originalPrice, pkg.price)}%
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {/* Validity */}
+                                        <td className="py-4 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                                            {pkg.validityDays} Days
+                                        </td>
+                                        {/* Tests Included */}
+                                        <td className="py-4 px-4">
+                                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                {pkg.testsIncluded.slice(0, 2).map((test) => (
+                                                    <span key={test} className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-50 dark:bg-white/5 text-[var(--text-muted)] border border-[var(--border-color)]">
+                                                        {test}
+                                                    </span>
+                                                ))}
+                                                {pkg.testsIncluded.length > 2 && (
+                                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-white/10 text-[var(--text-muted)]">
+                                                        +{pkg.testsIncluded.length - 2} more
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {/* Featured toggle */}
+                                        <td className="py-4 px-4 text-center">
+                                            <button
+                                                title={pkg.isFeatured ? "Remove from featured" : "Mark as featured"}
+                                                onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
+                                                className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all ${
+                                                    pkg.isFeatured 
+                                                        ? "bg-amber-100 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400" 
+                                                        : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                                                }`}
+                                            >
+                                                <Star size={14} fill={pkg.isFeatured ? "currentColor" : "none"} />
+                                            </button>
+                                        </td>
+                                        {/* Active Status toggle */}
+                                        <td className="py-4 px-4 text-center">
+                                            <button
+                                                title={pkg.isActive ? "Deactivate" : "Activate"}
+                                                onClick={() => toggleActiveMutation.mutate(pkg._id)}
+                                                className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all ${
+                                                    pkg.isActive 
+                                                        ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20" 
+                                                        : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                                                }`}
+                                            >
+                                                {pkg.isActive ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                                            </button>
+                                        </td>
+                                        {/* Actions */}
+                                        <td className="py-4 px-4 text-right">
+                                            <div className="flex gap-2 justify-end">
+                                                <button
+                                                    onClick={() => openEdit(pkg)}
+                                                    className="w-8 h-8 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--bg-main)] hover:text-blue-600 transition-all"
+                                                    title="Edit Package"
+                                                >
+                                                    <Pencil size={13} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteTargetId(pkg._id)}
+                                                    className="w-8 h-8 rounded-lg border border-red-100 dark:border-red-950/20 bg-red-50/50 dark:bg-red-950/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+                                                    title="Delete Package"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="py-16 text-center">
+                            <div className="flex flex-col items-center justify-center space-y-3">
+                                <Package size={24} className="text-slate-300" />
+                                <div>
+                                    <h4 className="text-sm font-bold text-[var(--text-main)]">No Health Packages Yet</h4>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">Seed packages or add a new health package bundle.</p>
+                                </div>
+                                <button className="button primary h-9 px-4 rounded-lg text-xs font-bold uppercase tracking-wider" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+                                    <Sparkles size={14} /> Seed Default Packages
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
 
             {/* Create / Edit Modal */}
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: "580px" }}>
-                        <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center">
                             <div>
-                                <h3 className="brand-name">{editTarget ? "Edit Package" : "New Health Package"}</h3>
-                                <p className="text-xs muted">Fill in the details for this bundled service</p>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Healthcare Catalog</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">{editTarget ? "Edit Package" : "New Health Package"}</h3>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="logout-btn"><X size={24} /></button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all">
+                                <X size={16} />
+                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} style={{ padding: "24px" }} className="flex-col gap-4">
-                            <div className="input-group">
-                                <label>Package Name *</label>
-                                <input value={form.name} onChange={field("name")} placeholder="e.g., Basic Health Checkup" required />
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Package Name *</label>
+                                <input className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.name} onChange={field("name")} placeholder="e.g. Basic Health Checkup" required />
                             </div>
 
-                            <div className="input-group">
-                                <label>Description *</label>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Description *</label>
                                 <textarea
+                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold min-h-[70px]"
                                     value={form.description} onChange={field("description") as any}
                                     placeholder="Brief description shown in the app..."
-                                    style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "none", minHeight: "80px", fontFamily: "inherit" }}
                                     required
                                 />
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                                <div className="input-group">
-                                    <label>Sale Price (₹) *</label>
-                                    <input type="number" value={form.price} onChange={field("price")} placeholder="999" required />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Sale Price (₹) *</label>
+                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.price} onChange={field("price")} placeholder="999" required />
                                 </div>
-                                <div className="input-group">
-                                    <label>Original Price (₹) *</label>
-                                    <input type="number" value={form.originalPrice} onChange={field("originalPrice")} placeholder="1499" required />
-                                </div>
-                            </div>
-
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                                <div className="input-group">
-                                    <label>Badge Label</label>
-                                    <input value={form.badge} onChange={field("badge")} placeholder="e.g., BEST VALUE" />
-                                </div>
-                                <div className="input-group">
-                                    <label>Validity (Days)</label>
-                                    <input type="number" value={form.validityDays} onChange={field("validityDays")} placeholder="30" />
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Original Price (₹) *</label>
+                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.originalPrice} onChange={field("originalPrice")} placeholder="1499" required />
                                 </div>
                             </div>
 
-                            <div className="input-group">
-                                <label>Tests Included (comma-separated)</label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Badge Label</label>
+                                    <input className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.badge} onChange={field("badge")} placeholder="e.g. BEST VALUE" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Validity (Days)</label>
+                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.validityDays} onChange={field("validityDays")} placeholder="30" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Tests Included (comma-separated)</label>
                                 <textarea
+                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold min-h-[60px]"
                                     value={form.testsIncluded} onChange={field("testsIncluded") as any}
                                     placeholder="CBC, Blood Sugar, ECG, Urine Routine..."
-                                    style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "none", minHeight: "70px", fontFamily: "inherit" }}
                                 />
                             </div>
-                            <div className="input-group">
-                                <label>Applicable Services *</label>
-                                <div ref={servicesDropdownRef} style={{ position: "relative" }}>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Applicable Services *</label>
+                                <div ref={servicesDropdownRef} className="relative">
                                     <button
                                         type="button"
                                         onClick={() => setServicesDropdownOpen((v) => !v)}
-                                        style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "#f8fafc", border: "1px solid #e2e8f0", fontFamily: "inherit", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}
+                                        className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-left flex items-center justify-between"
                                     >
-                                        <span style={{ color: selectedRoleIds.length ? "#0f172a" : "#94a3b8", fontSize: "0.95rem" }}>
+                                        <span className={selectedRoleIds.length ? "text-[var(--text-main)]" : "text-[var(--text-muted)]"}>
                                             {selectedRoleIds.length
                                                 ? `${selectedRoleIds.length} service${selectedRoleIds.length > 1 ? "s" : ""} selected`
                                                 : "Select services"}
                                         </span>
-                                        <ChevronDown size={16} style={{ color: "#64748b", transform: servicesDropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }} />
+                                        <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-250 ${servicesDropdownOpen ? "rotate-180" : ""}`} />
                                     </button>
                                     {servicesDropdownOpen && (
-                                        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "12px", maxHeight: "220px", overflowY: "auto", zIndex: 30, boxShadow: "0 8px 24px rgba(15,23,42,0.08)" }}>
+                                        <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg max-h-48 overflow-y-auto z-30 shadow-lg">
                                             {(roles || []).map((role) => {
                                                 const checked = selectedRoleIds.includes(role._id);
                                                 return (
@@ -455,34 +511,31 @@ export function HealthPackagesPage() {
                                                         key={role._id}
                                                         type="button"
                                                         onClick={() => toggleRole(role._id)}
-                                                        style={{ width: "100%", border: "none", background: checked ? "#eff6ff" : "#fff", padding: "10px 12px", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textAlign: "left" }}
+                                                        className={`w-full border-none text-left p-2.5 flex items-center gap-2 text-xs font-semibold ${checked ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400" : "text-[var(--text-main)] hover:bg-[var(--bg-main)]"}`}
                                                     >
-                                                        <span style={{ width: "18px", height: "18px", borderRadius: "4px", border: checked ? "1px solid #2563eb" : "1px solid #cbd5e1", background: checked ? "#2563eb" : "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                                            {checked && <Check size={13} color="#fff" />}
+                                                        <span className={`w-4.5 h-4.5 rounded border flex items-center justify-center shrink-0 ${checked ? "bg-blue-600 border-blue-600" : "bg-[var(--bg-main)] border-[var(--border-color)]"}`}>
+                                                            {checked && <Check size={11} className="text-white" />}
                                                         </span>
-                                                        <span style={{ fontSize: "0.9rem", color: "#0f172a" }}>{role.title || role.name}</span>
+                                                        <span>{role.title || role.name}</span>
                                                     </button>
                                                 );
                                             })}
                                         </div>
                                     )}
                                 </div>
-                                <p className="text-xs muted" style={{ marginTop: "6px" }}>
-                                    Click to open and tick multiple services.
-                                </p>
                             </div>
 
-                            <div className="input-group">
-                                <label>Card Color</label>
-                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Card Visual Color</label>
+                                <div className="flex gap-2 flex-wrap pt-1">
                                     {PRESET_COLORS.map(c => (
                                         <button
                                             key={c.value} type="button"
                                             onClick={() => setForm(f => ({ ...f, color: c.value }))}
+                                            className="w-8 h-8 rounded-full border-3 transition-all cursor-pointer"
                                             style={{
-                                                width: "36px", height: "36px", borderRadius: "50%", background: c.value,
-                                                border: form.color === c.value ? "3px solid #0f172a" : "3px solid transparent",
-                                                cursor: "pointer",
+                                                backgroundColor: c.value,
+                                                borderColor: form.color === c.value ? "var(--text-main)" : "transparent"
                                             }}
                                             title={c.label}
                                         />
@@ -490,14 +543,16 @@ export function HealthPackagesPage() {
                                 </div>
                             </div>
 
-                            <div className="input-group">
-                                <label>Display Order</label>
-                                <input type="number" value={form.order} onChange={field("order")} placeholder="0" />
+                            <div className="space-y-1">
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Display Order</label>
+                                <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.order} onChange={field("order")} placeholder="0" />
                             </div>
 
-                            <button className="button primary full-width" disabled={saveMutation.isPending} style={{ marginTop: "8px" }}>
-                                {saveMutation.isPending ? "Saving..." : editTarget ? "Update Package" : "Create Package"}
-                            </button>
+                            <div className="pt-2">
+                                <button className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50" disabled={saveMutation.isPending}>
+                                    {saveMutation.isPending ? "Saving..." : editTarget ? "Update Package" : "Create Package"}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -505,34 +560,22 @@ export function HealthPackagesPage() {
 
             {/* Delete Confirmation Modal */}
             {deleteTargetId && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: "420px", textAlign: "center", padding: "32px 24px" }}>
-                        <div style={{
-                            width: "64px", height: "64px", background: "#fee2e2", color: "#ef4444",
-                            borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                            margin: "0 auto 20px"
-                        }}>
-                            <Trash2 size={32} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteTargetId(null)} />
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Catalog Security</p>
+                            <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Delete Health Package?</h3>
                         </div>
-                        <h3 className="brand-name" style={{ marginBottom: "8px" }}>Delete Health Package?</h3>
-                        <p className="muted" style={{ fontSize: "0.9rem", marginBottom: "32px" }}>
-                            This action cannot be undone. This package will be permanently removed from the catalog.
-                        </p>
-                        <div style={{ display: "flex", gap: "12px" }}>
-                            <button
-                                className="button secondary full-width"
-                                onClick={() => setDeleteTargetId(null)}
-                                style={{ height: "48px" }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="button primary full-width"
-                                onClick={confirmDelete}
-                                style={{ background: "#ef4444", color: "white", height: "48px" }}
-                            >
-                                Delete Permanently
-                            </button>
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center mx-auto border border-red-200">
+                                <Trash2 size={20} />
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)] font-semibold">This action cannot be undone. This package will be permanently removed from the catalog.</p>
+                        </div>
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex gap-2 bg-[var(--bg-main)]">
+                            <button className="flex-1 h-9 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--bg-main)] transition-all" onClick={() => setDeleteTargetId(null)}>Cancel</button>
+                            <button className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors" onClick={confirmDelete}>Delete Permanently</button>
                         </div>
                     </div>
                 </div>

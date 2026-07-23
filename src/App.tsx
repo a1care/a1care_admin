@@ -31,6 +31,7 @@ import { HealthPackagesPage } from "./pages/HealthPackagesPage";
 import { ServiceVerticalsPage } from "./pages/ServiceVerticalsPage";
 import { AppBannerManagementPage } from "./pages/AppBannerManagementPage";
 import DeletionRequestsPage from "./pages/DeletionRequestsPage";
+import { CommissionReportPage } from "./pages/CommissionReportPage";
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
             {/* Revenue & Subscriptions */}
             <Route path="/partner-revenue-model" element={<SubscriptionManagementPage />} />
             <Route path="/payouts" element={<PayoutsPage />} />
+            <Route path="/commission-report" element={<CommissionReportPage />} />
             <Route path="/coupons" element={<CouponsPage />} />
             <Route path="/referrals" element={<ReferralsPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />

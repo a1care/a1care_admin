@@ -2,8 +2,14 @@ import { useState, useDeferredValue } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Clock, CheckCircle2, XCircle, User, Calendar, MapPin, CreditCard, Briefcase, ChevronLeft, ChevronRight, Search, Filter, Eye, Check, CheckCheck, X, RefreshCw, Loader2, Stethoscope, Truck, Package } from "lucide-react";
+import {
+    Clock, CheckCircle2, User, Calendar, MapPin, CreditCard,
+    Briefcase, ChevronLeft, ChevronRight, Search, Filter, Eye,
+    X, RefreshCw, Loader2, Stethoscope, Truck, Package,
+    Activity, TrendingUp, AlertCircle, ChevronDown
+} from "lucide-react";
 import { toast } from "sonner";
+import { formatDate, formatDateTime, formatTime } from "@/lib/format";
 
 interface BaseBooking {
     _id: string;
@@ -41,22 +47,42 @@ interface DoctorListItem {
     specialization?: string[];
 }
 
+const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
+    PENDING:           { label: "Pending",        dot: "bg-amber-400",   badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" },
+    BROADCASTED:       { label: "Broadcasting",   dot: "bg-purple-400",  badge: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20" },
+    ACCEPTED:          { label: "Accepted",        dot: "bg-blue-400",    badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" },
+    IN_PROGRESS:       { label: "In Progress",    dot: "bg-cyan-400",    badge: "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/20" },
+    COMPLETED:         { label: "Completed",      dot: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" },
+    CANCELLED:         { label: "Cancelled",      dot: "bg-slate-400",   badge: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20" },
+    RETURNED_TO_ADMIN: { label: "Needs Review",   dot: "bg-rose-400",    badge: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20" },
+    Pending:           { label: "Pending",        dot: "bg-amber-400",   badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" },
+    Confirmed:         { label: "Confirmed",      dot: "bg-blue-400",    badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" },
+    Completed:         { label: "Completed",      dot: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" },
+    Cancelled:         { label: "Cancelled",      dot: "bg-slate-400",   badge: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+    const cfg = STATUS_CONFIG[status] || { label: status, dot: "bg-slate-400", badge: "bg-slate-50 text-slate-600 border-slate-200" };
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${cfg.badge}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+        </span>
+    );
+}
+
 export function BookingOperationsPage() {
     const [searchParams] = useSearchParams();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<"doctors" | "services" | "hospital">("services");
     const [serviceCategory, setServiceCategory] = useState<string>("All");
     const [searchQuery, setSearchQuery] = useState("");
-
     const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All");
     const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [page, setPage] = useState(1);
-    
-    // Defer search to prevent lag
     const deferredSearch = useDeferredValue(searchQuery);
 
-    // Advanced Filters State
     const [showFilters, setShowFilters] = useState(false);
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
@@ -64,34 +90,18 @@ export function BookingOperationsPage() {
     const [departmentFilter, setDepartmentFilter] = useState("All");
     const [serviceFilter, setServiceFilter] = useState("All");
     const [subServiceFilter, setSubServiceFilter] = useState("All");
+
     const DOCTOR_STATUS_UI_TO_API: Record<string, string> = {
-        All: "All",
-        PENDING: "Pending",
-        CONFIRMED: "Confirmed",
-        COMPLETED: "Completed",
-        CANCELLED: "Cancelled",
+        All: "All", PENDING: "Pending", CONFIRMED: "Confirmed", COMPLETED: "Completed", CANCELLED: "Cancelled",
     };
 
     const normalizeBookingPayload = (payload: any) => {
         if (Array.isArray(payload)) {
-            return {
-                items: payload,
-                total: payload.length,
-                page: 1,
-                totalPages: 1,
-                stats: {
-                    all: payload.length,
-                    pending: 0,
-                    confirmed: 0,
-                    completed: 0,
-                    cancelled: 0,
-                },
-            };
+            return { items: payload, total: payload.length, page: 1, totalPages: 1, stats: { all: payload.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0 } };
         }
         return payload || { items: [], total: 0, page: 1, totalPages: 1, stats: { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 } };
     };
 
-    // Fetching Bookings
     const { data: doctorData, isLoading: loadingDocs } = useQuery({
         queryKey: ["admin_doctor_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, subServiceFilter],
         queryFn: async () => {
@@ -106,7 +116,10 @@ export function BookingOperationsPage() {
             const res = await api.get(`/admin/bookings/doctors?${params.toString()}`);
             return normalizeBookingPayload(res.data.data);
         },
-        placeholderData: (prev) => prev
+        placeholderData: (prev) => prev,
+        enabled: activeTab === "doctors",
+        refetchInterval: 15000,
+        refetchIntervalInBackground: true,
     });
 
     const { data: serviceData, isLoading: loadingServices } = useQuery({
@@ -125,7 +138,10 @@ export function BookingOperationsPage() {
             const res = await api.get(`/admin/bookings/services?${params.toString()}`);
             return normalizeBookingPayload(res.data.data);
         },
-        placeholderData: (prev) => prev
+        placeholderData: (prev) => prev,
+        enabled: activeTab === "services",
+        refetchInterval: 15000,
+        refetchIntervalInBackground: true,
     });
 
     const { data: hospitalData, isLoading: loadingHospital } = useQuery({
@@ -141,32 +157,34 @@ export function BookingOperationsPage() {
             const res = await api.get(`/admin/bookings/hospital?${params.toString()}`);
             return normalizeBookingPayload(res.data.data);
         },
-        placeholderData: (prev) => prev
+        placeholderData: (prev) => prev,
+        enabled: activeTab === "hospital",
+        refetchInterval: 15000,
+        refetchIntervalInBackground: true,
     });
 
     const { data: categories } = useQuery({
         queryKey: ["admin_categories"],
         queryFn: async () => {
             const res = await api.get("/services");
-            return res.data.data as { _id: string, name: string, type?: string }[];
+            return res.data.data as { _id: string; name: string; type?: string }[];
         }
     });
 
     const { data: doctorsList } = useQuery({
         queryKey: ["admin_doctors_list"],
         queryFn: async () => {
-            const res = await api.get("/admin/doctors?status=Active&limit=500");
+            const res = await api.get("/admin/doctors?limit=500");
             const payload = res.data?.data;
             if (Array.isArray(payload)) return payload as DoctorListItem[];
             if (Array.isArray(payload?.items)) return payload.items as DoctorListItem[];
             return [];
         }
     });
+
     const normalizedDoctorsList: DoctorListItem[] = Array.isArray(doctorsList)
         ? doctorsList
-        : Array.isArray((doctorsList as any)?.items)
-            ? (doctorsList as any).items
-            : [];
+        : Array.isArray((doctorsList as any)?.items) ? (doctorsList as any).items : [];
 
     const doctorCategory = categories?.find(c => c.type === 'doctor' || c.name.toLowerCase().includes('doctor'));
 
@@ -175,61 +193,57 @@ export function BookingOperationsPage() {
         queryFn: async () => {
             if (!doctorCategory?._id) return [];
             const res = await api.get(`/subservice/${doctorCategory._id}`);
-            return res.data.data as { _id: string, name: string }[];
+            return res.data.data as { _id: string; name: string }[];
         },
         enabled: !!doctorCategory?._id
     });
 
     const [acceptServiceModal, setAcceptServiceModal] = useState<{ bookingId: string; booking: any } | null>(null);
     const [selectedHospitalId, setSelectedHospitalId] = useState("");
+
     const getProviderRoleId = (provider: DoctorListItem) =>
         typeof provider.roleId === "string" ? provider.roleId : provider.roleId?._id || "";
+
     const getEligibleProvidersForBooking = (booking: any) => {
         const allowedRoleIds = booking?.serviceId?.allowedRoleIds || booking?.childServiceId?.allowedRoleIds || [];
         if (!Array.isArray(allowedRoleIds) || allowedRoleIds.length === 0) {
-            return normalizedDoctorsList.filter((d) => d.status === "Active");
+            return normalizedDoctorsList.filter((d) => String(d.status || '').toLowerCase() === "active");
         }
         const allowed = new Set(allowedRoleIds.map((id: any) => String(id?._id || id)));
-        return normalizedDoctorsList.filter((d) => d.status === "Active" && allowed.has(getProviderRoleId(d)));
+        const filtered = normalizedDoctorsList.filter((d) => String(d.status || '').toLowerCase() === "active" && allowed.has(getProviderRoleId(d)));
+        // Fallback: If no strict role matches found, return all active providers to avoid empty dropdown
+        if (filtered.length === 0) {
+            return normalizedDoctorsList.filter((d) => String(d.status || '').toLowerCase() === "active");
+        }
+        return filtered;
     };
 
     const updateStatusMutation = useMutation({
-        mutationFn: async ({ id, type, status, assignedProviderId }: { id: string, type: "doctor" | "service", status: string; assignedProviderId?: string }) => {
+        mutationFn: async ({ id, type, status, assignedProviderId, booking }: { id: string; type: "doctor" | "service"; status: string; assignedProviderId?: string; booking?: any }) => {
             const endpoint = type === "doctor" ? `/admin/bookings/doctors/${id}/status` : `/admin/bookings/services/${id}/status`;
             const body: { status: string; assignedProviderId?: string } = { status };
             if (assignedProviderId) body.assignedProviderId = assignedProviderId;
             const res = await api.put(endpoint, body);
             return res.data;
         },
-        onSuccess: () => {
+        onSuccess: async (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["admin_doctor_bookings"] });
             queryClient.invalidateQueries({ queryKey: ["admin_service_bookings"] });
             queryClient.invalidateQueries({ queryKey: ["admin_hospital_bookings"] });
             setAcceptServiceModal(null);
             setSelectedHospitalId("");
-            toast.success("Booking updated successfully");
+            const { status, type, booking } = variables;
+            const wasPaid = booking?.paymentStatus === "COMPLETED" && (booking?.paymentMode === "WALLET" || booking?.paymentMode === "ONLINE");
+            if (status === "CANCELLED" && wasPaid && type === "service") {
+                toast.success("Booking cancelled and refund processed.");
+            } else {
+                toast.success("Booking updated successfully");
+            }
         },
         onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update booking. Please try again.");
+            toast.error(error?.response?.data?.message || "Failed to update booking.");
         }
     });
-
-    const getStatusLabel = (status: string): string => {
-        const map: Record<string, string> = {
-            PENDING: 'Awaiting Assignment',
-            BROADCASTED: 'Finding Partner',
-            ACCEPTED: 'Partner Assigned',
-            IN_PROGRESS: 'In Progress',
-            COMPLETED: 'Completed',
-            CANCELLED: 'Cancelled',
-            RETURNED_TO_ADMIN: 'Needs Reassignment',
-            Pending: 'Pending Confirmation',
-            Confirmed: 'Confirmed',
-            Completed: 'Completed',
-            Cancelled: 'Cancelled',
-        };
-        return map[status] || status.replace(/_/g, ' ');
-    };
 
     const handleUpdateStatus = (id: string, type: "doctor" | "service", status: string, assignedProviderId?: string) => {
         updateStatusMutation.mutate({ id, type, status, assignedProviderId });
@@ -237,7 +251,6 @@ export function BookingOperationsPage() {
 
     const handleAcceptServiceWithHospital = () => {
         if (!acceptServiceModal || !selectedHospitalId) return;
-        // Use PARTNER_ASSIGNED so partner gets the Rapido-style acceptance popup (5-min timer)
         handleUpdateStatus(acceptServiceModal.bookingId, "service", "PARTNER_ASSIGNED", selectedHospitalId);
     };
 
@@ -246,8 +259,8 @@ export function BookingOperationsPage() {
         if (notes.startsWith("Symptom:")) return notes.replace("Symptom:", "").trim();
         if (notes.startsWith("Dept:")) return notes.replace("Dept:", "").trim();
         if (activeTab === "doctors") {
-             const spec = booking.serviceName || (Array.isArray(booking.doctorId?.specialization) ? booking.doctorId.specialization[0] : null);
-             return spec || booking.doctorId?.name || "Doctor Consult";
+            const spec = booking.serviceName || (Array.isArray(booking.doctorId?.specialization) ? booking.doctorId.specialization[0] : null);
+            return spec || booking.doctorId?.name || "Doctor Consult";
         }
         if (activeTab === "services") return booking.serviceId?.name || "Service Request";
         return booking.serviceName || "Hospital Task";
@@ -255,8 +268,7 @@ export function BookingOperationsPage() {
 
     const activeDataset = activeTab === "doctors" ? doctorData : activeTab === "services" ? serviceData : hospitalData;
     const rawItems = activeDataset?.items || [];
-    
-    // Frontend Filter Fallback (Ensures tabs work even if backend hasn't been deployed/updated)
+
     const paginatedData = activeTab === "services" && serviceCategory !== "All"
         ? rawItems.filter((item: any) => {
             const serviceName = (item.serviceId?.name || "").toLowerCase();
@@ -267,328 +279,261 @@ export function BookingOperationsPage() {
             return true;
         })
         : rawItems;
-    
+
     const totalPages = activeDataset?.totalPages || 1;
     const stats = activeDataset?.stats || { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
-
-    const statsCards = [
-        { label: "All", count: stats.all || 0, value: "All" },
-        { label: "Pending", count: stats.pending || 0, value: "PENDING" },
-        { label: "Assigned", count: stats.confirmed || 0, value: "CONFIRMED" },
-        { label: "Completed", count: stats.completed || 0, value: "COMPLETED" },
-        { label: "Cancelled", count: stats.cancelled || 0, value: "CANCELLED" },
-    ];
     const ITEMS_PER_PAGE = 55;
 
+    const isLoading = (activeTab === "doctors" && loadingDocs) || (activeTab === "services" && loadingServices) || (activeTab === "hospital" && loadingHospital);
+
+    const TAB_CONFIG = [
+        { id: "services", label: "Service Requests", icon: <Activity size={14} /> },
+        { id: "doctors", label: "Doctor Consult", icon: <Stethoscope size={14} /> },
+        { id: "hospital", label: "Hospital Bookings", icon: <Briefcase size={14} /> },
+    ];
+
+    const STAT_CARDS = [
+        { label: "Total",     value: "All",       count: stats.all || 0,       color: "text-slate-700 dark:text-slate-300", icon: <TrendingUp size={14} /> },
+        { label: "Pending",   value: "PENDING",   count: stats.pending || 0,   color: "text-amber-600 dark:text-amber-400", icon: <Clock size={14} /> },
+        { label: "Assigned",  value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:text-blue-400",   icon: <CheckCircle2 size={14} /> },
+        { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:text-emerald-400", icon: <CheckCircle2 size={14} /> },
+        { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
+    ];
+
     return (
-        <div className="w-full space-y-6 animate-in text-left items-start px-4">
-            <header className="w-full bg-[var(--card-bg)] p-10 rounded-[32px] shadow-sm border border-[var(--border-color)]">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                    <div className="flex flex-col items-start text-left gap-3">
-                        <h1 className="text-5xl font-black tracking-tighter text-[var(--text-main)]">Service Orders</h1>
-                        <div className="flex items-center gap-2.5 px-4 py-1.5 bg-green-50 dark:bg-green-500/10 rounded-full border border-green-100 dark:border-green-500/20">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]"></span>
-                            <p className="text-[11px] font-black text-green-700 dark:text-green-400 uppercase tracking-[0.25em]">Live Operations Desk</p>
-                        </div>
-                    </div>
+        <div className="space-y-6 animate-in">
 
-                    <div className="flex items-center gap-4 flex-nowrap overflow-x-auto pb-2 lg:pb-0 custom-scrollbar">
-                        <div className="flex items-center bg-[var(--bg-main)] p-1.5 rounded-[20px] border border-[var(--border-color)] shadow-inner shrink-0">
-                            <div className="relative group min-w-[300px]">
-                                <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-blue-600 transition-all duration-300 z-10" />
-                                <input
-                                    type="text"
-                                    placeholder="Search Patient name, ID or Mobile..."
-                                    className="w-full bg-transparent border-none text-sm font-bold pr-6 h-12 outline-none focus:ring-0 text-[var(--text-main)] placeholder:text-slate-400"
-                                    style={{ paddingLeft: '80px' }}
-                                    value={searchQuery}
-                                    onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                                />
+            {/* ── Page Header ── */}
+            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+                <div className="relative z-10 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Service Orders</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                    Home • Bookings • Service Orders &nbsp;•&nbsp; Auto-refreshes every 15s
+                                </p>
                             </div>
-                            <button 
-                                className="h-10 px-5 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 shrink-0"
-                                onClick={() => toast.success(`Intelligence scan: "${searchQuery}"`)}
-                            >
-                                Search
-                            </button>
                         </div>
 
-                        <div className="flex bg-[var(--bg-main)] p-1.5 rounded-[20px] shadow-inner shrink-0">
-                            <button
-                                onClick={() => { setActiveTab("services"); setPage(1); }}
-                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "services" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                            >
-                                Service Requests
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab("doctors"); setPage(1); }}
-                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "doctors" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                            >
-                                Doctor Consult
-                            </button>
-                            <button
-                                onClick={() => { setActiveTab("hospital"); setPage(1); }}
-                                className={`px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${activeTab === "hospital" ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-md scale-105" : "text-[var(--text-muted)] hover:text-[var(--text-main)]"}`}
-                            >
-                                Hospital Bookings
-                            </button>
+                        {/* Tab Switcher */}
+                        <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl p-1 gap-0.5 self-start">
+                            {TAB_CONFIG.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => { setActiveTab(tab.id as any); setPage(1); setStatusFilter("All"); }}
+                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap
+                                        ${activeTab === tab.id
+                                            ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm"
+                                            : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                                        }`}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
-
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`h-14 px-6 flex items-center justify-center gap-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shrink-0 ${showFilters ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-[var(--bg-main)] text-[var(--text-main)] hover:bg-[var(--border-color)]'}`}
-                        >
-                            <Filter size={18} />
-                            <span>Filters</span>
-                        </button>
                     </div>
                 </div>
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            {/* Advanced Filters Panel */}
-            {showFilters && (
-                <div className="bg-[var(--card-bg)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm animate-in slide-in-from-top-4 fade-in duration-200">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-muted)]">Advanced Filters</h3>
-                        <button
-                            onClick={() => {
-                                setDateFrom(""); setDateTo(""); setPaymentFilter("All");
-                                setDepartmentFilter("All"); setServiceFilter("All");
-                                setSubServiceFilter("All");
-                            }}
-                            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                        >
-                            <RefreshCw size={12} /> Reset All
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Date Range */}
-                        <div className="col-span-1 lg:col-span-2 grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">From Date</label>
-                                <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]" />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">To Date</label>
-                                <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]" />
-                            </div>
-                        </div>
-
-                        {/* Payment Status */}
-                        <div>
-                            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Payment</label>
-                            <select value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
-                                <option value="All">All Statuses</option>
-                                <option value="COMPLETED">Paid</option>
-                                <option value="PENDING">Pending</option>
-                                <option value="FAILED">Failed</option>
-                            </select>
-                        </div>
-
-                        {activeTab === "doctors" && (
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Sub-Specialization</label>
-                                <select value={subServiceFilter} onChange={e => { setSubServiceFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
-                                    <option value="All">All Specializations</option>
-                                    {doctorSubServices?.map(sub => (
-                                        <option key={sub._id} value={sub.name}>{sub.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {activeTab === "services" && (
-                            <div>
-                                <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 ml-1">Service Node</label>
-                                <select value={serviceFilter} onChange={e => { setServiceFilter(e.target.value); setPage(1); }} className="w-full h-11 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 text-[var(--text-main)]">
-                                    <option value="All">All Services</option>
-                                    {categories?.map(c => (
-                                        <option key={c._id} value={c.name}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Stat Cards Row */}
-            <div className="flex flex-wrap gap-4">
-                {statsCards.map((stat) => (
+            {/* ── Stats Row ── */}
+            <div className="grid grid-cols-5 gap-3">
+                {STAT_CARDS.map(s => (
                     <button
-                        key={stat.value}
-                        onClick={() => { setStatusFilter(stat.value); setPage(1); }}
-                        className={`group flex-1 min-w-[140px] flex flex-col items-center justify-center py-5 px-4 rounded-2xl border transition-all duration-300 ${statusFilter === stat.value
-                            ? "bg-[var(--card-bg)] border-[var(--text-main)] shadow-md ring-1 ring-[var(--text-main)] scale-[1.02]"
-                            : "bg-[var(--card-bg)] border-[var(--border-color)] hover:border-[var(--text-muted)] shadow-sm"
+                        key={s.value}
+                        onClick={() => { setStatusFilter(s.value); setPage(1); }}
+                        className={`bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
+                            ${statusFilter === s.value
+                                ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30"
+                                : "border-[var(--border-color)] hover:border-[var(--text-muted)]"
                             }`}
                     >
-                        <span className={`text-[32px] md:text-[40px] leading-none font-black mb-1 transition-colors ${statusFilter === stat.value ? "text-[var(--text-main)]" : "text-[var(--text-main)]"}`}>
-                            {stat.count}
-                        </span>
-                        <span className={`text-xs font-semibold capitalize tracking-wide ${statusFilter === stat.value ? "text-[var(--text-main)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-main)]"}`}>
-                            {stat.label}
-                        </span>
+                        <div className={`flex items-center gap-1.5 text-xs font-medium mb-2 ${s.color}`}>
+                            {s.icon}
+                            {s.label}
+                        </div>
+                        <div className="text-2xl font-bold text-[var(--text-main)]">{s.count}</div>
                     </button>
                 ))}
             </div>
 
-            {activeTab === "services" && (
-                <div className="flex flex-wrap gap-3 mb-6">
-                    {[
-                        { id: "All", label: "All Services", icon: <Filter size={14} /> },
-                        { id: "Nurse", label: "Nursing Services", icon: <Stethoscope size={14} /> },
-                        { id: "Ambulance", label: "Ambulance", icon: <Truck size={14} /> },
-                        { id: "Rental", label: "Medical Equipment", icon: <Package size={14} /> }
-                    ].map((cat) => (
-                        <button
-                            key={cat.id}
-                            onClick={() => { setServiceCategory(cat.id); setPage(1); }}
-                            className={`h-11 px-5 flex items-center gap-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border ${serviceCategory === cat.id 
-                                ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20 scale-105" 
-                                : "bg-[var(--card-bg)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/50"}`}
-                        >
-                            {cat.icon}
-                            <span>{cat.label}</span>
-                        </button>
-                    ))}
+            {/* ── Toolbar ── */}
+            <div className="flex flex-row items-center justify-between gap-3 p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                {/* Search */}
+                <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                    <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                    <input
+                        type="text"
+                        placeholder="Search by TxnID, name, phone..."
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                        style={{
+                            width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                            background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                            fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                            fontFamily: "inherit", boxSizing: "border-box"
+                        }}
+                    />
                 </div>
-            )}
 
-            <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
+                {/* Service Category Pills (services tab only) */}
+                {activeTab === "services" && (
+                    <div className="flex items-center gap-1.5 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg p-1">
+                        {[
+                            { id: "All", label: "All" },
+                            { id: "Nurse", label: "Nursing", icon: <Stethoscope size={11} /> },
+                            { id: "Ambulance", label: "Ambulance", icon: <Truck size={11} /> },
+                            { id: "Rental", label: "Equipment", icon: <Package size={11} /> },
+                        ].map(cat => (
+                            <button
+                                key={cat.id}
+                                onClick={() => { setServiceCategory(cat.id); setPage(1); }}
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all
+                                    ${serviceCategory === cat.id
+                                        ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm"
+                                        : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                                    }`}
+                            >
+                                {cat.icon}
+                                {cat.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+
+
+            {/* ── Data Table ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <table className="w-full text-left min-w-[900px]">
                         <thead>
-                            <tr className="bg-[var(--bg-main)] border-b border-[var(--border-color)] text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-black">
-                                <th className="py-5 px-6 whitespace-nowrap w-[60px]">Sl No</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Order ID</th>
-                                <th className="py-5 px-6 whitespace-nowrap min-w-[200px]">
-                                    {activeTab === "doctors" ? "Doctor" : activeTab === "services" ? "Service" : "Hospital Task"}
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Order</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-[180px]">
+                                    {activeTab === "doctors" ? "Service / Specialty" : activeTab === "services" ? "Service" : "Task"}
                                 </th>
-                                <th className="py-5 px-6 whitespace-nowrap">Patient Name</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Date & Time</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Status</th>
-                                <th className="py-5 px-6 whitespace-nowrap">Amount</th>
-                                <th className="py-5 px-6 whitespace-nowrap text-center">Assign Partner</th>
-                                <th className="py-5 px-6 whitespace-nowrap text-right">Actions</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Patient</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Date & Time</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-center">Assign</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border-color)]">
-                            {((activeTab === "doctors" && loadingDocs) || (activeTab === "services" && loadingServices) || (activeTab === "hospital" && loadingHospital)) ? (
+                            {isLoading ? (
                                 <tr>
-                                    <td colSpan={9} className="py-24 text-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Synchronizing Operations Desk...</p>
+                                    <td colSpan={9} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Loading bookings...</p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : paginatedData.length > 0 ? (
                                 paginatedData.map((booking: any, index: number) => {
-                                    const isPending = booking.status?.toUpperCase() === "PENDING" || booking.status?.toUpperCase() === "RETURNED_TO_ADMIN";
+                                    const isPending = booking.status?.toUpperCase() === "PENDING" || booking.status?.toUpperCase() === "RETURNED_TO_ADMIN" || booking.status?.toUpperCase() === "BROADCASTED";
                                     const isConfirmed = booking.status?.toUpperCase() === "CONFIRMED" || booking.status?.toUpperCase() === "ACCEPTED";
+                                    const isFinal = booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED";
                                     return (
-                                        <tr key={booking._id} className="hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors group">
-                                            <td className="py-5 px-6 text-sm font-black text-[var(--text-muted)]">
+                                        <tr key={booking._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                            <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
                                                 {String((page - 1) * ITEMS_PER_PAGE + index + 1).padStart(2, '0')}
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded inline-block">
+                                            <td className="py-3.5 px-4">
+                                                <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
                                                     #{booking._id.slice(-8).toUpperCase()}
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-bold text-[var(--text-main)] truncate max-w-[250px]">
-                                                    {getBookingDisplayName(booking)}
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-semibold text-[var(--text-main)]">
-                                                    {booking.patientId?.name || booking.patientId?.mobile || "Anonymous Member"}
-                                                </div>
-                                                <div className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
-                                                    {booking.patientId?.mobile || "N/A"}
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-6">
-                                                <div className="text-sm font-medium text-[var(--text-main)] whitespace-nowrap">
-                                                    {new Date(booking.date || booking.createdAt).toLocaleDateString()}
-                                                </div>
-                                                <div className="text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] mt-0.5 whitespace-nowrap">
-                                                    {booking.startingTime || new Date(booking.createdAt).toLocaleTimeString()}
-                                                </div>
-                                            </td>
-                                            <td className="py-5 px-6 whitespace-nowrap">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest
-                                                    ${booking.status?.toUpperCase() === 'PENDING' ? 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'BROADCASTED' ? 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'ACCEPTED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'IN_PROGRESS' ? 'text-cyan-600 bg-cyan-50 dark:text-cyan-400 dark:bg-cyan-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20' : ''}
-                                                    ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'COMPLETED' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
-                                                    ${booking.status?.toUpperCase() === 'CANCELLED' ? 'text-[var(--text-muted)] bg-[var(--bg-main)]' : ''}
-                                                `}>
-                                                    {getStatusLabel(booking.status || '')}
                                                 </span>
                                             </td>
-                                            <td className="py-5 px-6">
-                                                <div className={`text-sm font-black whitespace-nowrap ${booking.paymentStatus === 'COMPLETED' ? 'text-green-600 dark:text-green-400' : 'text-[var(--text-main)]'}`}>
-                                                    ₹{booking.totalAmount}
+                                            <td className="py-3.5 px-4">
+                                                <span className="text-sm font-medium text-[var(--text-main)] truncate block max-w-[200px]">
+                                                    {getBookingDisplayName(booking)}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <div className="text-sm font-medium text-[var(--text-main)]">
+                                                    {booking.patientId?.name || booking.patientId?.mobile || "Anonymous"}
                                                 </div>
-                                                <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider mt-0.5">
-                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Awaiting Payment' : (booking.paymentStatus || 'N/A')}
+                                                <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
+                                                    {booking.patientId?.mobile || "—"}
                                                 </div>
                                             </td>
-                                            <td className="py-5 px-6 text-center">
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-[var(--text-main)]">
+                                                    {formatDate(booking.date || booking.createdAt)}
+                                                </div>
+                                                <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                                                    {formatTime(booking.startingTime || booking.createdAt)}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4">
+                                                <StatusBadge status={booking.status || ''} />
+                                            </td>
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className={`text-sm font-semibold ${booking.paymentStatus === 'COMPLETED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-main)]'}`}>
+                                                    ₹{booking.totalAmount}
+                                                </div>
+                                                <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                                                    {booking.paymentStatus === 'COMPLETED' ? 'Paid' : booking.paymentStatus === 'PENDING' ? 'Unpaid' : (booking.paymentStatus || '—')}
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-4 text-center">
                                                 {activeTab === "services" && (isPending || isConfirmed) ? (
                                                     <button
                                                         onClick={() => setAcceptServiceModal({ bookingId: booking._id, booking })}
-                                                        className={`h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto text-white ${isConfirmed ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700 animate-soft-glow"}`}
+                                                        className={`h-8 px-3 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 text-white shadow-sm
+                                                            ${isConfirmed ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
                                                     >
-                                                        <CheckCircle2 size={14} />
-                                                        {isConfirmed ? "Re-assign" : "Assign Provider"}
+                                                        <CheckCircle2 size={12} />
+                                                        {isConfirmed ? "Re-assign" : "Assign"}
                                                     </button>
                                                 ) : (
                                                     <button
                                                         disabled={!isPending || activeTab === "services"}
                                                         onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "Confirmed")}
-                                                        className={`h-9 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-xs font-bold mx-auto 
+                                                        className={`h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all
                                                             ${isPending && activeTab !== "services"
-                                                                ? "bg-blue-600 text-white hover:bg-blue-700 animate-soft-glow"
-                                                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700 shadow-none"
+                                                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                                                                : "bg-[var(--bg-main)] text-[var(--text-muted)] cursor-not-allowed border border-[var(--border-color)]"
                                                             }`}
                                                     >
-                                                        <CheckCircle2 size={14} />
+                                                        <CheckCircle2 size={12} />
                                                         Accept
                                                     </button>
                                                 )}
                                             </td>
-                                            <td className="py-5 px-6 text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="py-3.5 px-4 text-right">
+                                                <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={() => { setSelectedBooking({ ...booking, tab: activeTab }); setViewModalOpen(true); }}
-                                                        className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-500 dark:hover:text-white flex items-center justify-center transition-all border border-blue-200 dark:border-blue-500/20" title="View Details">
-                                                        <Eye size={16} />
+                                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 border border-[var(--border-color)] hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={14} />
                                                     </button>
-
-
-
                                                     <button
-                                                        disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
+                                                        disabled={isFinal}
                                                         onClick={() => {
-                                                            if (!window.confirm(`Cancel this booking for ${booking.patientId?.name || 'this patient'}? This cannot be undone.`)) return;
-                                                            handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "CANCELLED");
+                                                            if (!window.confirm(`Cancel booking for ${booking.patientId?.name || 'this patient'}?`)) return;
+                                                            const id = booking.bookingId || booking._id;
+                                                            const type = (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service");
+                                                            updateStatusMutation.mutate({ id, type, status: "CANCELLED", booking });
                                                         }}
-                                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border
-                                                            ${(booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED")
-                                                                ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border-slate-200 dark:border-slate-700"
-                                                                : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-500 dark:hover:text-white border-red-200 dark:border-red-500/20 shadow-sm"
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
+                                                            ${isFinal
+                                                                ? "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                                : "text-[var(--text-muted)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 border-[var(--border-color)] hover:border-red-300 dark:hover:border-red-500/30"
                                                             }`}
                                                         title="Cancel Booking"
                                                     >
-                                                        <X size={16} />
+                                                        <X size={14} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -597,149 +542,146 @@ export function BookingOperationsPage() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={9} className="py-24 text-center">
-                                        <div className="w-20 h-20 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
-                                            <Calendar size={32} className="text-[var(--text-muted)]" />
+                                    <td colSpan={9} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center">
+                                                <Calendar size={20} className="text-[var(--text-muted)]" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-[var(--text-main)]">No bookings found</p>
+                                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Try adjusting your filters or search query.</p>
+                                            </div>
                                         </div>
-                                        <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">No active bookings found</h3>
-                                        <p className="text-[var(--text-muted)]">There are currently no active bookings matching your criteria in this segment.</p>
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                        <p className="text-xs text-[var(--text-muted)]">
+                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronLeft size={14} />
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronRight size={14} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 bg-[var(--card-bg)] rounded-3xl border border-[var(--border-color)] shadow-sm">
-                    <p className="text-sm font-semibold text-[var(--text-muted)]">
-                        Page {page} of {totalPages}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                        <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="p-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* View Details Modal */}
+            {/* ── View Details Modal ── */}
             {viewModalOpen && selectedBooking && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setViewModalOpen(false)}></div>
-                    <div className="relative w-full max-w-2xl bg-[var(--card-bg)] rounded-[32px] border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between p-8 border-b border-[var(--border-color)]">
-                            <div className="space-y-1">
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Order Details</span>
-                                <h3 className="text-xl font-black text-[var(--text-main)] flex items-center gap-3">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewModalOpen(false)} />
+                    <div className="relative w-full max-w-xl bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Booking Details</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5 flex items-center gap-2">
                                     #{selectedBooking._id.slice(-12).toUpperCase()}
-                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest
-                                        ${selectedBooking.status?.toUpperCase() === 'PENDING' ? 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/10' : ''}
-                                        ${selectedBooking.status?.toUpperCase() === 'CONFIRMED' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10' : ''}
-                                        ${selectedBooking.status?.toUpperCase() === 'COMPLETED' ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10' : ''}
-                                        ${selectedBooking.status?.toUpperCase() === 'CANCELLED' ? 'text-slate-500 bg-slate-50' : ''}
-                                    `}>
-                                        {selectedBooking.status}
-                                    </span>
+                                    <StatusBadge status={selectedBooking.status || ''} />
                                 </h3>
                             </div>
-                            <button onClick={() => setViewModalOpen(false)} className="w-10 h-10 rounded-full bg-[var(--bg-main)] hover:bg-[var(--border-color)] flex items-center justify-center transition-colors">
-                                <X size={20} className="text-[var(--text-muted)]" />
+                            <button
+                                onClick={() => setViewModalOpen(false)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
                             </button>
                         </div>
 
-                        {/* Modal Body */}
-                        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-                            {/* Entity Info Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)]">
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <User size={12} className="text-blue-500" /> Patient Profile
-                                    </h4>
-                                    <div className="space-y-1">
-                                        <p className="text-[var(--text-main)] font-bold text-lg leading-tight">{selectedBooking.patientId?.name || selectedBooking.patientId?.mobile || "Guest User"}</p>
-                                        <p className="text-[var(--text-muted)] font-mono text-xs">{selectedBooking.patientId?.mobile || "No mobile available"}</p>
-                                    </div>
+                        {/* Body */}
+                        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                            {/* Patient & Service */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                        <User size={11} className="text-blue-500" /> Patient
+                                    </p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.name || "Anonymous"}</p>
+                                    <p className="text-xs font-mono text-[var(--text-muted)] mt-0.5">{selectedBooking.patientId?.mobile || "—"}</p>
                                 </div>
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <Briefcase size={12} className="text-blue-500" />
-                                        {selectedBooking.tab === "doctors" ? "Medical Expert" : "Service Info"}
-                                    </h4>
-                                    <div className="space-y-1">
-                                        <p className="text-[var(--text-main)] font-bold text-lg leading-tight">
-                                            {selectedBooking.tab === "doctors" ? selectedBooking.doctorId?.name : selectedBooking.tab === "services" ? selectedBooking.serviceId?.name : selectedBooking.serviceName}
-                                        </p>
-                                        <p className="text-[var(--text-muted)] text-sm font-medium">
-                                            {selectedBooking.tab === "doctors" ? selectedBooking.doctorId?.specialization?.join(", ") : "Hospital Facility Token"}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Scheduling & Payment */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} /> Appointment
-                                    </h4>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-bold text-[var(--text-main)]">{new Date(selectedBooking.date || selectedBooking.createdAt).toLocaleDateString()}</p>
-                                        <p className="text-xs font-medium text-[var(--text-muted)]">{selectedBooking.startingTime || new Date(selectedBooking.createdAt).toLocaleTimeString()}</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <CreditCard size={12} /> Billing
-                                    </h4>
-                                    <div className="space-y-1">
-                                        <p className="text-lg font-black text-[var(--text-main)]">₹{selectedBooking.totalAmount}</p>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest 
-                                            ${selectedBooking.paymentStatus === 'COMPLETED' ? 'text-green-600' : 'text-orange-600'}`}>
-                                            {selectedBooking.paymentStatus}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <Clock size={12} /> Created On
-                                    </h4>
-                                    <p className="text-sm font-bold text-[var(--text-main)]">{new Date(selectedBooking.createdAt).toLocaleString()}</p>
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                        <Briefcase size={11} className="text-blue-500" />
+                                        {selectedBooking.tab === "doctors" ? "Doctor" : "Service"}
+                                    </p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">
+                                        {selectedBooking.tab === "doctors"
+                                            ? selectedBooking.doctorId?.name
+                                            : selectedBooking.tab === "services"
+                                                ? selectedBooking.serviceId?.name
+                                                : selectedBooking.serviceName
+                                        }
+                                    </p>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                        {selectedBooking.tab === "doctors"
+                                            ? selectedBooking.doctorId?.specialization?.join(", ")
+                                            : "—"
+                                        }
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Additional Details */}
+                            {/* Scheduling & Billing */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                        <Calendar size={11} /> Date
+                                    </p>
+                                    <p className="text-sm font-semibold text-[var(--text-main)]">{formatDate(selectedBooking.date || selectedBooking.createdAt)}</p>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatTime(selectedBooking.startingTime || selectedBooking.createdAt)}</p>
+                                </div>
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                        <CreditCard size={11} /> Billing
+                                    </p>
+                                    <p className="text-base font-bold text-[var(--text-main)]">₹{selectedBooking.totalAmount}</p>
+                                    <p className={`text-[11px] font-semibold mt-0.5 ${selectedBooking.paymentStatus === 'COMPLETED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                        {selectedBooking.paymentStatus}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
+                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                        <Clock size={11} /> Created
+                                    </p>
+                                    <p className="text-sm font-medium text-[var(--text-main)]">{formatDateTime(selectedBooking.createdAt)}</p>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
                             {selectedBooking.notes && (
-                                <div className="space-y-3 p-5 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-500/10">
-                                    <h4 className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Medical Notes / Requirements</h4>
-                                    <p className="text-sm text-[var(--text-main)] leading-relaxed italic">"{selectedBooking.notes}"</p>
+                                <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-xl border border-blue-100 dark:border-blue-500/10">
+                                    <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1.5">Notes</p>
+                                    <p className="text-sm text-[var(--text-main)] leading-relaxed">"{selectedBooking.notes}"</p>
                                 </div>
                             )}
 
+                            {/* Location */}
                             {selectedBooking.tab === "services" && selectedBooking.location && (
-                                <div className="space-y-3">
-                                    <h4 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
-                                        <MapPin size={12} /> Service Location
-                                    </h4>
-                                    <p className="text-sm font-medium text-[var(--text-main)] p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                        {selectedBooking.location}
-                                    </p>
+                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex items-start gap-3">
+                                    <MapPin size={14} className="text-[var(--text-muted)] mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Service Location</p>
+                                        <p className="text-sm text-[var(--text-main)]">{selectedBooking.location}</p>
+                                    </div>
                                 </div>
                             )}
 
@@ -748,71 +690,89 @@ export function BookingOperationsPage() {
                                 const assignedId = typeof selectedBooking.assignedProviderId === "object"
                                     ? selectedBooking.assignedProviderId?._id
                                     : selectedBooking.assignedProviderId;
-                                const provider = normalizedDoctorsList.find((d) => d._id === assignedId);
+                                const provider = normalizedDoctorsList.find(d => d._id === assignedId);
                                 const providerName = provider?.name
                                     || (typeof selectedBooking.assignedProviderId === "object" ? selectedBooking.assignedProviderId?.name : null)
                                     || "Assigned Provider";
                                 return (
-                                    <div className="space-y-3">
-                                        <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                            <CheckCircle2 size={12} /> Assigned Provider
-                                        </h4>
-                                        <div className="flex items-center gap-3 p-4 bg-emerald-50/60 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/10">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm">
-                                                {providerName.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-[var(--text-main)]">{providerName}</p>
-                                                {provider?.mobileNumber && <p className="text-xs font-mono text-[var(--text-muted)]">{provider.mobileNumber}</p>}
-                                            </div>
+                                    <div className="p-4 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/10 flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                            {providerName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Assigned Provider</p>
+                                            <p className="text-sm font-semibold text-[var(--text-main)]">{providerName}</p>
+                                            {provider?.mobileNumber && <p className="text-xs font-mono text-[var(--text-muted)]">{provider.mobileNumber}</p>}
                                         </div>
                                     </div>
                                 );
                             })()}
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="p-8 border-t border-[var(--border-color)] flex justify-end">
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end">
                             <button
                                 onClick={() => setViewModalOpen(false)}
-                                className="px-10 h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-md active:scale-95"
+                                className="h-9 px-6 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] text-sm font-semibold rounded-lg hover:bg-[var(--border-color)] transition-all"
                             >
-                                Close View
+                                Close
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Assign service to provider modal */}
+            {/* ── Assign Provider Modal ── */}
             {acceptServiceModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}></div>
-                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl p-6">
-                        <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Assign Provider</h3>
-                        <p className="text-sm text-[var(--text-muted)] mb-4">Choose an active provider eligible for this service. The booking will move to assigned work.</p>
-                        <select
-                            value={selectedHospitalId}
-                            onChange={(e) => setSelectedHospitalId(e.target.value)}
-                            className="w-full h-12 px-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm font-medium text-[var(--text-main)] mb-4"
-                        >
-                            <option value="">Choose provider...</option>
-                            {getEligibleProvidersForBooking(acceptServiceModal.booking).map((d) => (
-                                <option key={d._id} value={d._id}>
-                                    {d.name} {d.specialization?.length ? `- ${d.specialization.join(", ")}` : ""} {d.mobileNumber ? `(${d.mobileNumber})` : ""}
-                                </option>
-                            ))}
-                        </select>
-                        {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
-                            <p className="text-xs font-bold text-rose-600 mb-4">No active matching providers found for this service.</p>
-                        )}
-                        <div className="flex gap-3 justify-end">
-                            <button onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }} className="px-5 h-11 rounded-xl border border-[var(--border-color)] font-bold text-[var(--text-main)]">Cancel</button>
-                            <button onClick={handleAcceptServiceWithHospital} disabled={!selectedHospitalId || updateStatusMutation.isPending} className="px-5 h-11 rounded-xl bg-blue-600 text-white font-bold disabled:opacity-50">Assign</button>
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }} />
+                    <div className="relative w-full max-w-sm bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl animate-in zoom-in-95 duration-150">
+                        <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
+                            <h3 className="text-base font-bold text-[var(--text-main)]">Assign Provider</h3>
+                            <button onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all">
+                                <X size={14} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-[var(--text-muted)]">Select an active provider eligible for this service booking.</p>
+                            <div>
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Provider</label>
+                                <select
+                                    value={selectedHospitalId}
+                                    onChange={e => setSelectedHospitalId(e.target.value)}
+                                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500"
+                                >
+                                    <option value="">Select provider...</option>
+                                    {getEligibleProvidersForBooking(acceptServiceModal.booking).map(d => (
+                                        <option key={d._id} value={d._id}>
+                                            {d.name}{d.specialization?.length ? ` — ${d.specialization.join(", ")}` : ""}{d.mobileNumber ? ` (${d.mobileNumber})` : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                                {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
+                                    <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-2">No active matching providers found.</p>
+                                )}
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                                <button
+                                    onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}
+                                    className="flex-1 h-9 rounded-lg border border-[var(--border-color)] text-sm font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAcceptServiceWithHospital}
+                                    disabled={!selectedHospitalId || updateStatusMutation.isPending}
+                                    className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {updateStatusMutation.isPending ? "Assigning..." : "Assign"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
-        </div >
+        </div>
     );
 }

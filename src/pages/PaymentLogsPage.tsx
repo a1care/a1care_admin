@@ -103,37 +103,41 @@ export function PaymentLogsPage() {
           <span>Refresh</span>
         </button>
         <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
-      </header>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 20, alignItems: "start" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className="card" style={{ padding: 12, borderRadius: 16 }}>
-            <div style={{ position: "relative" }}>
-              <Search size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search by TxnID, name, phone..."
-                style={{ width: "100%", paddingLeft: 40, paddingRight: 16, height: 40, borderRadius: 12, background: "var(--bg-main)", border: "none", fontSize: 13, boxSizing: "border-box" }}
-              />
-            </div>
+      </header>      {/* ── Main Clean Table View ── */}
+      <div className="card p-0 overflow-hidden" style={{ border: 'none', background: 'var(--card-bg)', borderRadius: 24, borderStyle: 'solid', borderWidth: 1, borderColor: 'var(--border-color)' }}>
+        {/* Toolbar */}
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-color)", display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", background: "var(--bg-main)" }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+            <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by TxnID, name, phone..."
+              style={{
+                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                fontFamily: "inherit", boxSizing: "border-box"
+              }}
+            />
           </div>
 
-          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {["ALL", "SUCCESS", "FAILED", "PENDING", "VERIFICATION_PENDING"].map(status => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
                 style={{
-                  padding: "8px 16px",
+                  height: 40,
+                  padding: "0 16px",
                   borderRadius: 12,
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 800,
                   textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  background: statusFilter === status ? "var(--text-main)" : "var(--bg-main)",
+                  letterSpacing: "0.05em",
+                  background: statusFilter === status ? "var(--text-main)" : "var(--card-bg)",
                   color: statusFilter === status ? "white" : "var(--text-muted)",
-                  border: "none",
+                  border: "1.5px solid var(--border-color)",
                   cursor: "pointer",
                   transition: "all 0.2s",
                   whiteSpace: "nowrap"
@@ -144,138 +148,192 @@ export function PaymentLogsPage() {
             ))}
           </div>
 
-          {isLoading ? (
-            <div style={{ textAlign: "center", padding: 60 }}>
-              <RefreshCcw size={32} className="animate-spin" style={{ color: "var(--text-muted)", margin: "0 auto" }} />
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="card" style={{ padding: 60, textAlign: "center", borderRadius: 24 }}>
-              <CreditCard size={40} style={{ color: "var(--text-muted)", margin: "0 auto 12px" }} />
-              <p className="muted text-xs font-black uppercase tracking-widest">No payment records found</p>
-            </div>
-          ) : (
-            orders.map(order => {
-              const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
-              const StatusIcon = cfg.icon;
-              const userName = typeof order.userId === "object" ? order.userId?.name || "-" : "-";
-              const userPhone = typeof order.userId === "object" ? order.userId?.mobileNumber || "" : "";
-              const isSelected = selectedTxn === order.txnId;
-
-              return (
-                <div
-                  key={order._id}
-                  onClick={() => setSelectedTxn(isSelected ? null : order.txnId)}
-                  className="card"
-                  style={{
-                    padding: "16px 20px", borderRadius: 20, cursor: "pointer",
-                    border: isSelected ? "2px solid #3b82f6" : "1px solid var(--border-color)",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <span style={{ fontWeight: 700, fontSize: 13, color: "var(--text-main)" }}>{userName}</span>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "monospace" }}>{order.txnId}</span>
-                      {userPhone && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{userPhone}</span>}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-                      <span style={{ fontWeight: 800, fontSize: 16 }}>INR {Number(order.amount).toFixed(2)}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, background: cfg.bg, color: cfg.color, borderRadius: 8, padding: "3px 10px" }}>
-                        <StatusIcon size={12} />
-                        <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{cfg.label}</span>
-                      </div>
-                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                        {new Date(order.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, background: "var(--bg-main)", color: "var(--text-muted)", padding: "2px 8px", borderRadius: 6, textTransform: "uppercase" }}>
-                      {({'WALLET_TOPUP':'Wallet Top-up','SERVICE_BOOKING':'Service Booking','DOCTOR_BOOKING':'Doctor Booking','APPOINTMENT':'Appointment','SUBSCRIPTION':'Subscription'} as Record<string,string>)[order.type] || (order.type || '').replace(/_/g,' ')}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-
-          <div className="card" style={{ padding: '20px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--card-bg)', border: '1px solid var(--border-color)', marginTop: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', fontSize: '10px', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Page <span style={{ color: 'var(--text-main)', marginLeft: '4px' }}>{page} / {totalPages}</span>
-              </div>
-              <div style={{ padding: '8px 16px', borderRadius: '12px', background: 'var(--bg-main)', border: '1px solid var(--border-color)', fontSize: '10px', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Total Records <span style={{ color: 'var(--text-main)', marginLeft: '4px' }}>{total}</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                className="button secondary"
-                style={{ height: '44px', width: '44px', padding: 0, borderRadius: '14px', border: '1px solid var(--border-color)' }}
-                onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                disabled={page === 1 || isFetching}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                className="button secondary"
-                style={{ height: '44px', width: '44px', padding: 0, borderRadius: '14px', border: '1px solid var(--border-color)' }}
-                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={page >= totalPages || isFetching}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+          <div style={{ marginLeft: "auto", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>
+            {isLoading ? "Loading..." : `${orders.length} of ${total} shown`}
           </div>
         </div>
 
-        <div className="card" style={{ padding: 20, borderRadius: 24, position: "sticky", top: 20 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--text-muted)", marginBottom: 16 }}>
-            {selectedTxn ? `Event Log - ${selectedTxn}` : "Select a transaction"}
-          </p>
+        {/* Table */}
+        {isLoading && !ordersResponse ? (
+          <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--text-muted)", fontWeight: 700 }}>
+            <RefreshCcw size={32} className="animate-spin" style={{ margin: "0 auto 16px", opacity: 0.4 }} />
+            <div>Loading Payment Registry...</div>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "var(--bg-main)" }}>
+                  {["User Details", "Transaction ID", "Type", "Amount", "Status", "Date", "Actions"].map((h, i) => (
+                    <th key={i} style={{
+                      padding: "13px 20px",
+                      fontSize: "0.7rem", fontWeight: 800,
+                      color: "var(--text-muted)", textTransform: "uppercase",
+                      letterSpacing: "0.08em", borderBottom: "1px solid var(--border-color)",
+                      textAlign: h === "Actions" ? "right" : "left"
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length > 0 ? orders.map((order) => {
+                  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
+                  const StatusIcon = cfg.icon;
+                  const userName = typeof order.userId === "object" ? order.userId?.name || "-" : "-";
+                  const userPhone = typeof order.userId === "object" ? order.userId?.mobileNumber || "" : "";
+                  const isSelected = selectedTxn === order.txnId;
 
-          {!selectedTxn ? (
-            <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-              <CreditCard size={32} style={{ margin: "0 auto 12px", opacity: 0.3 }} />
-              <p style={{ fontSize: 12, fontWeight: 600 }}>Click any order to view its event trail</p>
+                  return (
+                    <>
+                      <tr
+                        key={order._id}
+                        onClick={() => setSelectedTxn(isSelected ? null : order.txnId)}
+                        style={{
+                          borderBottom: "1px solid var(--border-color)",
+                          cursor: "pointer",
+                          background: isSelected ? "var(--bg-main)" : "transparent",
+                          transition: "background 0.15s"
+                        }}
+                      >
+                        <td style={{ padding: "16px 20px" }}>
+                          <div style={{ fontWeight: 800, fontSize: "0.9rem", color: "var(--text-main)" }}>{userName}</div>
+                          {userPhone && <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>{userPhone}</div>}
+                        </td>
+                        <td style={{ padding: "16px 20px" }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontFamily: "monospace", fontWeight: 700 }}>{order.txnId}</span>
+                        </td>
+                        <td style={{ padding: "16px 20px" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, background: "var(--bg-main)", color: "var(--text-muted)", padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
+                            {({'WALLET_TOPUP':'Wallet Top-up','SERVICE_BOOKING':'Service Booking','DOCTOR_BOOKING':'Doctor Booking','APPOINTMENT':'Appointment','SUBSCRIPTION':'Subscription'} as Record<string,string>)[order.type] || (order.type || '').replace(/_/g,' ')}
+                          </span>
+                        </td>
+                        <td style={{ padding: "16px 20px" }}>
+                          <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>INR {Number(order.amount).toFixed(2)}</span>
+                        </td>
+                        <td style={{ padding: "16px 20px" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: cfg.bg, color: cfg.color, borderRadius: 8, padding: "3px 10px" }}>
+                            <StatusIcon size={12} />
+                            <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>{cfg.label}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "16px 20px" }}>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 600 }}>{new Date(order.createdAt).toLocaleString()}</span>
+                        </td>
+                        <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setSelectedTxn(isSelected ? null : order.txnId); }}
+                            style={{
+                              height: 28,
+                              padding: "0 10px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              background: isSelected ? "var(--text-main)" : "var(--card-bg)",
+                              color: isSelected ? "white" : "var(--text-muted)",
+                              border: "1px solid var(--border-color)",
+                              cursor: "pointer",
+                              transition: "all 0.15s"
+                            }}
+                          >
+                            {isSelected ? "Hide Logs" : "View Logs"}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* Expandable nested log row */}
+                      {isSelected && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: "20px 24px", background: "var(--bg-main)", borderBottom: "1px solid var(--border-color)" }}>
+                            <div style={{
+                              background: "var(--card-bg)", borderRadius: 16, border: "1px solid var(--border-color)", padding: 20,
+                              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)"
+                            }}>
+                              <p style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--accent-color)", margin: "0 0 16px" }}>
+                                Transaction Timeline Logs: {order.txnId}
+                              </p>
+
+                              {logsLoading ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", color: "var(--text-muted)" }}>
+                                  <RefreshCcw size={14} className="animate-spin" />
+                                  <span style={{ fontSize: 12, fontWeight: 600 }}>Loading timeline events...</span>
+                                </div>
+                              ) : logs.length === 0 ? (
+                                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>No log records found for this transaction.</div>
+                              ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                  {logs.slice(1).map(log => {
+                                    const lvl = LEVEL_CONFIG[log.level] || LEVEL_CONFIG.INFO;
+                                    return (
+                                      <div key={log._id} style={{ background: "var(--bg-main)", borderRadius: 12, padding: "12px 14px", borderLeft: `3.5px solid ${lvl.color}` }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                          <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", color: lvl.color, letterSpacing: "0.08em" }}>
+                                            {log.event}
+                                          </span>
+                                          <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500 }}>
+                                            {new Date(log.createdAt).toLocaleTimeString()}
+                                          </span>
+                                        </div>
+                                        <p style={{ fontSize: 12, color: "var(--text-main)", margin: 0, fontWeight: 600 }}>{log.message}</p>
+                                        {log.metadata && (
+                                          <details style={{ marginTop: 6 }}>
+                                            <summary style={{ fontSize: 10, color: "var(--text-muted)", cursor: "pointer", fontWeight: 700 }}>View payload metadata</summary>
+                                            <pre style={{ fontSize: 10, marginTop: 6, overflow: "auto", background: "var(--card-bg)", padding: 10, borderRadius: 8, color: "var(--text-muted)", border: "1px solid var(--border-color)", fontFamily: "monospace" }}>
+                                              {JSON.stringify(log.metadata, null, 2)}
+                                            </pre>
+                                          </details>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "80px 24px", textAlign: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                        <CreditCard size={40} style={{ color: "var(--text-muted)", opacity: 0.3 }} />
+                        <p style={{ fontWeight: 800, color: "var(--text-main)", margin: 0 }}>No payment records found</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ padding: "14px 24px", borderTop: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-main)" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+              Page {page} of {totalPages} · {total.toLocaleString()} records
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                disabled={page === 1 || isFetching}
+                style={{ width: 36, height: 36, borderRadius: 10, border: "1.5px solid var(--border-color)", background: "var(--card-bg)", cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={page >= totalPages || isFetching}
+                style={{ width: 36, height: 36, borderRadius: 10, border: "1.5px solid var(--border-color)", background: "var(--card-bg)", cursor: page >= totalPages ? "not-allowed" : "pointer", opacity: page >= totalPages ? 0.4 : 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
-          ) : logsLoading ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <RefreshCcw size={24} className="animate-spin" style={{ color: "var(--text-muted)", margin: "0 auto" }} />
-            </div>
-          ) : logs.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-              <p style={{ fontSize: 12 }}>No logs for this transaction</p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 600, overflowY: "auto" }}>
-              {logs.map(log => {
-                const lvl = LEVEL_CONFIG[log.level] || LEVEL_CONFIG.INFO;
-                return (
-                  <div key={log._id} style={{ background: "var(--bg-main)", borderRadius: 12, padding: "12px 14px", borderLeft: `3px solid ${lvl.color}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: lvl.color, letterSpacing: "0.1em" }}>
-                        {log.event}
-                      </span>
-                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                        {new Date(log.createdAt).toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 12, color: "var(--text-main)", margin: 0 }}>{log.message}</p>
-                    {log.metadata && (
-                      <details style={{ marginTop: 6 }}>
-                        <summary style={{ fontSize: 10, color: "var(--text-muted)", cursor: "pointer" }}>View metadata</summary>
-                        <pre style={{ fontSize: 10, marginTop: 4, overflow: "auto", background: "var(--card-bg)", padding: 8, borderRadius: 8, color: "var(--text-muted)" }}>
-                          {JSON.stringify(log.metadata, null, 2)}
-                        </pre>
-                      </details>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
