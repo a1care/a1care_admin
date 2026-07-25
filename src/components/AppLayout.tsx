@@ -210,21 +210,7 @@ export function AppLayout() {
       if (dismissedTime && now - dismissedTime < 60000) {
         return false;
       }
-      return (
-        a.refType === "ServiceRequest" && 
-        (
-          a.title?.includes("Expired") || 
-          a.title?.includes("Accept") || 
-          a.title?.includes("Rejected") || 
-          a.title?.includes("Returned") || 
-          a.title?.includes("Missing") ||
-          a.title?.includes("No Partner") ||
-          a.body?.includes("did not accept") ||
-          a.body?.includes("No Partner Accepted") ||
-          a.body?.includes("rejected") ||
-          a.body?.includes("missed")
-        )
-      );
+      return true;
     });
   }, [alerts, dismissTrigger]);
 
@@ -773,7 +759,7 @@ export function AppLayout() {
           <div className="flex justify-between items-center pb-4 border-b dark:border-slate-800">
             <div>
               <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">⚠️ Critical Action</p>
-              <h3 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">{activeAlerts.length} Missed Bookings</h3>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">{activeAlerts.length} Action{activeAlerts.length !== 1 ? 's' : ''} Required</h3>
             </div>
             <button
               onClick={(e) => {
@@ -800,7 +786,7 @@ export function AppLayout() {
               <div 
                 key={alert._id} 
                 onClick={() => {
-                  navigate("/bookings");
+                  navigate(alert.refType === "DoctorAppointment" ? "/op-bookings" : "/bookings");
                   const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
                   dismissedMap[alert._id] = Date.now();
                   localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
@@ -823,7 +809,7 @@ export function AppLayout() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation(); // Avoid triggering card-level navigation
-                      navigate("/bookings");
+                      navigate(alert.refType === "DoctorAppointment" ? "/op-bookings" : "/bookings");
                       const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
                       dismissedMap[alert._id] = Date.now();
                       localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
@@ -832,7 +818,7 @@ export function AppLayout() {
                     }}
                     className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black transition-all text-center uppercase tracking-wider shadow-md shadow-red-500/10"
                   >
-                    Assign Manually
+                    View Details
                   </button>
                   <button
                     onClick={(e) => {

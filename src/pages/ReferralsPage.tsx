@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
     Gift,
@@ -11,8 +11,11 @@ import {
     ChevronRight,
     TrendingUp,
     Clock,
-    AlertCircle
+    AlertCircle,
+    Settings,
+    Save
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface PartyRef {
     _id?: string;
@@ -47,6 +50,49 @@ const partyMobile = (p?: PartyRef | string) =>
 export function ReferralsPage() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
+
+    // Configuration state
+    const [customerReward, setCustomerReward] = useState("100");
+    const [partnerReward, setPartnerReward] = useState("100");
+
+    const { data: configData, refetch: refetchConfig } = useQuery({
+        queryKey: ["referral-config"],
+        queryFn: async () => {
+            const res = await api.get("/referral/config");
+            return res.data?.data;
+        }
+    });
+
+    // Populate local state when config is fetched
+    useEffect(() => {
+        if (configData) {
+            if (configData.customerRewardAmount !== undefined) setCustomerReward(String(configData.customerRewardAmount));
+            if (configData.partnerRewardAmount !== undefined) setPartnerReward(String(configData.partnerRewardAmount));
+        }
+    }, [configData]);
+
+    const updateConfigMutation = useMutation({
+        mutationFn: async (payload: { customerRewardAmount: number, partnerRewardAmount: number }) => {
+            await api.put("/referral/config", payload);
+        },
+        onSuccess: () => {
+            toast.success("Configuration updated successfully!");
+            refetchConfig();
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.message || "Failed to update configuration");
+        }
+    });
+
+    const handleSaveConfig = () => {
+        const cReward = Number(customerReward);
+        const pReward = Number(partnerReward);
+        if (isNaN(cReward) || isNaN(pReward) || cReward < 0 || pReward < 0) {
+            toast.error("Invalid amounts entered");
+            return;
+        }
+        updateConfigMutation.mutate({ customerRewardAmount: cReward, partnerRewardAmount: pReward });
+    };
 
     const { data, isLoading } = useQuery<ReferralStats>({
         queryKey: ["admin-referrals", page],
@@ -106,6 +152,42 @@ export function ReferralsPage() {
                 <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
+
+            {/* ── Configuration Section ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm text-left">
+                <div className="flex items-center gap-2 mb-4">
+                    <Settings size={18} className="text-blue-500" />
+                    <h2 className="text-lg font-bold text-[var(--text-main)]">Referral Rewards Configuration</h2>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-6 items-end">
+                    <div className="flex-1 space-y-1">
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Customer Reward (₹)</label>
+                        <input 
+                            type="number"
+                            value={customerReward}
+                            onChange={e => setCustomerReward(e.target.value)}
+                            className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 text-sm font-semibold outline-none focus:border-blue-500 text-[var(--text-main)]"
+                        />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Partner Reward (₹)</label>
+                        <input 
+                            type="number"
+                            value={partnerReward}
+                            onChange={e => setPartnerReward(e.target.value)}
+                            className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 text-sm font-semibold outline-none focus:border-blue-500 text-[var(--text-main)]"
+                        />
+                    </div>
+                    <button 
+                        onClick={handleSaveConfig}
+                        disabled={updateConfigMutation.isPending}
+                        className="h-10 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors whitespace-nowrap"
+                    >
+                        {updateConfigMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        Save Config
+                    </button>
+                </div>
+            </div>
 
             {/* ── Stats Row ── */}
             <div className="grid grid-cols-4 gap-3">

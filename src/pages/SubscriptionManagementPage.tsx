@@ -235,7 +235,7 @@ export function SubscriptionManagementPage() {
             </header>
 
             {/* ── Stats Strip ── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4">
                 {[
                     { label: "Total Plans", value: stats.total, icon: <Sparkles size={16} />, color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-500/10" },
                     { label: "Active Plans", value: stats.active, icon: <CheckCircle2 size={16} />, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
