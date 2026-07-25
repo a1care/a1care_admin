@@ -1,29 +1,43 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary: #1A56DB;
+  --primary-hover: #1e40af;
   --primary-light: #eff6ff;
-  --bg-main: #f8fafc;
+  --secondary: #0E9F6E;
+  --success: #057A55;
+  --warning: #D03801;
+  --error: #E02424;
+  --bg-main: #f9fafb;
   --bg-sidebar: #ffffff;
   --sidebar-active: #eff6ff;
-  --sidebar-border: #e2e8f0;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
+  --sidebar-border: #e5e7eb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
   --text-white: #ffffff;
-  --border-color: #e2e8f0;
+  --border-color: #e5e7eb;
   --header-bg: #ffffff;
   --card-bg: #ffffff;
-  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', 'Roboto', sans-serif;
   color: var(--text-main);
   background: var(--bg-main);
-  -webkit-font-smoothing: initial;
-  -moz-osx-font-smoothing: initial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 [data-theme='dark'] {
@@ -62,7 +76,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-  background: linear-gradient(180deg, var(--bg-sidebar) 0%, rgba(248, 250, 252, 0.5) 100%);
+  background: var(--bg-sidebar);
   color: var(--text-main);
   padding: 0;
   display: flex;
@@ -71,7 +85,6 @@ body {
   height: 100vh;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.02);
 }
 
 .sidebar-brand {
@@ -81,21 +94,19 @@ body {
   align-items: center;
   gap: 14px;
   border-bottom: 1px solid var(--sidebar-border);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
+  background: var(--bg-sidebar);
 }
 
 .logo-box {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
-  border-radius: 14px;
+  background: var(--primary);
+  border-radius: 10px;
   display: grid;
   place-items: center;
   font-weight: 800;
   color: white;
   overflow: hidden;
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
 }
 
 .logo-box.large {
@@ -172,14 +183,13 @@ body {
 }
 
 .nav-link.active {
-  color: var(--text-white);
-  background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+  color: var(--primary);
+  background: var(--primary-light);
   font-weight: 700;
-  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.35);
 }
 
 .nav-link.active svg {
-  color: white;
+  color: var(--primary);
 }
 
 .submenu-trigger {
@@ -284,7 +294,7 @@ body {
 }
 
 .content-header {
-  height: 96px;
+  height: 72px;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
   padding: 0 24px;

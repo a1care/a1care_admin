@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
+import { A1Card } from "@/components/ui/A1Card";
 import type { DashboardOverview } from "@/types";
 import {
   Users,
@@ -95,26 +96,26 @@ export function DashboardPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* ── Page Header ── */}
-      <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
+      <A1Card className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:p-8">
         <div className="relative z-10 text-left">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-md">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">System Operational</span>
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-md">
+            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></div>
+            <span className="text-[10px] font-bold text-success uppercase tracking-wider">System Operational</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mt-2 mb-1">Admin Dashboard</h1>
-          <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Monitor network activity, performance, and incoming alerts.</p>
+          <p className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">Monitor network activity, performance, and incoming alerts.</p>
         </div>
 
-        <div className="flex items-center gap-4 bg-[var(--bg-main)] px-4 py-3 rounded-xl border border-[var(--border-color)] shadow-inner">
-          <Calendar className="text-[var(--text-muted)]" size={18} />
+        <div className="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200">
+          <Calendar className="text-slate-500" size={18} />
           <div className="flex flex-col text-left">
-            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider leading-none mb-1">Today's Date</span>
-            <span className="text-xs font-semibold text-[var(--text-main)] leading-none">
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider leading-none mb-1">Today's Date</span>
+            <span className="text-xs font-semibold text-slate-900 leading-none">
               {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>
         </div>
-      </header>
+      </A1Card>
 
       {/* ── Primary KPI Cluster (Unified row structure) ── */}
       <section className="grid grid-cols-7 gap-4">
@@ -127,10 +128,11 @@ export function DashboardPage() {
           { title: "Monthly Revenue", value: kpis?.revenue?.month ? `₹${kpis.revenue.month.toLocaleString()}` : "₹0", icon: CreditCard, colorClass: "text-blue-600", bgClass: "bg-blue-50 dark:bg-blue-500/10", route: "/payment-logs" },
           { title: "Total Revenue", value: kpis?.revenue?.total ? `₹${kpis.revenue.total.toLocaleString()}` : "₹0", icon: IndianRupee, colorClass: "text-slate-600", bgClass: "bg-slate-50 dark:bg-slate-500/10", route: "/payment-logs" }
         ].map((kpi) => (
-          <div
+          <A1Card
             key={kpi.title}
             onClick={() => navigate(kpi.route)}
-            className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 flex flex-col gap-3 text-left cursor-pointer hover:border-blue-400 hover:shadow-sm transition-all"
+            className="flex flex-col gap-3 text-left cursor-pointer hover:border-blue-400"
+            noPadding={false}
           >
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${kpi.bgClass} ${kpi.colorClass}`}>
               <kpi.icon size={18} />
@@ -139,7 +141,7 @@ export function DashboardPage() {
               <p className="text-xl font-black text-[var(--text-main)] tracking-tight">{kpi.value?.toLocaleString() ?? kpi.value}</p>
               <p className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mt-1">{kpi.title}</p>
             </div>
-          </div>
+          </A1Card>
         ))}
       </section>
 

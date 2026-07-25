@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate, formatDateTime, formatTime } from "@/lib/format";
+import { A1Drawer } from "@/components/ui/A1Drawer";
 
 interface BaseBooking {
     _id: string;
@@ -585,142 +586,120 @@ export function BookingOperationsPage() {
                 )}
             </div>
 
-            {/* ── View Details Modal ── */}
-            {viewModalOpen && selectedBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewModalOpen(false)} />
-                    <div className="relative w-full max-w-xl bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
-                            <div>
-                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Booking Details</p>
-                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5 flex items-center gap-2">
-                                    #{selectedBooking._id.slice(-12).toUpperCase()}
-                                    <StatusBadge status={selectedBooking.status || ''} />
-                                </h3>
-                            </div>
-                            <button
-                                onClick={() => setViewModalOpen(false)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
-                            >
-                                <X size={16} />
-                            </button>
+            {/* ── View Details Drawer ── */}
+            <A1Drawer
+                isOpen={viewModalOpen && !!selectedBooking}
+                onClose={() => setViewModalOpen(false)}
+                title={selectedBooking ? `Booking #${selectedBooking._id.slice(-12).toUpperCase()}` : "Booking Details"}
+                width="lg"
+            >
+                {selectedBooking && (
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2 mb-2">
+                            <StatusBadge status={selectedBooking.status || ''} />
                         </div>
 
-                        {/* Body */}
-                        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-                            {/* Patient & Service */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                                        <User size={11} className="text-blue-500" /> Patient
-                                    </p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.name || "Anonymous"}</p>
-                                    <p className="text-xs font-mono text-[var(--text-muted)] mt-0.5">{selectedBooking.patientId?.mobile || "—"}</p>
-                                </div>
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                                        <Briefcase size={11} className="text-blue-500" />
-                                        {selectedBooking.tab === "doctors" ? "Doctor" : "Service"}
-                                    </p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">
-                                        {selectedBooking.tab === "doctors"
-                                            ? selectedBooking.doctorId?.name
-                                            : selectedBooking.tab === "services"
-                                                ? selectedBooking.serviceId?.name
-                                                : selectedBooking.serviceName
-                                        }
-                                    </p>
-                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                                        {selectedBooking.tab === "doctors"
-                                            ? selectedBooking.doctorId?.specialization?.join(", ")
-                                            : "—"
-                                        }
-                                    </p>
+                        {/* Patient & Service */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                    <User size={12} className="text-blue-500" /> Patient
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900">{selectedBooking.patientId?.name || "Anonymous"}</p>
+                                <p className="text-xs font-mono text-slate-500 mt-0.5">{selectedBooking.patientId?.mobile || "—"}</p>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                    <Briefcase size={12} className="text-blue-500" />
+                                    {selectedBooking.tab === "doctors" ? "Doctor" : "Service"}
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900">
+                                    {selectedBooking.tab === "doctors"
+                                        ? selectedBooking.doctorId?.name
+                                        : selectedBooking.tab === "services"
+                                            ? selectedBooking.serviceId?.name
+                                            : selectedBooking.serviceName
+                                    }
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    {selectedBooking.tab === "doctors"
+                                        ? selectedBooking.doctorId?.specialization?.join(", ")
+                                        : "—"
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Scheduling & Billing */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                    <Calendar size={12} /> Date
+                                </p>
+                                <p className="text-sm font-semibold text-slate-900">{formatDate(selectedBooking.date || selectedBooking.createdAt)}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{formatTime(selectedBooking.startingTime || selectedBooking.createdAt)}</p>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                    <CreditCard size={12} /> Billing
+                                </p>
+                                <p className="text-base font-bold text-slate-900">₹{selectedBooking.totalAmount}</p>
+                                <p className={`text-[11px] font-semibold mt-0.5 ${selectedBooking.paymentStatus === 'COMPLETED' ? 'text-success' : 'text-warning'}`}>
+                                    {selectedBooking.paymentStatus}
+                                </p>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                    <Clock size={12} /> Created
+                                </p>
+                                <p className="text-sm font-medium text-slate-900">{formatDateTime(selectedBooking.createdAt)}</p>
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        {selectedBooking.notes && (
+                            <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                                <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-1.5">Notes</p>
+                                <p className="text-sm text-slate-900 leading-relaxed">"{selectedBooking.notes}"</p>
+                            </div>
+                        )}
+
+                        {/* Location */}
+                        {selectedBooking.tab === "services" && selectedBooking.location && (
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-3">
+                                <MapPin size={16} className="text-slate-500 mt-0.5 shrink-0" />
+                                <div>
+                                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Service Location</p>
+                                    <p className="text-sm text-slate-900">{selectedBooking.location}</p>
                                 </div>
                             </div>
+                        )}
 
-                            {/* Scheduling & Billing */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                                        <Calendar size={11} /> Date
-                                    </p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{formatDate(selectedBooking.date || selectedBooking.createdAt)}</p>
-                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatTime(selectedBooking.startingTime || selectedBooking.createdAt)}</p>
-                                </div>
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                                        <CreditCard size={11} /> Billing
-                                    </p>
-                                    <p className="text-base font-bold text-[var(--text-main)]">₹{selectedBooking.totalAmount}</p>
-                                    <p className={`text-[11px] font-semibold mt-0.5 ${selectedBooking.paymentStatus === 'COMPLETED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                                        {selectedBooking.paymentStatus}
-                                    </p>
-                                </div>
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                                        <Clock size={11} /> Created
-                                    </p>
-                                    <p className="text-sm font-medium text-[var(--text-main)]">{formatDateTime(selectedBooking.createdAt)}</p>
-                                </div>
-                            </div>
-
-                            {/* Notes */}
-                            {selectedBooking.notes && (
-                                <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-xl border border-blue-100 dark:border-blue-500/10">
-                                    <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1.5">Notes</p>
-                                    <p className="text-sm text-[var(--text-main)] leading-relaxed">"{selectedBooking.notes}"</p>
-                                </div>
-                            )}
-
-                            {/* Location */}
-                            {selectedBooking.tab === "services" && selectedBooking.location && (
-                                <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex items-start gap-3">
-                                    <MapPin size={14} className="text-[var(--text-muted)] mt-0.5 shrink-0" />
+                        {/* Assigned Provider */}
+                        {selectedBooking.assignedProviderId && (() => {
+                            const assignedId = typeof selectedBooking.assignedProviderId === "object"
+                                ? selectedBooking.assignedProviderId?._id
+                                : selectedBooking.assignedProviderId;
+                            const provider = normalizedDoctorsList.find(d => d._id === assignedId);
+                            const providerName = provider?.name
+                                || (typeof selectedBooking.assignedProviderId === "object" ? selectedBooking.assignedProviderId?.name : null)
+                                || "Assigned Provider";
+                            return (
+                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                                        {providerName.charAt(0).toUpperCase()}
+                                    </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Service Location</p>
-                                        <p className="text-sm text-[var(--text-main)]">{selectedBooking.location}</p>
+                                        <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Assigned Provider</p>
+                                        <p className="text-sm font-semibold text-slate-900">{providerName}</p>
+                                        {provider?.mobileNumber && <p className="text-xs font-mono text-slate-500">{provider.mobileNumber}</p>}
                                     </div>
                                 </div>
-                            )}
-
-                            {/* Assigned Provider */}
-                            {selectedBooking.assignedProviderId && (() => {
-                                const assignedId = typeof selectedBooking.assignedProviderId === "object"
-                                    ? selectedBooking.assignedProviderId?._id
-                                    : selectedBooking.assignedProviderId;
-                                const provider = normalizedDoctorsList.find(d => d._id === assignedId);
-                                const providerName = provider?.name
-                                    || (typeof selectedBooking.assignedProviderId === "object" ? selectedBooking.assignedProviderId?.name : null)
-                                    || "Assigned Provider";
-                                return (
-                                    <div className="p-4 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/10 flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                                            {providerName.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Assigned Provider</p>
-                                            <p className="text-sm font-semibold text-[var(--text-main)]">{providerName}</p>
-                                            {provider?.mobileNumber && <p className="text-xs font-mono text-[var(--text-muted)]">{provider.mobileNumber}</p>}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end">
-                            <button
-                                onClick={() => setViewModalOpen(false)}
-                                className="h-9 px-6 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] text-sm font-semibold rounded-lg hover:bg-[var(--border-color)] transition-all"
-                            >
-                                Close
-                            </button>
-                        </div>
+                            );
+                        })()}
                     </div>
-                </div>
-            )}
+                )}
+            </A1Drawer>
 
             {/* ── Assign Provider Modal ── */}
             {acceptServiceModal && (
