@@ -32,6 +32,7 @@ import { ServiceVerticalsPage } from "./pages/ServiceVerticalsPage";
 import { AppBannerManagementPage } from "./pages/AppBannerManagementPage";
 import DeletionRequestsPage from "./pages/DeletionRequestsPage";
 import { CommissionReportPage } from "./pages/CommissionReportPage";
+import { EmailTemplatesPage } from "./pages/EmailTemplatesPage";
 
 export default function App() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="/app-banners/:type" element={<AppBannerManagementPage />} />
               <Route path="/payment-logs" element={<PaymentLogsPage />} />
               <Route path="/deletion-requests" element={<DeletionRequestsPage />} />
+              <Route path="/manage-email-templates" element={<EmailTemplatesPage />} />
             </Route>
           </Route>
         </Route>

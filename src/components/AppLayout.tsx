@@ -41,7 +41,8 @@ import {
   Trash2,
   Calendar,
   CheckCircle,
-  ReceiptText
+  ReceiptText,
+  Mail
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -102,6 +103,7 @@ export function AppLayout() {
     { label: "Child Categories", to: "/service-child-services", icon: "🏷️", cat: "Services" },
     { label: "Health Packages", to: "/health-packages", icon: "📦", cat: "Services" },
     { label: "System Settings", to: "/manage-system-config", icon: "⚙️", cat: "Admin" },
+    { label: "Email Templates", to: "/manage-email-templates", icon: "✉️", cat: "Admin" },
     { label: "Payment Logs", to: "/payment-logs", icon: "🧾", cat: "Admin" },
     { label: "Audit Logs", to: "/audit-logs", icon: "📜", cat: "Admin" },
     { label: "Account Deletion Requests", to: "/deletion-requests", icon: "🗑️", cat: "Admin" },
@@ -357,6 +359,10 @@ export function AppLayout() {
                   <NavLink to="/manage-system-config" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <ShieldCheck size={13} />
                     System Credentials
+                  </NavLink>
+                  <NavLink to="/manage-email-templates" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
+                    <Mail size={13} />
+                    Email Templates
                   </NavLink>
                   <NavLink to="/audit-logs" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Audit Logs</NavLink>
                   <NavLink to="/deletion-requests" className={({ isActive }) => `sub-link text-rose-500 font-bold ${isActive ? "active" : ""}`}>Deletion Requests</NavLink>

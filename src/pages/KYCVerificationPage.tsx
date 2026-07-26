@@ -35,22 +35,15 @@ export default function KYCVerificationPage() {
     const [page, setPage] = useState(1);
     const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
     const [viewingDoc, setViewingDoc] = useState<{ type: string; url: string } | null>(null);
+    const [viewingDocsListFor, setViewingDocsListFor] = useState<Doctor | null>(null);
     const [rejectingDoctor, setRejectingDoctor] = useState<Doctor | null>(null);
     const [rejectReason, setRejectReason] = useState("");
 
     const { data: kycData, isLoading, isFetching } = useQuery({
         queryKey: ["admin_staff_kyc", page, searchQuery],
         queryFn: async () => {
-            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}`);
-            const data = res.data.data;
-            const items = data.items || [];
-            return {
-                ...data,
-                items: items.filter((d: any) => {
-                    const s = String(d?.status || "").toLowerCase();
-                    return s === "pending" || s === "rejected" || s === "inactive";
-                })
-            };
+            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}&status=Pending`);
+            return res.data.data;
         }
     });
 
@@ -136,107 +129,140 @@ export default function KYCVerificationPage() {
                 />
             </div>
 
-            {/* ── KYC Cards Grid ── */}
-            {isLoading ? (
-                <div className="flex flex-col items-center justify-center p-20 gap-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
-                    <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
-                    <p className="text-sm text-[var(--text-muted)]">Reconciling partner credentials...</p>
-                </div>
-            ) : staff.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {staff.map((doctor) => (
-                        <div key={doctor._id} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all duration-200">
-                            <div className="p-5 space-y-4">
-                                {/* Top Identity */}
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex gap-3 items-center min-w-0">
-                                        <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-sm font-bold text-blue-600 shrink-0">
-                                            {doctor.name?.charAt(0) || 'P'}
+            {/* ── Data Table ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[900px]">
+                        <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Provider</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Role & Expertise</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Experience</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Documents</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-color)]">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                            <p className="text-sm text-[var(--text-muted)]">Reconciling partner credentials...</p>
                                         </div>
-                                        <div className="min-w-0">
-                                            <h3 className="text-sm font-semibold text-[var(--text-main)] truncate leading-snug">{doctor.name || "Provider"}</h3>
-                                            <div className="flex items-center gap-1 mt-0.5 text-xs text-[var(--text-muted)] font-mono">
-                                                <Phone size={12} />
-                                                <span>{doctor.mobileNumber}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
-                                        ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400" : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400"}`}
-                                    >
-                                        {doctor.status}
-                                    </span>
-                                </div>
-
-                                {/* Qualifications Info */}
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
-                                        <p className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Expertise</p>
-                                        <p className="text-xs font-semibold text-[var(--text-main)] truncate mt-0.5">{doctor.specialization?.join(', ') || "N/A"}</p>
-                                    </div>
-                                    <div className="bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
-                                        <p className="text-[9px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Tenure</p>
-                                        <p className="text-xs font-semibold text-[var(--text-main)] truncate mt-0.5">
-                                            {doctor.startExperience ? `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years` : "N/A"}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Submitted Documents List */}
-                                <div className="space-y-1.5 pt-2 border-t border-[var(--border-color)]">
-                                    <h4 className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                                        <FileText size={12} />
-                                        Submitted Documents
-                                    </h4>
-                                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                                        {Array.isArray(doctor.documents) && doctor.documents.map((doc, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg hover:border-blue-300 transition-colors">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <FileText size={14} className="text-[var(--text-muted)] shrink-0" />
-                                                    <p className="text-xs text-[var(--text-main)] truncate font-semibold">{doc.type}</p>
+                                    </td>
+                                </tr>
+                            ) : staff.length > 0 ? (
+                                staff.map((doctor, index) => (
+                                    <tr key={doctor._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                        <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
+                                            {String((page - 1) * 50 + index + 1).padStart(2, '0')}
+                                        </td>
+                                        
+                                        {/* Provider Identity */}
+                                        <td className="py-3.5 px-4">
+                                            <div className="flex gap-3 items-center min-w-0">
+                                                <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-sm font-bold text-blue-600 shrink-0">
+                                                    {doctor.name?.charAt(0) || 'P'}
                                                 </div>
-                                                <button onClick={() => setViewingDoc(doc)} className="text-[var(--text-muted)] hover:text-blue-500 p-1 transition-colors">
-                                                    <Eye size={14} />
+                                                <div className="min-w-0">
+                                                    <h3 className="text-sm font-semibold text-[var(--text-main)] truncate leading-snug">{doctor.name || "Provider"}</h3>
+                                                    <div className="flex items-center gap-1 mt-0.5 text-xs text-[var(--text-muted)] font-mono">
+                                                        <Phone size={12} />
+                                                        <span>{doctor.mobileNumber}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Expertise */}
+                                        <td className="py-3.5 px-4">
+                                            <p className="text-xs font-semibold text-[var(--text-main)] truncate max-w-[150px]">
+                                                {doctor.specialization && doctor.specialization.length > 0 
+                                                    ? doctor.specialization.join(', ') 
+                                                    : (doctor as any).role?.name 
+                                                        ? String((doctor as any).role.name).charAt(0).toUpperCase() + String((doctor as any).role.name).slice(1)
+                                                        : (doctor as any).roleId?.name
+                                                            ? String((doctor as any).roleId.name).charAt(0).toUpperCase() + String((doctor as any).roleId.name).slice(1)
+                                                            : "N/A"
+                                                }
+                                            </p>
+                                        </td>
+
+                                        {/* Experience */}
+                                        <td className="py-3.5 px-4">
+                                            <p className="text-xs font-semibold text-[var(--text-muted)]">
+                                                {doctor.startExperience ? (
+                                                    new Date().getFullYear() - new Date(doctor.startExperience).getFullYear() === 0 
+                                                        ? "< 1 Year" 
+                                                        : `${new Date().getFullYear() - new Date(doctor.startExperience).getFullYear()} Years`
+                                                ) : "N/A"}
+                                            </p>
+                                        </td>
+
+                                        {/* Documents */}
+                                        <td className="py-3.5 px-4">
+                                            {doctor.documents && doctor.documents.length > 0 ? (
+                                                <button
+                                                    onClick={() => setViewingDocsListFor(doctor)}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 rounded-md text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors"
+                                                >
+                                                    <FileText size={13} />
+                                                    View Docs ({doctor.documents.length})
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-[var(--text-muted)] italic">None</span>
+                                            )}
+                                        </td>
+
+                                        {/* Status */}
+                                        <td className="py-3.5 px-4">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                                ${doctor.status === 'Pending' ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400" : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-400"}`}
+                                            >
+                                                {doctor.status}
+                                            </span>
+                                        </td>
+
+                                        {/* Actions */}
+                                        <td className="py-3.5 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Active' })}
+                                                    title="Approve"
+                                                    className="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/20"
+                                                >
+                                                    <CheckCircle size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setRejectingDoctor(doctor);
+                                                        setRejectReason("");
+                                                    }}
+                                                    title="Reject"
+                                                    className="w-8 h-8 flex items-center justify-center bg-rose-50 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-colors border border-rose-200 dark:border-rose-500/20"
+                                                >
+                                                    <XCircle size={16} />
                                                 </button>
                                             </div>
-                                        ))}
-                                        {(!doctor.documents || doctor.documents.length === 0) && (
-                                            <div className="text-center py-4 bg-[var(--bg-main)] rounded-lg border border-dashed border-[var(--border-color)]">
-                                                <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">No Documents Uploaded</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Actions Footer */}
-                            <div className="p-5 bg-[var(--bg-main)]/50 border-t border-[var(--border-color)] flex gap-2">
-                                <button
-                                    onClick={() => updateStatusMutation.mutate({ id: doctor._id, status: 'Active' })}
-                                    className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                                >
-                                    <CheckCircle size={14} /> Approve
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setRejectingDoctor(doctor);
-                                        setRejectReason("");
-                                    }}
-                                    className="h-9 px-4 border border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors"
-                                >
-                                    Reject
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="py-20 text-center">
+                                        <ShieldCheck size={48} className="mx-auto text-[var(--text-muted)] mb-3" />
+                                        <h3 className="text-sm font-semibold text-[var(--text-main)]">Audit queue clear</h3>
+                                        <p className="text-xs text-[var(--text-muted)] mt-0.5">All partner KYC applications have been reviewed.</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            ) : (
-                <div className="py-20 text-center bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
-                    <ShieldCheck size={48} className="mx-auto text-[var(--text-muted)] mb-3" />
-                    <h3 className="text-sm font-semibold text-[var(--text-main)]">Audit queue clear</h3>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">All partner KYC applications have been reviewed.</p>
-                </div>
-            )}
+            </div>
 
             {/* ── Pagination ── */}
             {totalPages > 1 && (
@@ -265,7 +291,7 @@ export default function KYCVerificationPage() {
 
             {/* ── Document Viewer Modal ── */}
             {viewingDoc && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewingDoc(null)} />
                     <div className="relative w-full max-w-5xl h-[85vh] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
                         {/* Header */}
@@ -307,6 +333,50 @@ export default function KYCVerificationPage() {
                             >
                                 Close
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Document List Modal ── */}
+            {viewingDocsListFor && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setViewingDocsListFor(null)} />
+                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">KYC Documents</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">{viewingDocsListFor.name}</h3>
+                            </div>
+                            <button
+                                onClick={() => setViewingDocsListFor(null)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-2 max-h-[60vh] overflow-y-auto">
+                            {viewingDocsListFor.documents?.map((doc, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl hover:border-blue-300 transition-colors">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+                                            <FileText size={16} />
+                                        </div>
+                                        <p className="text-sm text-[var(--text-main)] truncate font-semibold">{doc.type}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setViewingDoc(doc)} 
+                                        className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors shadow-sm"
+                                    >
+                                        <Eye size={12} /> View
+                                    </button>
+                                </div>
+                            ))}
+                            {(!viewingDocsListFor.documents || viewingDocsListFor.documents.length === 0) && (
+                                <div className="text-center py-8">
+                                    <p className="text-sm font-medium text-[var(--text-muted)]">No documents uploaded.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

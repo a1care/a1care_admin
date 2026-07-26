@@ -11,7 +11,8 @@ import {
   CheckCircle,
   Loader2,
   Phone,
-  History
+  History,
+  RotateCcw
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -46,6 +47,19 @@ export default function DeletionRequestsPage() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || "Failed to process request");
+    }
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async ({ id, type }: { id: string, type: 'patient' | 'staff' }) => {
+      return api.post(`/admin/deletion-restore/${id}`, { type });
+    },
+    onSuccess: () => {
+      toast.success("Account restored successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-deletion-requests"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Failed to process restore request");
     }
   });
 
@@ -178,18 +192,32 @@ export default function DeletionRequestsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Are you absolutely sure you want to permanently delete this account? This action cannot be undone.")) {
-                            approveMutation.mutate({ id: req.id, type: req.type });
-                          }
-                        }}
-                        disabled={approveMutation.isPending}
-                        className="inline-flex items-center gap-1.5 h-8 px-3.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                      >
-                        {approveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 size={13} />}
-                        <span>Delete Account</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to restore this account? They will regain access immediately.")) {
+                              restoreMutation.mutate({ id: req.id, type: req.type });
+                            }
+                          }}
+                          disabled={restoreMutation.isPending || approveMutation.isPending}
+                          className="inline-flex items-center gap-1.5 h-8 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                        >
+                          {restoreMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw size={13} />}
+                          <span>Restore</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm("Are you absolutely sure you want to permanently delete this account? This action cannot be undone.")) {
+                              approveMutation.mutate({ id: req.id, type: req.type });
+                            }
+                          }}
+                          disabled={approveMutation.isPending || restoreMutation.isPending}
+                          className="inline-flex items-center gap-1.5 h-8 px-3.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                        >
+                          {approveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 size={13} />}
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -12,10 +12,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // Dev-only: forward API calls to production server-side so the browser
-      // makes a same-origin request (localhost:5173) and never hits CORS.
+      // Dev-only: forward API calls to the local backend server
       "/api": {
-        target: "https://api.a1carehospital.in",
+        target: "http://localhost:3000",
         changeOrigin: true,
         secure: false
       }

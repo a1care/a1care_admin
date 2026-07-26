@@ -11,7 +11,8 @@ import {
     ExternalLink, X, Loader2, UserPlus, Eye,
     XCircle, CreditCard as WalletIcon,
     ArrowUpCircle, ArrowDownCircle,
-    CalendarClock, Stethoscope, Activity, BadgeCheck
+    CalendarClock, Stethoscope, Activity, BadgeCheck,
+    Trash2, RefreshCw, AlertTriangle
 } from "lucide-react";
 
 interface Doctor {
@@ -36,6 +37,7 @@ export function DoctorStaffManagementPage() {
 
     const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
     const [searchQuery, setSearchQuery] = useState(initialSearch);
+    const [statusFilter, setStatusFilter] = useState("All");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -70,9 +72,9 @@ export function DoctorStaffManagementPage() {
     };
 
     const { data: staffData, isLoading } = useQuery({
-        queryKey: ["admin_staff", page, searchQuery],
+        queryKey: ["admin_staff", page, searchQuery, statusFilter],
         queryFn: async () => {
-            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}`);
+            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}&status=${statusFilter}`);
             return normalizeDoctorsPayload(res.data.data);
         }
     });
@@ -102,6 +104,23 @@ export function DoctorStaffManagementPage() {
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Status synchronization failed.");
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async ({ id, type }: { id: string, type: 'soft' | 'hard' | 'restore' }) => {
+            if (type === 'soft') return await api.put(`/admin/doctors/${id}/soft-delete`);
+            if (type === 'restore') return await api.put(`/admin/doctors/${id}/restore`);
+            return await api.delete(`/admin/doctors/${id}/hard-delete`);
+        },
+        onSuccess: (res, vars) => {
+            queryClient.invalidateQueries({ queryKey: ["admin_staff"] });
+            if (vars.type === 'soft') toast.success("Provider archived (Soft Delete).");
+            if (vars.type === 'restore') toast.success("Provider restored to active.");
+            if (vars.type === 'hard') toast.success("Provider permanently deleted.");
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.message || "Action failed.");
         }
     });
 
@@ -345,6 +364,18 @@ export function DoctorStaffManagementPage() {
                             }}
                         />
                     </div>
+                    
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => { setPage(1); setStatusFilter(e.target.value); }}
+                        className="h-[42px] px-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl text-sm font-semibold text-[var(--text-main)] outline-none"
+                    >
+                        <option value="All">All Providers</option>
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Archived">Archived (Trash)</option>
+                    </select>
 
                     {/* Network badge */}
                     <div className="flex items-center gap-1.5 h-8 px-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-lg text-[10px] font-bold border border-blue-100 dark:border-blue-500/20 whitespace-nowrap tracking-wider uppercase">
@@ -435,19 +466,50 @@ export function DoctorStaffManagementPage() {
                                         </td>
                                         <td className="py-3.5 px-4 text-right" onClick={e => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-1.5">
-                                                <button
-                                                    onClick={() => setSelectedDoctor(doc)}
-                                                    className="h-8 px-3 rounded-lg text-xs font-semibold border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
-                                                >
-                                                    {doc.status === 'Pending' ? 'Review' : 'View'}
-                                                </button>
-                                                <button
-                                                    onClick={() => openSlotModal(doc)}
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all"
-                                                    title="Manage Slots"
-                                                >
-                                                    <CalendarClock size={14} />
-                                                </button>
+                                                {statusFilter === "Archived" ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => window.confirm("Restore this provider to the active directory?") && deleteMutation.mutate({ id: doc._id, type: 'restore' })}
+                                                            className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 transition-all flex items-center gap-1"
+                                                        >
+                                                            <RefreshCw size={12} /> Restore
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (window.confirm("WARNING: PERMANENT DELETE.\n\nThis will completely erase the provider from the database. This action CANNOT be undone.\n\nNote: If this provider has any past bookings, this operation will be blocked by the system.\n\nAre you absolutely sure?")) {
+                                                                    deleteMutation.mutate({ id: doc._id, type: 'hard' });
+                                                                }
+                                                            }}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-rose-500 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 transition-all"
+                                                            title="Permanent Delete"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() => setSelectedDoctor(doc)}
+                                                            className="h-8 px-3 rounded-lg text-xs font-semibold border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
+                                                        >
+                                                            {doc.status === 'Pending' ? 'Review' : 'View'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openSlotModal(doc)}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-[var(--border-color)] transition-all"
+                                                            title="Manage Slots"
+                                                        >
+                                                            <CalendarClock size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => window.confirm("Archive this provider? They will be removed from the active directory but their history will be preserved.") && deleteMutation.mutate({ id: doc._id, type: 'soft' })}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-[var(--border-color)] transition-all"
+                                                            title="Archive (Soft Delete)"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
