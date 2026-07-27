@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api, resolveAssetUrl } from "@/lib/api";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import type { FestivalBanner, ManagedAppConfig, ManagedAppKey } from "@/types";
 import {
   Globe, Palette, Phone, Layout, Image as ImageIcon,
@@ -488,16 +490,20 @@ export function AppManagementPage({ appKey }: Props) {
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4 text-left">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Privacy Policy URL</label>
-                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.privacyPolicy} onChange={(e) => updatePath("contact.privacyPolicy", e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Terms & Conditions URL</label>
-                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.termsAndConditions} onChange={(e) => updatePath("contact.termsAndConditions", e.target.value)} />
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Privacy Policy</label>
+                      <div className="bg-white rounded-lg text-black overflow-hidden border border-[var(--border-color)]">
+                        <ReactQuill theme="snow" value={formState.contact.privacyPolicy} onChange={(val) => updatePath("contact.privacyPolicy", val)} />
+                      </div>
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Frequently Asked Questions (FAQ) Link</label>
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Terms & Conditions</label>
+                      <div className="bg-white rounded-lg text-black overflow-hidden border border-[var(--border-color)]">
+                        <ReactQuill theme="snow" value={formState.contact.termsAndConditions} onChange={(val) => updatePath("contact.termsAndConditions", val)} />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Frequently Asked Questions (FAQ)</label>
                       <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.faq} onChange={(e) => updatePath("contact.faq", e.target.value)} />
                     </div>
                   </div>
