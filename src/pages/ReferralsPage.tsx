@@ -154,39 +154,60 @@ export function ReferralsPage() {
                 <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
-            {/* ── Configuration Section ── */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm text-left flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex items-center gap-2">
-                    <Settings size={18} className="text-blue-500" />
-                    <h2 className="text-lg font-bold text-[var(--text-main)] whitespace-nowrap">Referral Rewards Configuration</h2>
+            {/* ── Configuration Section (Table Layout) ── */}
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+                <div className="px-4 py-3.5 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex items-center gap-2">
+                    <Settings size={16} className="text-blue-600 dark:text-blue-400" />
+                    <h2 className="text-sm font-bold text-[var(--text-main)] uppercase tracking-wider">Referral Rewards Configuration</h2>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-end flex-1 lg:justify-end">
-                    <div className="flex-1 sm:flex-none sm:w-48 space-y-1">
-                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Customer Reward (₹)</label>
-                        <input 
-                            type="number"
-                            value={customerReward}
-                            onChange={e => setCustomerReward(e.target.value)}
-                            className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 text-sm font-semibold outline-none focus:border-blue-500 text-[var(--text-main)]"
-                        />
-                    </div>
-                    <div className="flex-1 sm:flex-none sm:w-48 space-y-1">
-                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Partner Reward (₹)</label>
-                        <input 
-                            type="number"
-                            value={partnerReward}
-                            onChange={e => setPartnerReward(e.target.value)}
-                            className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 text-sm font-semibold outline-none focus:border-blue-500 text-[var(--text-main)]"
-                        />
-                    </div>
-                    <button 
-                        onClick={handleSaveConfig}
-                        disabled={updateConfigMutation.isPending}
-                        className="h-10 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors whitespace-nowrap"
-                    >
-                        {updateConfigMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        Save Config
-                    </button>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="border-b border-[var(--border-color)] bg-[var(--card-bg)]">
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-1/2">Customer Reward (₹)</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-1/2">Partner Reward (₹)</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-color)]">
+                            <tr className="hover:bg-[var(--bg-main)] transition-colors">
+                                <td className="py-3.5 px-4">
+                                    <div className="relative max-w-[200px]">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-semibold">₹</span>
+                                        <input 
+                                            type="number"
+                                            value={customerReward}
+                                            onChange={e => setCustomerReward(e.target.value)}
+                                            className="w-full h-9 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg pl-7 pr-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-blue-500 transition-all shadow-sm"
+                                            placeholder="100"
+                                        />
+                                    </div>
+                                </td>
+                                <td className="py-3.5 px-4">
+                                    <div className="relative max-w-[200px]">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] font-semibold">₹</span>
+                                        <input 
+                                            type="number"
+                                            value={partnerReward}
+                                            onChange={e => setPartnerReward(e.target.value)}
+                                            className="w-full h-9 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg pl-7 pr-3 text-sm font-bold text-[var(--text-main)] outline-none focus:border-blue-500 transition-all shadow-sm"
+                                            placeholder="100"
+                                        />
+                                    </div>
+                                </td>
+                                <td className="py-3.5 px-4 text-right">
+                                    <button 
+                                        onClick={handleSaveConfig}
+                                        disabled={updateConfigMutation.isPending}
+                                        className="h-9 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm ml-auto whitespace-nowrap disabled:opacity-70"
+                                    >
+                                        {updateConfigMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                        Save Config
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

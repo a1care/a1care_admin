@@ -64,7 +64,7 @@ const mainNav = (role: string) => [
   { to: "/reviews", label: "Ratings & Feedback", icon: MessageSquare },
   { to: "/support-tickets", label: "Support Desk", icon: Ticket },
   { to: "/reports", label: "System Reports", icon: FileText },
-  { to: "/notifications", label: "Broadcasts", icon: Bell },
+  { to: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export function AppLayout() {
