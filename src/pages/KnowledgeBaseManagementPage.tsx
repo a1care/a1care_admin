@@ -37,7 +37,7 @@ export default function KnowledgeBaseManagementPage() {
         },
         onSuccess: () => {
             toast.success(editingId ? "Article updated" : "Article created");
-            queryClient.invalidateQueries(["knowledgeBaseAdmin"]);
+            queryClient.invalidateQueries({ queryKey: ["knowledgeBaseAdmin"] });
             closeModal();
         },
         onError: (err: any) => {
@@ -51,7 +51,7 @@ export default function KnowledgeBaseManagementPage() {
         },
         onSuccess: () => {
             toast.success("Article deleted");
-            queryClient.invalidateQueries(["knowledgeBaseAdmin"]);
+            queryClient.invalidateQueries({ queryKey: ["knowledgeBaseAdmin"] });
         }
     });
 
@@ -266,10 +266,10 @@ export default function KnowledgeBaseManagementPage() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={saveMutation.isLoading}
+                                disabled={saveMutation.isPending}
                                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-semibold transition-colors shadow-sm shadow-orange-500/20 flex items-center gap-2"
                             >
-                                {saveMutation.isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                 Save Article
                             </button>
                         </div>

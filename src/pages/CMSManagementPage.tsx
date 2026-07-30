@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { FileText, ShieldAlert, HelpCircle, Save, Plus, Trash2, Edit2, Loader2, ArrowLeft } from "lucide-react";
@@ -21,11 +21,14 @@ export default function CMSManagementPage() {
         queryFn: async () => {
             const res = await api.get("/cms/admin");
             return res.data.data;
-        },
-        onSuccess: (data) => {
-            loadContentIntoState(data, activeTab, targetApp);
         }
     });
+
+    useEffect(() => {
+        if (cmsList) {
+            loadContentIntoState(cmsList, activeTab, targetApp);
+        }
+    }, [cmsList]);
 
     const saveMutation = useMutation({
         mutationFn: async (payload: any) => {
@@ -34,7 +37,7 @@ export default function CMSManagementPage() {
         },
         onSuccess: () => {
             toast.success("Content saved successfully");
-            queryClient.invalidateQueries(["cmsList"]);
+            queryClient.invalidateQueries({ queryKey: ["cmsList"] });
         },
         onError: (err: any) => {
             toast.error(err.response?.data?.message || "Failed to save content");
@@ -55,12 +58,10 @@ export default function CMSManagementPage() {
 
     const handleTabChange = (tab: "TERMS" | "PRIVACY" | "FAQ") => {
         setActiveTab(tab);
-        if (cmsList) loadContentIntoState(cmsList, tab, targetApp);
     };
 
     const handleAppChange = (app: AppTarget) => {
         setTargetApp(app);
-        if (cmsList) loadContentIntoState(cmsList, activeTab, app);
     };
 
     const handleSave = () => {
@@ -143,10 +144,10 @@ export default function CMSManagementPage() {
                         </h2>
                         <button
                             onClick={handleSave}
-                            disabled={saveMutation.isLoading}
+                            disabled={saveMutation.isPending}
                             className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm shadow-orange-500/20 flex items-center gap-2 disabled:opacity-70"
                         >
-                            {saveMutation.isLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                            {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                             Save Changes
                         </button>
                     </div>
