@@ -49,6 +49,7 @@ const partyMobile = (p?: PartyRef | string) =>
 
 export function ReferralsPage() {
     const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState("");
 
     // Configuration state
@@ -97,7 +98,7 @@ export function ReferralsPage() {
     const { data, isLoading } = useQuery<ReferralStats>({
         queryKey: ["admin-referrals", page],
         queryFn: async () => {
-            const res = await api.get("/admin/referrals", { params: { page, limit: 50 } });
+            const res = await api.get("/admin/referrals", { params: { page, limit } });
             const d = res.data?.data ?? res.data;
             return {
                 items: d?.items ?? [],
@@ -154,13 +155,13 @@ export function ReferralsPage() {
             </header>
 
             {/* ── Configuration Section ── */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm text-left">
-                <div className="flex items-center gap-2 mb-4">
+            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm text-left flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-2">
                     <Settings size={18} className="text-blue-500" />
-                    <h2 className="text-lg font-bold text-[var(--text-main)]">Referral Rewards Configuration</h2>
+                    <h2 className="text-lg font-bold text-[var(--text-main)] whitespace-nowrap">Referral Rewards Configuration</h2>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-6 items-end">
-                    <div className="flex-1 space-y-1">
+                <div className="flex flex-col sm:flex-row gap-4 items-end flex-1 lg:justify-end">
+                    <div className="flex-1 sm:flex-none sm:w-48 space-y-1">
                         <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Customer Reward (₹)</label>
                         <input 
                             type="number"
@@ -169,7 +170,7 @@ export function ReferralsPage() {
                             className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-3 text-sm font-semibold outline-none focus:border-blue-500 text-[var(--text-main)]"
                         />
                     </div>
-                    <div className="flex-1 space-y-1">
+                    <div className="flex-1 sm:flex-none sm:w-48 space-y-1">
                         <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Partner Reward (₹)</label>
                         <input 
                             type="number"
@@ -264,7 +265,7 @@ export function ReferralsPage() {
                                 filtered.map((r, index) => (
                                     <tr key={r._id} className="hover:bg-[var(--bg-main)] transition-colors group">
                                         <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
-                                            {String(index + 1).padStart(2, '0')}
+                                            {String((page - 1) * limit + index + 1).padStart(2, '0')}
                                         </td>
                                         <td className="py-3.5 px-4">
                                             <div className="font-semibold text-sm text-[var(--text-main)]">
@@ -308,11 +309,23 @@ export function ReferralsPage() {
                 </div>
 
                 {/* ── Pagination ── */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--text-muted)]">
-                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
-                        </p>
+                {totalPages > 0 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)] bg-[var(--card-bg)]">
+                        <div className="flex items-center gap-4">
+                            <p className="text-xs text-[var(--text-muted)]">
+                                Showing <span className="font-semibold text-[var(--text-main)]">{(page - 1) * limit + (filtered.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{Math.min(page * limit, data?.total || 0)}</span> of <span className="font-semibold text-[var(--text-main)]">{data?.total || 0}</span> entries
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-[var(--text-muted)]">Rows per page:</span>
+                                <select 
+                                    value={limit} 
+                                    onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                                    className="h-7 text-xs bg-[var(--bg-main)] border border-[var(--border-color)] rounded-md px-1 text-[var(--text-main)] outline-none cursor-pointer"
+                                >
+                                    {[10, 20, 50, 100].map(v => <option key={v} value={v}>{v}</option>)}
+                                </select>
+                            </div>
+                        </div>
                         <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -321,6 +334,7 @@ export function ReferralsPage() {
                             >
                                 <ChevronLeft size={14} />
                             </button>
+                            <span className="text-xs font-semibold px-2 text-[var(--text-main)]">Page {page} of {totalPages}</span>
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}

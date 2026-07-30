@@ -51,20 +51,20 @@ import { format } from "date-fns";
 
 const mainNav = (role: string) => [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/bookings", label: "Service Orders", icon: CalendarCheck },
-  { to: "/op-bookings", label: "Doctor Appointments", icon: ClipboardList },
+  { to: "/bookings", label: "Service Bookings", icon: CalendarCheck },
+  { to: "/op-bookings", label: "Consultations", icon: ClipboardList },
   ...(role === "super_admin" ? [
-    { to: "/partner-revenue-model", label: "Partner Plans", icon: BarChart3 },
-    { to: "/payouts", label: "Payouts", icon: Banknote },
-    { to: "/commission-report", label: "Commission Report", icon: ReceiptText },
-    { to: "/coupons", label: "Coupons", icon: Tag },
+    { to: "/partner-revenue-model", label: "Subscription Plans", icon: BarChart3 },
+    { to: "/payouts", label: "Partner Settlements", icon: Banknote },
+    { to: "/commission-report", label: "Revenue Analytics", icon: ReceiptText },
+    { to: "/coupons", label: "Promotions", icon: Tag },
   ] : []),
-  { to: "/kyc-verification", label: "KYC Verification", icon: ShieldCheck },
-  { to: "/referrals", label: "Referrals", icon: Gift },
-  { to: "/reviews", label: "User Reviews", icon: MessageSquare },
-  { to: "/support-tickets", label: "Tickets", icon: Ticket },
-  { to: "/reports", label: "Reports", icon: FileText },
-  { to: "/notifications", label: "Push Notifications", icon: Bell },
+  { to: "/kyc-verification", label: "Identity Verification", icon: ShieldCheck },
+  { to: "/referrals", label: "Referral Program", icon: Gift },
+  { to: "/reviews", label: "Ratings & Feedback", icon: MessageSquare },
+  { to: "/support-tickets", label: "Support Desk", icon: Ticket },
+  { to: "/reports", label: "System Reports", icon: FileText },
+  { to: "/notifications", label: "Broadcasts", icon: Bell },
 ];
 
 export function AppLayout() {
@@ -240,7 +240,7 @@ export function AppLayout() {
         </div>
 
         <nav>
-          <div className="nav-section">Control Center</div>
+          <div className="nav-section">Core Operations</div>
 
           {mainNav(user?.role || "admin").map((item) => (
             <NavLink key={item.label} to={item.to} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
@@ -249,7 +249,7 @@ export function AppLayout() {
             </NavLink>
           ))}
 
-          <div className="nav-section">Inventory & Users</div>
+          <div className="nav-section">Account Management</div>
 
           <button
             className={`submenu-trigger ${usersActive ? "active" : ""}`}
@@ -257,7 +257,7 @@ export function AppLayout() {
           >
             <div className="flex items-center gap-3">
               <Users size={18} />
-              <span>User Directory</span>
+              <span>Accounts Registry</span>
             </div>
             {usersOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </button>
@@ -266,12 +266,12 @@ export function AppLayout() {
             <div className="submenu-list">
               {[
                 { to: "/manage-patients", label: "Patients" },
-                { to: "/manage-doctors", label: "Doctors" },
+                { to: "/manage-doctors", label: "Medical Practitioners" },
                 { to: "/manage-nurses", label: "Nurses" },
-                { to: "/manage-ambulances", label: "Ambulances" },
-                { to: "/manage-rentals", label: "Rental Inventory" },
-                { to: "/manage-labs", label: "Lab Registry" },
-                { to: "/manage-services", label: "Extra Services" }
+                { to: "/manage-ambulances", label: "Emergency Fleet" },
+                { to: "/manage-rentals", label: "Medical Equipment" },
+                { to: "/manage-labs", label: "Diagnostic Centers" },
+                { to: "/manage-services", label: "Allied Services" }
               ].map(link => (
                 <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link ${isActive ? "active text-primary font-bold" : ""}`}>
                   {link.label}
@@ -288,7 +288,7 @@ export function AppLayout() {
               >
                 <div className="flex items-center gap-3">
                   <Layers size={18} />
-                  <span>Healthcare Catalog</span>
+                  <span>Service Master Data</span>
                 </div>
                 {servicesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
@@ -299,7 +299,7 @@ export function AppLayout() {
                     // { to: "/service-Categories", label: "Categoriess Hub", icon: Briefcase },
                     { to: "/service-categories", label: "Categories", icon: LayoutGrid },
                     { to: "/service-subcategories", label: "Subcategories", icon: Layers },
-                    { to: "/service-child-services", label: "Child Categories", icon: Tag },
+                    { to: "/service-child-services", label: "Service Variants", icon: Tag },
                     { to: "/health-packages", label: "Health Packages", icon: Package }
                   ].map(link => (
                     <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active text-primary font-bold" : ""}`}>
@@ -313,7 +313,7 @@ export function AppLayout() {
 
           {user?.role === "super_admin" && (
             <>
-              <div className="nav-section">Customer App Management</div>
+              <div className="nav-section">Growth & Marketing</div>
 
               <button
                 className={`submenu-trigger ${customerAppActive ? "active" : ""}`}
@@ -321,36 +321,36 @@ export function AppLayout() {
               >
                 <div className="flex items-center gap-3">
                   <Flame size={18} />
-                  <span>Growth Banners</span>
+                  <span>Campaign Banners</span>
                 </div>
                 {customerAppOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
 
               {customerAppOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Customer Offer Banners</NavLink>
-                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promotional Banners</NavLink>
-                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Customer Campaigns</NavLink>
+                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Provider Promotions</NavLink>
+                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Health Articles</NavLink>
                 </div>
               )}
 
-              <div className="nav-section">Content Management</div>
+              <div className="nav-section">Content Management System</div>
 
               <NavLink to="/cms-management" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
                 <div className="flex items-center gap-3">
                   <FileText size={18} />
-                  <span>Legal & FAQs</span>
+                  <span>Legal & Compliance</span>
                 </div>
               </NavLink>
 
               <NavLink to="/knowledge-base" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
                 <div className="flex items-center gap-3">
                   <BookOpen size={18} />
-                  <span>Knowledge Base</span>
+                  <span>Partner Knowledge Base</span>
                 </div>
               </NavLink>
 
-              <div className="nav-section">System Configuration</div>
+              <div className="nav-section">System Administration</div>
 
               <button
                 className={`submenu-trigger ${appsActive ? "active" : ""}`}
@@ -358,31 +358,31 @@ export function AppLayout() {
               >
                 <div className="flex items-center gap-3">
                   <AppWindow size={18} />
-                  <span>App Deployment</span>
+                  <span>Platform Configurations</span>
                 </div>
                 {appsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
 
               {appsOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Customer App Config</NavLink>
-                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Provider Apps Config</NavLink>
+                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Customer App Settings</NavLink>
+                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Partner App Settings</NavLink>
                   <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                  <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Health Vault Audit</NavLink>
+                  <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>EHR Audit Logs</NavLink>
                   <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <Receipt size={13} />
-                    Payment Logs
+                    Transaction History
                   </NavLink>
                   <NavLink to="/manage-system-config" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <ShieldCheck size={13} />
-                    System Credentials
+                    API & Security
                   </NavLink>
                   <NavLink to="/manage-email-templates" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <Mail size={13} />
-                    Email Templates
+                    Communication Templates
                   </NavLink>
-                  <NavLink to="/audit-logs" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Audit Logs</NavLink>
-                  <NavLink to="/deletion-requests" className={({ isActive }) => `sub-link text-rose-500 font-bold ${isActive ? "active" : ""}`}>Deletion Requests</NavLink>
+                  <NavLink to="/audit-logs" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>System Audit Trail</NavLink>
+                  <NavLink to="/deletion-requests" className={({ isActive }) => `sub-link text-rose-500 font-bold ${isActive ? "active" : ""}`}>Data Privacy (GDPR/DPDP)</NavLink>
                 </div>
               )}
             </>

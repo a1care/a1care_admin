@@ -70,7 +70,7 @@ export function OPBookingsPage() {
     const { data: serviceData, isLoading: loadingServices, isFetching: fetchingServices } = useQuery({
         queryKey: ["admin_service_bookings", page, deferredSearch, statusFilter, dateFrom, dateTo, paymentFilter, sourceFilter, patientTypeFilter, doctorFilter, departmentFilter, slotFilter],
         queryFn: async () => {
-            const params = new URLSearchParams({ page: page.toString(), limit: "60" });
+            const params = new URLSearchParams({ page: page.toString(), limit: "10" });
             if (deferredSearch) params.append("search", deferredSearch);
             if (dateFrom) params.append("dateFrom", dateFrom);
             if (dateTo) params.append("dateTo", dateTo);
@@ -357,7 +357,7 @@ export function OPBookingsPage() {
                                     return (
                                         <tr key={booking._id} className="hover:bg-[var(--bg-main)] transition-colors group">
                                             <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
-                                                {String((page - 1) * 60 + index + 1).padStart(2, '0')}
+                                                {String((page - 1) * 10 + index + 1).padStart(2, '0')}
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
@@ -488,30 +488,28 @@ export function OPBookingsPage() {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--text-muted)]">
-                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            >
-                                <ChevronLeft size={14} />
-                            </button>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            >
-                                <ChevronRight size={14} />
-                            </button>
-                        </div>
+                {/* ── Pagination ── */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                    <p className="text-xs text-[var(--text-muted)]">
+                        Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{Math.max(1, totalPages)}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronLeft size={14} />
+                        </button>
+                        <button
+                            onClick={() => setPage(p => Math.min(Math.max(1, totalPages), p + 1))}
+                            disabled={page >= Math.max(1, totalPages)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronRight size={14} />
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* ── View Details Modal ── */}

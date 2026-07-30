@@ -42,7 +42,7 @@ export default function KYCVerificationPage() {
     const { data: kycData, isLoading, isFetching } = useQuery({
         queryKey: ["admin_staff_kyc", page, searchQuery],
         queryFn: async () => {
-            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}&status=Pending`);
+            const res = await api.get(`/admin/doctors?page=${page}&limit=10&search=${searchQuery}&status=Pending`);
             return res.data.data;
         }
     });
@@ -158,7 +158,7 @@ export default function KYCVerificationPage() {
                                 staff.map((doctor, index) => (
                                     <tr key={doctor._id} className="hover:bg-[var(--bg-main)] transition-colors group">
                                         <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
-                                            {String((page - 1) * 50 + index + 1).padStart(2, '0')}
+                                            {String((page - 1) * 10 + index + 1).padStart(2, '0')}
                                         </td>
                                         
                                         {/* Provider Identity */}

@@ -65,12 +65,17 @@ export function CommissionReportPage() {
     const [sortField, setSortField] = useState<"createdAt" | "commissionAmount" | "grossAmount">("createdAt");
     const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-    const params = new URLSearchParams({ page: String(page), limit: "50" });
+    const params = new URLSearchParams({ 
+        page: String(page), 
+        limit: "25",
+        sortBy: sortField,
+        sortDir: sortDir 
+    });
     if (fromDate) params.set("from", fromDate);
     if (toDate) params.set("to", toDate);
 
     const { data, isLoading, isFetching, refetch } = useQuery<CommissionReportData>({
-        queryKey: ["admin-commission-report", page, fromDate, toDate],
+        queryKey: ["admin-commission-report", page, fromDate, toDate, sortField, sortDir],
         queryFn: async () => {
             const res = await api.get(`/admin/commission/report?${params.toString()}`);
             return res.data.data;
@@ -83,17 +88,8 @@ export function CommissionReportPage() {
     const items = data?.items || [];
     const totalPages = data?.totalPages || 1;
 
-    // Client-side sort
-    const sorted = [...items].sort((a, b) => {
-        const valA = a[sortField as keyof CommissionRow] as number | string;
-        const valB = b[sortField as keyof CommissionRow] as number | string;
-        if (typeof valA === "number" && typeof valB === "number") {
-            return sortDir === "desc" ? valB - valA : valA - valB;
-        }
-        return sortDir === "desc"
-            ? String(valB).localeCompare(String(valA))
-            : String(valA).localeCompare(String(valB));
-    });
+    // Backend provides sorted items now
+    const sorted = items;
 
     function toggleSort(field: typeof sortField) {
         if (sortField === field) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -474,36 +470,6 @@ export function CommissionReportPage() {
                 )}
             </div>
 
-            {/* ── How Commission is Calculated (Info Box) ── */}
-            <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-2xl p-5 shadow-sm">
-                <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-                        <Building2 size={18} />
-                    </div>
-                    <div className="text-left">
-                        <h3 className="text-sm font-bold text-[var(--text-main)] mb-1">How Platform Commission Works</h3>
-                        <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                            Every completed and paid booking is split automatically by the system:
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-                            {[
-                                { step: "01", title: "Gross Booking Amount", desc: "The total amount paid by the patient/customer for the service or consultation.", color: "text-slate-600 bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/20" },
-                                { step: "02", title: "Platform Commission (Admin Fee)", desc: "A percentage (default 20%) deducted as the A1Care platform fee. This goes to Super Admin.", color: "text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/20" },
-                                { step: "03", title: "Partner Earning (80%)", desc: "The remaining amount is credited to the partner's wallet as their earning for the booking.", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20" },
-                            ].map((s) => (
-                                <div key={s.step} className={`border rounded-xl p-3 ${s.color}`}>
-                                    <div className="text-[10px] font-black uppercase tracking-widest mb-1">Step {s.step}</div>
-                                    <div className="text-xs font-bold mb-1">{s.title}</div>
-                                    <div className="text-[10px] leading-relaxed opacity-80">{s.desc}</div>
-                                </div>
-                            ))}
-                        </div>
-                        <p className="text-[10px] text-[var(--text-muted)] mt-3">
-                            Example: ₹1,000 booking → <span className="font-bold text-indigo-600">₹200 platform commission</span> (20%) + <span className="font-bold text-emerald-600">₹800 partner payout</span> (80%)
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
