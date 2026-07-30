@@ -235,10 +235,10 @@ export function PayoutsPage() {
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <div className="text-sm font-semibold text-[var(--text-main)]">
-                                                    {payout.bankDetails?.bankName || "UPI Mode"}
+                                                    {payout.bankDetails?.bankName || (payout.bankDetails?.upiId ? "UPI Mode" : "Internal Deduction")}
                                                 </div>
                                                 <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
-                                                    {payout.bankDetails?.accountNumber ? `•••• ${payout.bankDetails.accountNumber.slice(-4)}` : payout.bankDetails?.upiId || "N/A"}
+                                                    {payout.bankDetails?.accountNumber ? `•••• ${payout.bankDetails.accountNumber.slice(-4)}` : (payout.bankDetails?.upiId || "System")}
                                                 </div>
                                             </td>
                                             <td className="py-3.5 px-4 whitespace-nowrap">
@@ -267,40 +267,33 @@ export function PayoutsPage() {
                                                     >
                                                         <Eye size={14} />
                                                     </button>
-                                                    {/* APPROVE AND PAY */}
-                                                    <button
-                                                        disabled={!isPending}
-                                                        onClick={() => {
-                                                            toast.info("Confirm Settlement?", {
-                                                                description: `Approve and finalise payout of ₹${payout.amount} to this provider?`,
-                                                                action: {
-                                                                    label: "Approve & Pay",
-                                                                    onClick: () => updateStatusMutation.mutate({ id: payout._id, status: 'COMPLETED' })
-                                                                }
-                                                            });
-                                                        }}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
-                                                            ${isPending
-                                                                ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 border-[var(--border-color)] hover:border-green-300"
-                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                            }`}
-                                                        title="Approve & Pay"
-                                                    >
-                                                        <Check size={14} />
-                                                    </button>
-                                                    {/* REJECT */}
-                                                    <button
-                                                        disabled={!isPending}
-                                                        onClick={() => setSelectedPayout(payout)}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
-                                                            ${isPending
-                                                                ? "text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border-[var(--border-color)] hover:border-rose-300"
-                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                            }`}
-                                                        title="Reject Request"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
+                                                    {/* APPROVE AND REJECT */}
+                                                    {isPending && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => {
+                                                                    toast.info("Confirm Settlement?", {
+                                                                        description: `Approve and finalise payout of ₹${payout.amount} to this provider?`,
+                                                                        action: {
+                                                                            label: "Approve & Pay",
+                                                                            onClick: () => updateStatusMutation.mutate({ id: payout._id, status: 'COMPLETED' })
+                                                                        }
+                                                                    });
+                                                                }}
+                                                                className="w-8 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 border-[var(--border-color)] hover:border-green-300 transition-all"
+                                                                title="Approve & Pay"
+                                                            >
+                                                                <Check size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setSelectedPayout(payout)}
+                                                                className="w-8 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border-[var(--border-color)] hover:border-rose-300 transition-all"
+                                                                title="Reject Request"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
