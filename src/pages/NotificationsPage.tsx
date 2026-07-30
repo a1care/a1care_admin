@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type Audience = "all" | "patients" | "partners" | "individual";
+type Audience = "all" | "patients" | "partners" | "admins" | "individual";
 
 interface NotificationHistoryItem {
   _id: string;
@@ -47,7 +47,7 @@ export function NotificationsPage() {
   const [targetScope, setTargetScope] = useState<"all" | "specific">("all");
   const [recipientId, setRecipientId] = useState("");
   const [recipientName, setRecipientName] = useState("");
-  const [recipientType, setRecipientType] = useState<"patient" | "partner">("patient");
+  const [recipientType, setRecipientType] = useState<"patient" | "partner" | "admin" | "all">("patient");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [dataPayload, setDataPayload] = useState("");
@@ -71,7 +71,8 @@ export function NotificationsPage() {
     queryKey: ["user-search", userSearchTerm, recipientType],
     queryFn: async () => {
       if (userSearchTerm.length < 3) return [];
-      const res = await api.get(`/admin/user-list/${recipientType === 'patient' ? 'patient' : 'doctor'}`, {
+      
+      const res = await api.get(`/admin/user-list/${recipientType}`, {
         params: { search: userSearchTerm }
       });
       const payload = res.data?.data;
@@ -178,18 +179,21 @@ export function NotificationsPage() {
     setAudience(aud);
     setRecipientId("");
     setRecipientName("");
-    if (aud === "individual") {
-      setTargetScope("specific");
-      setRecipientType("patient");
-    } else if (aud === "patients") {
-      setTargetScope("all");
-      setRecipientType("patient");
-    } else if (aud === "partners") {
-      setTargetScope("all");
-      setRecipientType("partner");
-    } else {
-      setTargetScope("all");
-    }
+      if (aud === "individual") {
+        setTargetScope("specific");
+        setRecipientType("all");
+      } else if (aud === "patients") {
+        setTargetScope("all");
+        setRecipientType("patient");
+      } else if (aud === "partners") {
+        setTargetScope("all");
+        setRecipientType("partner");
+      } else if (aud === "admins") {
+        setTargetScope("all");
+        setRecipientType("admin");
+      } else {
+        setTargetScope("all");
+      }
   };
 
   return (
@@ -353,6 +357,7 @@ export function NotificationsPage() {
                     { id: "all", label: "Everyone", icon: Users },
                     { id: "patients", label: "Patients", icon: User },
                     { id: "partners", label: "Partners", icon: User },
+                    { id: "admins", label: "Admins", icon: ShieldCheck },
                     { id: "individual", label: "Individual", icon: Search },
                   ].map((item) => (
                     <button
@@ -372,8 +377,8 @@ export function NotificationsPage() {
                 </div>
               </div>
 
-              {/* Patient/Partner specific selector toggle */}
-              {(audience === "patients" || audience === "partners") && (
+              {/* Patient/Partner/Admin specific selector toggle */}
+              {(audience === "patients" || audience === "partners" || audience === "admins") && (
                 <div className="space-y-1.5">
                   <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Target Group Scope</label>
                   <div className="flex bg-[var(--bg-main)] border border-[var(--border-color)] p-0.5 rounded-lg">
@@ -383,7 +388,7 @@ export function NotificationsPage() {
                       className={`flex-1 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all
                         ${targetScope === "all" ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)]"}`}
                     >
-                      {audience === "patients" ? "All Patients" : "All Partners"}
+                      {audience === "patients" ? "All Patients" : audience === "partners" ? "All Partners" : "All Admins"}
                     </button>
                     <button
                       type="button"
@@ -391,7 +396,7 @@ export function NotificationsPage() {
                       className={`flex-1 py-1 text-xs font-semibold uppercase tracking-wider rounded-md transition-all
                         ${targetScope === "specific" ? "bg-blue-600 text-white shadow-sm" : "text-[var(--text-muted)]"}`}
                     >
-                      {audience === "patients" ? "Specific Patient" : "Specific Partner"}
+                      {audience === "patients" ? "Specific Patient" : audience === "partners" ? "Specific Partner" : "Specific Admin"}
                     </button>
                   </div>
                 </div>
@@ -400,7 +405,7 @@ export function NotificationsPage() {
               {/* Target Search Box */}
               {targetScope === "specific" && (
                 <div className="space-y-1.5 p-3 bg-[var(--bg-main)] rounded-lg border border-[var(--border-color)] animate-in fade-in">
-                  <label className="block text-[10px] font-semibold text-[var(--text-muted)] uppercase">Select Target {recipientType === "patient" ? "Patient" : "Partner"}</label>
+                  <label className="block text-[10px] font-semibold text-[var(--text-muted)] uppercase">Select Target {recipientType === "patient" ? "Patient" : recipientType === "partner" ? "Partner" : recipientType === "admin" ? "Admin" : "User"}</label>
                   <button
                     type="button"
                     onClick={() => setIsSearchOpen(true)}

@@ -33,6 +33,8 @@ import { AppBannerManagementPage } from "./pages/AppBannerManagementPage";
 import DeletionRequestsPage from "./pages/DeletionRequestsPage";
 import { CommissionReportPage } from "./pages/CommissionReportPage";
 import { EmailTemplatesPage } from "./pages/EmailTemplatesPage";
+import CMSManagementPage from "./pages/CMSManagementPage";
+import KnowledgeBaseManagementPage from "./pages/KnowledgeBaseManagementPage";
 
 export default function App() {
   return (
@@ -95,6 +97,8 @@ export default function App() {
               <Route path="/payment-logs" element={<PaymentLogsPage />} />
               <Route path="/deletion-requests" element={<DeletionRequestsPage />} />
               <Route path="/manage-email-templates" element={<EmailTemplatesPage />} />
+              <Route path="/cms-management" element={<CMSManagementPage />} />
+              <Route path="/knowledge-base" element={<KnowledgeBaseManagementPage />} />
             </Route>
           </Route>
         </Route>

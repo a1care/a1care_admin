@@ -42,7 +42,8 @@ import {
   Calendar,
   CheckCircle,
   ReceiptText,
-  Mail
+  Mail,
+  BookOpen
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -332,6 +333,22 @@ export function AppLayout() {
                   <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
                 </div>
               )}
+
+              <div className="nav-section">Content Management</div>
+
+              <NavLink to="/cms-management" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <FileText size={18} />
+                  <span>Legal & FAQs</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/knowledge-base" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <BookOpen size={18} />
+                  <span>Knowledge Base</span>
+                </div>
+              </NavLink>
 
               <div className="nav-section">System Configuration</div>
 
