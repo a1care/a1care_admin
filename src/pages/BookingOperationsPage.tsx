@@ -82,6 +82,7 @@ export function BookingOperationsPage() {
     const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
     const deferredSearch = useDeferredValue(searchQuery);
 
     const [showFilters, setShowFilters] = useState(false);
@@ -107,7 +108,7 @@ export function BookingOperationsPage() {
         queryKey: ["admin_doctor_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, subServiceFilter],
         queryFn: async () => {
             if (activeTab !== "doctors") return null;
-            const params = new URLSearchParams({ page: page.toString(), limit: "55" });
+            const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
             if (statusFilter !== "All") params.append("status", DOCTOR_STATUS_UI_TO_API[statusFilter] || statusFilter);
             if (deferredSearch) params.append("search", deferredSearch);
             if (dateFrom) params.append("dateFrom", dateFrom);
@@ -127,7 +128,7 @@ export function BookingOperationsPage() {
         queryKey: ["admin_service_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter, serviceFilter, departmentFilter, serviceCategory],
         queryFn: async () => {
             if (activeTab !== "services") return null;
-            const params = new URLSearchParams({ page: page.toString(), limit: "55" });
+            const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
             if (statusFilter !== "All") params.append("status", statusFilter);
             if (deferredSearch) params.append("search", deferredSearch);
             if (dateFrom) params.append("dateFrom", dateFrom);
@@ -149,7 +150,7 @@ export function BookingOperationsPage() {
         queryKey: ["admin_hospital_bookings", activeTab, page, statusFilter, deferredSearch, dateFrom, dateTo, paymentFilter],
         queryFn: async () => {
             if (activeTab !== "hospital") return null;
-            const params = new URLSearchParams({ page: page.toString(), limit: "55" });
+            const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
             if (statusFilter !== "All") params.append("status", statusFilter);
             if (deferredSearch) params.append("search", deferredSearch);
             if (dateFrom) params.append("dateFrom", dateFrom);
@@ -283,7 +284,6 @@ export function BookingOperationsPage() {
 
     const totalPages = activeDataset?.totalPages || 1;
     const stats = activeDataset?.stats || { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
-    const ITEMS_PER_PAGE = 55;
 
     const isLoading = (activeTab === "doctors" && loadingDocs) || (activeTab === "services" && loadingServices) || (activeTab === "hospital" && loadingHospital);
 
@@ -446,7 +446,7 @@ export function BookingOperationsPage() {
                                     return (
                                         <tr key={booking._id} className="hover:bg-[var(--bg-main)] transition-colors group">
                                             <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
-                                                {String((page - 1) * ITEMS_PER_PAGE + index + 1).padStart(2, '0')}
+                                                {String((page - 1) * limit + index + 1).padStart(2, '0')}
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
@@ -561,11 +561,23 @@ export function BookingOperationsPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--text-muted)]">
-                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
-                        </p>
+                {totalPages > 0 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)] bg-[var(--card-bg)]">
+                        <div className="flex items-center gap-4">
+                            <p className="text-xs text-[var(--text-muted)]">
+                                Showing <span className="font-semibold text-[var(--text-main)]">{(page - 1) * limit + (paginatedData.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{Math.min(page * limit, activeDataset?.total || 0)}</span> of <span className="font-semibold text-[var(--text-main)]">{activeDataset?.total || 0}</span> entries
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-[var(--text-muted)]">Rows per page:</span>
+                                <select 
+                                    value={limit} 
+                                    onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                                    className="h-7 text-xs bg-[var(--bg-main)] border border-[var(--border-color)] rounded-md px-1 text-[var(--text-main)] outline-none cursor-pointer"
+                                >
+                                    {[10, 20, 50, 100].map(v => <option key={v} value={v}>{v}</option>)}
+                                </select>
+                            </div>
+                        </div>
                         <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -574,6 +586,7 @@ export function BookingOperationsPage() {
                             >
                                 <ChevronLeft size={14} />
                             </button>
+                            <span className="text-xs font-semibold px-2 text-[var(--text-main)]">Page {page} of {totalPages}</span>
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}

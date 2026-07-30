@@ -54,7 +54,7 @@ export function PayoutsPage() {
     const { data: payoutData, isLoading, isFetching } = useQuery({
         queryKey: ["admin_payouts", filter, page, searchQuery],
         queryFn: async () => {
-            const res = await api.get(`/admin/payouts?status=${filter}&page=${page}&limit=60&search=${searchQuery}`);
+            const res = await api.get(`/admin/payouts?status=${filter}&page=${page}&limit=10&search=${searchQuery}`);
             return res.data.data;
         },
         staleTime: 30000,
@@ -186,7 +186,7 @@ export function PayoutsPage() {
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Partner</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Request Date</th>
-                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Bank Details</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Payment Mode</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Actions</th>
@@ -208,7 +208,7 @@ export function PayoutsPage() {
                                     return (
                                         <tr key={payout._id} className="hover:bg-[var(--bg-main)] transition-colors group">
                                             <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
-                                                {String((page - 1) * 60 + index + 1).padStart(2, '0')}
+                                                {String((page - 1) * 10 + index + 1).padStart(2, '0')}
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <div className="flex items-center gap-3">
@@ -235,10 +235,10 @@ export function PayoutsPage() {
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <div className="text-sm font-semibold text-[var(--text-main)]">
-                                                    {payout.bankDetails?.bankName || (payout.bankDetails?.upiId ? "UPI Mode" : "Internal Deduction")}
+                                                    {payout.bankDetails?.bankName || (payout.bankDetails?.upiId ? "UPI Mode" : "Wallet Payment")}
                                                 </div>
                                                 <div className="text-xs font-mono text-[var(--text-muted)] mt-0.5">
-                                                    {payout.bankDetails?.accountNumber ? `•••• ${payout.bankDetails.accountNumber.slice(-4)}` : (payout.bankDetails?.upiId || "System")}
+                                                    {payout.bankDetails?.accountNumber ? `•••• ${payout.bankDetails.accountNumber.slice(-4)}` : (payout.bankDetails?.upiId || "Wallet Balance")}
                                                 </div>
                                             </td>
                                             <td className="py-3.5 px-4 whitespace-nowrap">
@@ -319,29 +319,27 @@ export function PayoutsPage() {
                 </div>
 
                 {/* ── Pagination ── */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
-                        <p className="text-xs text-[var(--text-muted)]">
-                            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            >
-                                <ChevronLeft size={14} />
-                            </button>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                            >
-                                <ChevronRight size={14} />
-                            </button>
-                        </div>
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)]">
+                    <p className="text-xs text-[var(--text-muted)]">
+                        Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{Math.max(1, totalPages)}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronLeft size={14} />
+                        </button>
+                        <button
+                            onClick={() => setPage(p => Math.min(Math.max(1, totalPages), p + 1))}
+                            disabled={page >= Math.max(1, totalPages)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        >
+                            <ChevronRight size={14} />
+                        </button>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* ── Inspect Details Modal ── */}
