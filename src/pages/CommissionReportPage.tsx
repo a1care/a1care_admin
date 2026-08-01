@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import {
     TrendingUp,
     IndianRupee,
@@ -318,10 +319,7 @@ export function CommissionReportPage() {
                 </div>
 
                 {isLoading ? (
-                    <div className="py-20 flex flex-col items-center gap-3">
-                        <Loader2 size={28} className="animate-spin text-indigo-500" />
-                        <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Loading Commission Data...</p>
-                    </div>
+                    <TableSkeleton columns={8} rows={5} showHeader={false} />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-[900px]">

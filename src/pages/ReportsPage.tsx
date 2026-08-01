@@ -9,6 +9,7 @@ import {
     Stethoscope,
     BarChart3
 } from "lucide-react";
+import { StatsSkeleton, TableSkeleton } from "@/components/ui/Skeletons";
 
 interface Overview {
     kpis: {
@@ -108,7 +109,7 @@ export function ReportsPage() {
                         </div>
                         <div className="text-2xl font-bold text-[var(--text-main)]">
                             {loadingOverview ? (
-                                <span className="text-sm text-[var(--text-muted)] font-normal">Loading…</span>
+                                <StatsSkeleton count={1} />
                             ) : c.money === false ? (
                                 (c.value ?? 0)
                             ) : (
@@ -129,9 +130,7 @@ export function ReportsPage() {
                     </div>
 
                     {loadingRecent ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                        </div>
+                        <TableSkeleton columns={5} rows={5} showHeader={false} />
                     ) : recent.length === 0 ? (
                         <div className="py-20 text-center text-xs text-[var(--text-muted)]">No recent bookings found.</div>
                     ) : (
@@ -179,9 +178,7 @@ export function ReportsPage() {
                     </div>
 
                     {loadingPerf ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                        </div>
+                        <TableSkeleton columns={6} rows={5} showHeader={false} />
                     ) : performance.length === 0 ? (
                         <div className="py-20 text-center text-xs text-[var(--text-muted)]">No provider metrics reported.</div>
                     ) : (

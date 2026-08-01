@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import {
     Users, Search, Plus,
     ChevronLeft, ChevronRight, Phone, Mail,
@@ -81,7 +82,7 @@ export function UserManagementPage({ category }: { category: string }) {
     const { data: usersData, isLoading } = useQuery({
         queryKey: ["category_users", category, page, searchTerm, statusFilter],
         queryFn: async () => {
-            const params = new URLSearchParams({ page: String(page), limit: "50", status: statusFilter });
+            const params = new URLSearchParams({ page: String(page), limit: "10", status: statusFilter });
             if (searchTerm) params.set("search", searchTerm);
             const res = await api.get(`/admin/user-list/${category}?${params}`);
             const payload = res.data?.data;
@@ -282,11 +283,8 @@ export function UserManagementPage({ category }: { category: string }) {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Syncing Registry...</p>
-                                        </div>
+                                    <td colSpan={7} className="p-0">
+                                        <TableSkeleton columns={7} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : Array.isArray(filteredUsers) && filteredUsers.length > 0 ? (

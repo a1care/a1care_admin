@@ -13,7 +13,9 @@ import {
     ChevronLeft,
     ChevronRight
 } from "lucide-react";
+import { formatDateTime } from "@/lib/format";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface Coupon {
     _id: string;
@@ -230,11 +232,8 @@ export function CouponsPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={9} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-sm text-[var(--text-muted)]">Loading campaign coupons...</p>
-                                        </div>
+                                    <td colSpan={9} className="p-0">
+                                        <TableSkeleton columns={9} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (

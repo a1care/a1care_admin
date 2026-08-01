@@ -15,7 +15,9 @@ import {
     ChevronLeft,
     ChevronRight
 } from "lucide-react";
+import { formatDateTime } from "@/lib/format";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface Doctor {
     _id: string;
@@ -147,11 +149,8 @@ export default function KYCVerificationPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-sm text-[var(--text-muted)]">Reconciling partner credentials...</p>
-                                        </div>
+                                    <td colSpan={7} className="p-0">
+                                        <TableSkeleton columns={7} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : staff.length > 0 ? (

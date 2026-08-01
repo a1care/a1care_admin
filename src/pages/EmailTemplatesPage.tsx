@@ -8,6 +8,7 @@ import {
     Eye
 } from "lucide-react";
 import JoditEditor from 'jodit-react';
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface EmailTemplate {
     _id: string;
@@ -105,25 +106,21 @@ export function EmailTemplatesPage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left min-w-[800px]">
-                        <thead>
-                            <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                                <th className="py-3 px-4 w-12">#</th>
-                                <th className="py-3 px-4">Template Name</th>
-                                <th className="py-3 px-4">Subject Line</th>
-                                <th className="py-3 px-4">Last Updated</th>
-                                <th className="py-3 px-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--border-color)]">
-                            {isLoading ? (
-                                <tr>
-                                    <td colSpan={5} className="py-20 text-center">
-                                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-2" />
-                                        <p className="text-xs font-semibold text-[var(--text-muted)] uppercase">Loading templates...</p>
-                                    </td>
+                    {isLoading ? (
+                        <div className="p-4"><TableSkeleton columns={5} rows={8} showHeader={false} /></div>
+                    ) : (
+                        <table className="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                                    <th className="py-3 px-4 w-12">#</th>
+                                    <th className="py-3 px-4">Template Name</th>
+                                    <th className="py-3 px-4">Subject Line</th>
+                                    <th className="py-3 px-4">Last Updated</th>
+                                    <th className="py-3 px-4 text-right">Actions</th>
                                 </tr>
-                            ) : filteredTemplates.length > 0 ? (
+                            </thead>
+                            <tbody className="divide-y divide-[var(--border-color)]">
+                                {filteredTemplates.length > 0 ? (
                                 filteredTemplates.map((template: EmailTemplate, idx: number) => (
                                     <tr key={template._id} className="hover:bg-[var(--bg-main)] transition-colors">
                                         <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">{idx + 1}</td>
@@ -160,6 +157,7 @@ export function EmailTemplatesPage() {
                             )}
                         </tbody>
                     </table>
+                    )}
                 </div>
             </div>
 

@@ -24,6 +24,8 @@ import {
   IndianRupee
 } from "lucide-react";
 
+import { TableSkeleton, StatsSkeleton, CardSkeleton } from "@/components/ui/Skeletons";
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const [performanceSearch, setPerformanceSearch] = useState("");
@@ -64,9 +66,11 @@ export function DashboardPage() {
 
   if (isOverviewLoading || isPerformanceLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
-        <p className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Syncing Dashboard Workspace...</p>
+      <div className="space-y-6 animate-in fade-in duration-500 pb-12">
+        <StatsSkeleton count={7} />
+        <StatsSkeleton count={4} />
+        <CardSkeleton count={1} />
+        <TableSkeleton columns={8} rows={5} />
       </div>
     );
   }

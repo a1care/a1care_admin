@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, Info, MessageSquare, AlertCircle, CheckCircle2, Ticket, Send, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "../lib/api";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface Ticket {
     _id: string;
@@ -53,7 +54,7 @@ export function TicketsPage() {
 
         const params = new URLSearchParams();
         params.set('page', String(page));
-        params.set('limit', '50');
+        params.set('limit', '10');
         if (searchQuery.trim()) params.set('search', searchQuery.trim());
         if (statusFilter !== 'All') params.set('status', statusFilter);
 
@@ -241,11 +242,8 @@ export function TicketsPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-sm text-[var(--text-muted)]">Loading tickets...</p>
-                                        </div>
+                                    <td colSpan={5} className="p-0">
+                                        <TableSkeleton columns={5} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : tickets.length > 0 ? (
@@ -295,7 +293,7 @@ export function TicketsPage() {
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <button
                                                     onClick={() => setSelectedTicket(t)}
-                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all"
+                                                    className="w-8 h-8 rounded-xl flex items-center justify-center text-[#64748B] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 border border-[#E2E8F0] hover:border-blue-300 transition-all"
                                                     title="Reply to Ticket"
                                                 >
                                                     <MessageSquare size={14} />
@@ -303,12 +301,18 @@ export function TicketsPage() {
                                                 <select
                                                     value={t.status}
                                                     onChange={(e) => updateStatus(t._id, e.target.value)}
-                                                    className="h-8 px-2 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer uppercase tracking-wider"
+                                                    className="py-1.5 pl-3 pr-8 bg-[var(--bg-main)] border border-[#E2E8F0] rounded-xl text-xs font-bold text-[#1E293B] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer uppercase tracking-wider appearance-none"
+                                                    style={{
+                                                        backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                        backgroundPosition: `right 0.4rem center`,
+                                                        backgroundSize: `1.2em 1.2em`,
+                                                        backgroundRepeat: `no-repeat`,
+                                                    }}
                                                 >
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="In Progress">In Progress</option>
-                                                    <option value="Resolved">Resolved</option>
-                                                    <option value="Closed">Closed</option>
+                                                    <option value="Pending">PENDING</option>
+                                                    <option value="In Progress">IN PROGRESS</option>
+                                                    <option value="Resolved">RESOLVED</option>
+                                                    <option value="Closed">CLOSED</option>
                                                 </select>
                                             </div>
                                         </td>

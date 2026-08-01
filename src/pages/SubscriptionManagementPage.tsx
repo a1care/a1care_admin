@@ -7,6 +7,7 @@ import {
     Users, BadgeCheck, ChevronRight, RefreshCw, Filter
 } from "lucide-react";
 import { toast } from "sonner";
+import { CardSkeleton, StatsSkeleton } from "@/components/ui/Skeletons";
 
 type SubscriptionTier = "Basic" | "Standard" | "Premium";
 
@@ -209,7 +210,7 @@ export function SubscriptionManagementPage() {
                 <div className="relative z-10 mt-6">
                     <p className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-2">Filter by Category</p>
                     {catsLoading ? (
-                        <div className="flex items-center gap-2 text-blue-200 text-xs"><Loader2 size={12} className="animate-spin" /> Loading categories...</div>
+                        <div className="mt-4"><StatsSkeleton count={4} /></div>
                     ) : (
                         <div className="flex flex-wrap gap-1.5 bg-white/10 backdrop-blur-sm p-1.5 rounded-xl w-fit">
                             {allCategories.map(cat => (
@@ -296,9 +297,8 @@ export function SubscriptionManagementPage() {
 
             {/* ── Plan Cards Grid ── */}
             {isLoading ? (
-                <div className="flex items-center justify-center h-48 text-[var(--text-muted)]">
-                    <Loader2 className="animate-spin mr-2" size={20} />
-                    <span className="text-sm font-semibold">Loading plans...</span>
+                <div className="mt-8">
+                    <CardSkeleton count={3} />
                 </div>
             ) : filteredPlans.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 gap-3 bg-[var(--card-bg)] border border-dashed border-[var(--border-color)] rounded-2xl">

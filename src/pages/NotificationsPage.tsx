@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import {
   Send,
   Users,
@@ -17,7 +18,9 @@ import {
   ShieldCheck,
   Trash2,
   Loader2,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,14 +60,19 @@ export function NotificationsPage() {
 
   const [activeTab, setActiveTab] = useState<"broadcast" | "intelligence">("broadcast");
 
+  const [historyPage, setHistoryPage] = useState(1);
+  const [alertsPage, setAlertsPage] = useState(1);
+
   // 1. History Query
-  const { data: history = [], refetch: refetchHistory } = useQuery({
-    queryKey: ["notifications-history"],
+  const { data: historyData, refetch: refetchHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["notifications-history", historyPage],
     queryFn: async () => {
-      const res = await api.get("/admin/notifications");
-      return res.data.data.notifications as NotificationHistoryItem[];
+      const res = await api.get(`/admin/notifications?page=${historyPage}&limit=10`);
+      return res.data.data;
     }
   });
+  const history = historyData?.notifications || historyData || [];
+  const historyTotal = historyData?.total || 0;
 
   // 2. User Search Query
   const { data: searchResults, isLoading: searching } = useQuery({
@@ -128,13 +136,15 @@ export function NotificationsPage() {
   });
 
   // 4. Intelligence Query
-  const { data: alerts = [], refetch: refetchAlerts } = useQuery({
-    queryKey: ["admin-system-intelligence"],
+  const { data: alertsData, refetch: refetchAlerts, isLoading: isLoadingAlerts } = useQuery({
+    queryKey: ["admin-system-intelligence", alertsPage],
     queryFn: async () => {
-      const res = await api.get("/admin/notifications?recipientType=admin&limit=50");
-      return res.data.data.notifications as NotificationHistoryItem[];
+      const res = await api.get(`/admin/notifications?recipientType=admin&page=${alertsPage}&limit=10`);
+      return res.data.data;
     }
   });
+  const alerts = alertsData?.notifications || alertsData || [];
+  const alertsTotal = alertsData?.total || 0;
 
   const clearAlertsMutation = useMutation({
     mutationFn: async () => api.delete("/admin/notifications/clear"),
@@ -499,11 +509,17 @@ export function NotificationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-color)]">
-                {history.length > 0 ? (
-                  history.map((item, index) => (
+                {isLoadingHistory ? (
+                    <tr>
+                      <td colSpan={6} className="p-0">
+                        <TableSkeleton columns={6} rows={5} showHeader={false} />
+                      </td>
+                    </tr>
+                  ) : history.length > 0 ? (
+                  history.map((item: any, index: number) => (
                     <tr key={item._id} className="hover:bg-[var(--bg-main)] transition-colors">
                       <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
-                        {String(index + 1).padStart(2, '0')}
+                        {String((historyPage - 1) * 10 + index + 1).padStart(2, '0')}
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-sm text-[var(--text-main)]">{item.title}</div>
@@ -555,6 +571,33 @@ export function NotificationsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* History Pagination */}
+          {history.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 bg-[var(--card-bg)] border-t border-[var(--border-color)] shadow-sm">
+              <div className="flex items-center gap-4">
+                <p className="text-xs text-[var(--text-muted)]">
+                  Showing <span className="font-semibold text-[var(--text-main)]">{(historyPage - 1) * 10 + (history.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{historyTotal > 0 ? Math.min(historyPage * 10, historyTotal) : (historyPage - 1) * 10 + history.length}</span> {historyTotal > 0 && <>of <span className="font-semibold text-[var(--text-main)]">{historyTotal}</span></>} entries
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                  disabled={historyPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  onClick={() => setHistoryPage(p => p + 1)}
+                  disabled={history.length < 10}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* Intelligence log section */
@@ -590,8 +633,14 @@ export function NotificationsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-color)]">
-                    {alerts.length > 0 ? (
-                      alerts.map((alert, index) => (
+                    {isLoadingAlerts ? (
+                        <tr>
+                          <td colSpan={4} className="p-0">
+                            <TableSkeleton columns={4} rows={5} showHeader={false} />
+                          </td>
+                        </tr>
+                      ) : alerts.length > 0 ? (
+                      alerts.map((alert: any, index: number) => (
                         <tr
                           key={alert._id}
                           onClick={() => handleAlertClick(alert.refType)}
@@ -599,7 +648,7 @@ export function NotificationsPage() {
                           title="Click to inspect this item"
                         >
                           <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
-                            {String(index + 1).padStart(2, '0')}
+                            {String((alertsPage - 1) * 10 + index + 1).padStart(2, '0')}
                           </td>
                           <td className="py-3.5 px-4">
                             <div className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)]">
@@ -641,6 +690,33 @@ export function NotificationsPage() {
                 </table>
               </div>
             </div>
+
+            {/* Alerts Pagination */}
+            {alerts.length > 0 && (
+              <div className="flex items-center justify-between px-4 py-3 bg-[var(--card-bg)] border-t border-[var(--border-color)] shadow-sm">
+                <div className="flex items-center gap-4">
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Showing <span className="font-semibold text-[var(--text-main)]">{(alertsPage - 1) * 10 + (alerts.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{alertsTotal > 0 ? Math.min(alertsPage * 10, alertsTotal) : (alertsPage - 1) * 10 + alerts.length}</span> {alertsTotal > 0 && <>of <span className="font-semibold text-[var(--text-main)]">{alertsTotal}</span></>} entries
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setAlertsPage(p => Math.max(1, p - 1))}
+                    disabled={alertsPage === 1}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => setAlertsPage(p => p + 1)}
+                    disabled={alerts.length < 10}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

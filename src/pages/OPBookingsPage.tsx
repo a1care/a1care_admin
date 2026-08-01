@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Clock, CheckCircle2, Calendar, CreditCard, Search, Eye, Check, CheckCheck, X, Filter, ChevronDown, RefreshCw, Loader2, TrendingUp, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDate, formatDateTime, formatTime } from "@/lib/format";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface ServiceBooking {
     _id: string;
@@ -153,7 +154,7 @@ export function OPBookingsPage() {
         { label: "Total",     value: "All",       count: stats.all || 0,       color: "text-slate-700 dark:text-slate-300", icon: <TrendingUp size={14} /> },
         { label: "Pending",   value: "PENDING",   count: stats.pending || 0,   color: "text-amber-600 dark:text-amber-400", icon: <Clock size={14} /> },
         { label: "Confirmed", value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:text-blue-400",   icon: <CheckCircle2 size={14} /> },
-        { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:text-emerald-400", icon: <CheckCircle2 size={14} /> },
+        { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:emerald-400", icon: <CheckCircle2 size={14} /> },
         { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
     ];
 
@@ -343,11 +344,8 @@ export function OPBookingsPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {loadingServices ? (
                                 <tr>
-                                    <td colSpan={8} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-sm text-[var(--text-muted)]">Loading appointments...</p>
-                                        </div>
+                                    <td colSpan={8} className="p-0">
+                                        <TableSkeleton columns={8} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : Array.isArray(filteredTokens) && filteredTokens.length > 0 ? (

@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatDateTime } from "@/lib/format";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import { api } from "@/lib/api";
 import { 
   UserX, 
@@ -70,9 +72,8 @@ export default function DeletionRequestsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-20 text-slate-400">
-        <Loader2 className="w-10 h-10 animate-spin mr-3" />
-        <span className="font-bold uppercase tracking-widest text-xs">Loading requests...</span>
+      <div className="p-8">
+        <TableSkeleton columns={5} rows={5} showHeader={false} />
       </div>
     );
   }

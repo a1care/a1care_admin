@@ -43,7 +43,9 @@ import {
   CheckCircle,
   ReceiptText,
   Mail,
-  BookOpen
+  BookOpen,
+  Shield,
+  HelpCircle
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -336,10 +338,24 @@ export function AppLayout() {
 
               <div className="nav-section">Content Management System</div>
 
-              <NavLink to="/cms-management" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+              <NavLink to="/cms-management/privacy" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <Shield size={18} />
+                  <span>Privacy Policy</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/cms-management/terms" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
                 <div className="flex items-center gap-3">
                   <FileText size={18} />
-                  <span>Legal & Compliance</span>
+                  <span>Terms & Conditions</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/cms-management/faq" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <HelpCircle size={18} />
+                  <span>FAQs</span>
                 </div>
               </NavLink>
 
@@ -382,9 +398,17 @@ export function AppLayout() {
                     Communication Templates
                   </NavLink>
                   <NavLink to="/audit-logs" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>System Audit Trail</NavLink>
-                  <NavLink to="/deletion-requests" className={({ isActive }) => `sub-link text-rose-500 font-bold ${isActive ? "active" : ""}`}>Data Privacy (GDPR/DPDP)</NavLink>
                 </div>
               )}
+
+              <div className="nav-section">Data & Compliance</div>
+
+              <NavLink to="/deletion-requests" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-rose-600 font-bold bg-[var(--bg-main)]" : "text-rose-500 hover:text-rose-600"}`}>
+                <div className="flex items-center gap-3">
+                  <Trash2 size={18} />
+                  <span>Delete Request</span>
+                </div>
+              </NavLink>
             </>
           )}
         </nav>

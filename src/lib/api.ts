@@ -19,10 +19,18 @@ const ASSET_ORIGIN = baseURL.replace(/\/api\/?$/, "");
 export function resolveAssetUrl(url?: string | null): string {
   if (!url) return "";
   if (/^(data:|blob:)/.test(url)) return url;
-  // Normalize legacy absolute URLs that incorrectly include /api before /uploads
-  if (/^https?:\/\//.test(url)) {
-    return url.replace(/\/api\/uploads\//, '/uploads/');
+  
+  // Robustly extract the path if it contains /uploads/ to prevent hardcoded absolute URLs from breaking
+  const uploadIndex = url.indexOf("/uploads/");
+  if (uploadIndex !== -1) {
+    const path = url.substring(uploadIndex); // e.g. "/uploads/..."
+    return `${ASSET_ORIGIN}${path}`;
   }
+
+  if (/^https?:\/\//.test(url)) {
+    return url;
+  }
+  
   return `${ASSET_ORIGIN}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 

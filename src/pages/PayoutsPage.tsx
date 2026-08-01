@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useState } from "react";
+import { toast } from "sonner";
+import { formatDateTime } from "@/lib/format";
+import { A1Drawer } from "@/components/ui/A1Drawer";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import { 
     Banknote, 
     Clock, 
@@ -19,7 +23,6 @@ import {
     Eye,
     Check
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface Payout {
     _id: string;
@@ -195,11 +198,8 @@ export function PayoutsPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-sm text-[var(--text-muted)]">Loading payouts registry...</p>
-                                        </div>
+                                    <td colSpan={7} className="p-0">
+                                        <TableSkeleton columns={7} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : payouts.length > 0 ? (

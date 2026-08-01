@@ -97,7 +97,7 @@ export default function App() {
               <Route path="/payment-logs" element={<PaymentLogsPage />} />
               <Route path="/deletion-requests" element={<DeletionRequestsPage />} />
               <Route path="/manage-email-templates" element={<EmailTemplatesPage />} />
-              <Route path="/cms-management" element={<CMSManagementPage />} />
+              <Route path="/cms-management/:type" element={<CMSManagementPage />} />
               <Route path="/knowledge-base" element={<KnowledgeBaseManagementPage />} />
             </Route>
           </Route>

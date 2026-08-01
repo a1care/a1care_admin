@@ -7,6 +7,7 @@ import {
     ChevronRight, Eye, EyeOff, RefreshCw, Shield, Cpu, CreditCard, Mail, Server, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { FormSkeleton } from "@/components/ui/Skeletons";
 
 // ─── Default (hardcoded fallback) ────────────────────────────────────────────
 const DEFAULT_CONFIG: SystemConfig = {
@@ -261,11 +262,8 @@ export function SystemSettingsPage() {
                 {/* Right Side Tab Panel Content Column */}
                 <div className="md:col-span-3">
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center p-20 bg-[var(--card-bg)] rounded-xl border border-[var(--border-color)] space-y-4">
-                            <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider animate-pulse">
-                                Communicating with Platform Store…
-                            </p>
+                        <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--border-color)] p-6">
+                            <FormSkeleton />
                         </div>
                     ) : (
                         <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-6 md:p-8 shadow-sm">

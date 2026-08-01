@@ -34,6 +34,7 @@ import {
     Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Category {
@@ -389,10 +390,7 @@ export function ServiceCategoriesPage() {
 
                 <div className="overflow-x-auto">
                     {isLoading ? (
-                        <div className="py-20 text-center flex flex-col items-center gap-3">
-                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Synchronizing sector data...</p>
-                        </div>
+                        <div className="pt-4"><TableSkeleton columns={6} rows={5} showHeader={true} /></div>
                     ) : (
                         <table className="w-full text-left min-w-[800px]">
                             <thead>

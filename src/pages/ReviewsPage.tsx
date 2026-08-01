@@ -15,23 +15,27 @@ import {
   Layers
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDateTime } from "@/lib/format";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 export default function ReviewsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [filterStatus, setFilterStatus] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: reviewsData, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-reviews", page, filterStatus, searchTerm],
+    queryKey: ["admin-reviews", page, limit, filterStatus, searchTerm],
     queryFn: async () => {
-      const res = await api.get(`/admin/reviews?page=${page}&limit=60&status=${filterStatus}&search=${searchTerm}`);
+      const res = await api.get(`/admin/reviews?page=${page}&limit=${limit}&status=${filterStatus}&search=${searchTerm}`);
       return res.data.data;
     }
   });
 
   const reviews = reviewsData?.items || [];
   const totalPages = reviewsData?.totalPages || 1;
+  const totalItems = reviewsData?.total || 0;
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -102,118 +106,143 @@ export default function ReviewsPage() {
         </div>
       </div>
 
-      {/* ── Reviews Cards Grid ── */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center p-20 gap-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
-          <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
-          <p className="text-sm text-[var(--text-muted)]">Moderating feedback...</p>
-        </div>
-      ) : reviews.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviews.map((review: any) => (
-            <div key={review._id} className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between text-left hover:shadow-md transition-all duration-200">
-              <div className="p-5 space-y-4">
-                {/* Header: Identity */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] shrink-0">
-                      <User size={16} />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-semibold text-sm text-[var(--text-main)] truncate leading-snug">{review.userId?.name || "Anonymous User"}</h4>
-                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-[var(--text-muted)]">
-                        <Calendar size={12} />
-                        <span>{new Date(review.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+      {/* ── Reviews Table Card ── */}
+      <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[900px]">
+            <thead>
+              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-12">#</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">User</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Service</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Rating</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-[200px]">Feedback</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-color)]">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <TableSkeleton columns={7} rows={5} showHeader={false} />
+                  </td>
+                </tr>
+              ) : reviews.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
+                        <MessageSquare size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-main)]">No reviews found</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">There are no reviews matching your filters.</p>
                       </div>
                     </div>
-                  </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-                    ${review.status === "Active" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400"}`}
-                  >
-                    {review.status === "Active" ? "Published" : "Hidden"}
-                  </span>
-                </div>
+                  </td>
+                </tr>
+              ) : (
+                reviews.map((review: any, index: number) => (
+                  <tr key={review._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                    <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
+                      {String((page - 1) * limit + index + 1).padStart(2, '0')}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-sm text-[var(--text-main)] truncate max-w-[150px]">
+                        {review.userId?.name || "Anonymous User"}
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5 text-xs text-[var(--text-muted)]">
+                        <Calendar size={11} />
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers size={13} className="text-blue-500" />
+                        {review.bookingType === "Doctor" ? "Doctor Consult" : "Home Service"}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={14}
+                            className={star <= review.rating ? "text-amber-400 fill-amber-400" : "text-[var(--border-color)]"}
+                          />
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <p className="text-xs text-[var(--text-main)] italic truncate max-w-[300px]" title={review.comment}>
+                        "{review.comment || "No comment provided."}"
+                      </p>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
+                        ${review.status === "Active" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400"}`}
+                      >
+                        {review.status === "Active" ? "Published" : "Hidden"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex gap-1.5 justify-end">
+                        {review.status === "Active" ? (
+                          <button
+                            onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Hidden" })}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border border-[var(--border-color)] hover:border-rose-300 transition-colors"
+                            title="Hide Review"
+                          >
+                            <EyeOff size={14} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Active" })}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 border border-[var(--border-color)] hover:border-emerald-300 transition-colors"
+                            title="Publish Review"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                {/* Rating stars */}
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={15}
-                      className={star <= review.rating ? "text-amber-400 fill-amber-400" : "text-[var(--border-color)]"}
-                    />
-                  ))}
-                </div>
-
-                {/* Comment area */}
-                <div className="bg-[var(--bg-main)] p-3 rounded-lg border border-[var(--border-color)] min-h-[90px]">
-                  <p className="text-xs text-[var(--text-main)] leading-relaxed italic">
-                    "{review.comment || "No comment provided."}"
-                  </p>
-                </div>
-              </div>
-
-              {/* Card Footer: Metadata and publish action button */}
-              <div className="p-5 bg-[var(--bg-main)]/50 border-t border-[var(--border-color)] flex items-center justify-between gap-3">
-                <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
-                  <Layers size={13} className="text-blue-500" />
-                  {review.bookingType === "Doctor" ? "Doctor Consult" : "Home Service"}
-                </div>
-                <div className="flex gap-1.5">
-                  {review.status === "Active" ? (
-                    <button
-                      onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Hidden" })}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border border-[var(--border-color)] hover:border-rose-300 transition-colors"
-                      title="Hide Review"
-                    >
-                      <EyeOff size={14} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => updateStatusMutation.mutate({ id: review._id, status: "Active" })}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 border border-[var(--border-color)] hover:border-emerald-300 transition-colors"
-                      title="Publish Review"
-                    >
-                      <Eye size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* ── Pagination ── */}
+        {totalPages > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-color)] bg-[var(--card-bg)]">
+            <div className="flex items-center gap-4">
+              <p className="text-xs text-[var(--text-muted)]">
+                Showing <span className="font-semibold text-[var(--text-main)]">{(page - 1) * limit + (reviews.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{Math.min(page * limit, totalItems)}</span> of <span className="font-semibold text-[var(--text-main)]">{totalItems}</span> entries
+              </p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="py-20 text-center bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl">
-          <MessageSquare size={48} className="mx-auto text-[var(--text-muted)] mb-3" />
-          <h3 className="text-sm font-semibold text-[var(--text-main)]">No reviews match filters</h3>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">Reviews log matches the specified filter queries.</p>
-        </div>
-      )}
-
-      {/* ── Pagination ── */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-sm">
-          <p className="text-xs text-[var(--text-muted)]">
-            Page <span className="font-semibold text-[var(--text-main)]">{page}</span> of <span className="font-semibold text-[var(--text-main)]">{totalPages}</span>
-          </p>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight size={14} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="text-xs font-semibold px-2 text-[var(--text-main)]">Page {page} of {totalPages}</span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-main)] hover:bg-[var(--bg-main)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
+

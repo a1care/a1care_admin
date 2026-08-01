@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { RefreshCcw, Search, CheckCircle, XCircle, AlertTriangle, Clock, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface PaymentOrder {
   _id: string;
@@ -155,10 +156,7 @@ export function PaymentLogsPage() {
 
         {/* Table */}
         {isLoading && !ordersResponse ? (
-          <div style={{ padding: "80px 24px", textAlign: "center", color: "var(--text-muted)", fontWeight: 700 }}>
-            <RefreshCcw size={32} className="animate-spin" style={{ margin: "0 auto 16px", opacity: 0.4 }} />
-            <div>Loading Payment Registry...</div>
-          </div>
+          <div className="p-4"><TableSkeleton columns={7} rows={10} showHeader={true} /></div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>

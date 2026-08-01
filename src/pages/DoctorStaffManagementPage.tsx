@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 import {
     Users, Search, Filter, Plus,
     ChevronLeft, ChevronRight,
@@ -74,7 +75,7 @@ export function DoctorStaffManagementPage() {
     const { data: staffData, isLoading } = useQuery({
         queryKey: ["admin_staff", page, searchQuery, statusFilter],
         queryFn: async () => {
-            const res = await api.get(`/admin/doctors?page=${page}&limit=50&search=${searchQuery}&status=${statusFilter}`);
+            const res = await api.get(`/admin/doctors?page=${page}&limit=10&search=${searchQuery}&status=${statusFilter}`);
             return normalizeDoctorsPayload(res.data.data);
         }
     });
@@ -401,11 +402,8 @@ export function DoctorStaffManagementPage() {
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Loading doctors...</p>
-                                        </div>
+                                    <td colSpan={7} className="p-0">
+                                        <TableSkeleton columns={7} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : Array.isArray(filteredStaff) && filteredStaff.length > 0 ? (

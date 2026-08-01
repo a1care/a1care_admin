@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useDeferredValue } from "react";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
 interface AuditLog {
   _id: string;
@@ -149,6 +150,9 @@ export function AuditLogsPage() {
             </span>
           </div>
 
+        {isLoading ? (
+          <TableSkeleton columns={6} rows={10} showHeader={false} />
+        ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[700px]">
               <thead>
@@ -162,16 +166,7 @@ export function AuditLogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-color)]">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="py-16 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <RefreshCcw className="animate-spin text-indigo-500" size={24} />
-                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Syncing Audit Records...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filtered.length > 0 ? (
+                {filtered.length > 0 ? (
                   filtered.map((log, index) => (
                     <tr key={log._id} className="hover:bg-[var(--bg-main)]/50 transition-colors">
                       {/* Index */}
@@ -235,6 +230,7 @@ export function AuditLogsPage() {
               </tbody>
             </table>
           </div>
+        )}
         </div>
       </div>
     </div>

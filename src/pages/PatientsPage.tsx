@@ -2,8 +2,9 @@ import { useState, useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Users, Search, ChevronLeft, ChevronRight, Phone, Mail } from "lucide-react";
+import { TableSkeleton } from "@/components/ui/Skeletons";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export function PatientsPage() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -27,7 +28,21 @@ export function PatientsPage() {
     const total = data?.total ?? 0;
     const totalPages = Math.ceil(total / PAGE_SIZE);
 
-    if (isLoading && !data) return <div className="p-4 py-20 text-center text-[var(--text-muted)] font-bold">Loading Patient Registry...</div>;
+    if (isLoading && !data) {
+        return (
+            <div className="flex-col gap-4">
+                <header className="flex justify-between items-center" style={{ marginBottom: '24px' }}>
+                    <div>
+                        <h1 className="brand-name" style={{ fontSize: '1.75rem' }}>Patients</h1>
+                        <p className="text-xs muted font-bold uppercase tracking-wider mt-1">Loading...</p>
+                    </div>
+                </header>
+                <div className="card p-4">
+                    <TableSkeleton columns={5} rows={10} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex-col gap-4">
