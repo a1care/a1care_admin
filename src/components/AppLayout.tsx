@@ -330,9 +330,9 @@ export function AppLayout() {
 
               {customerAppOpen && (
                 <div className="submenu-list">
-                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Customer Campaigns</NavLink>
-                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Provider Promotions</NavLink>
-                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Health Articles</NavLink>
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners</NavLink>
+                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promotional Banners</NavLink>
+                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
                 </div>
               )}
 

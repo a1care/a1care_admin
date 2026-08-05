@@ -100,6 +100,7 @@ export function AppBannerManagementPage() {
       const newBanners = [...banners];
       newBanners[index].imageUrl = url;
       setBanners(newBanners);
+      saveMutation.mutate(newBanners);
       toast.success("Asset uploaded successfully.");
     } catch (err) {
       toast.error("Upload failed.");
@@ -122,7 +123,9 @@ export function AppBannerManagementPage() {
   };
 
   const removeBanner = (index: number) => {
-    setBanners(banners.filter((_, i) => i !== index));
+    const newBanners = banners.filter((_, i) => i !== index);
+    setBanners(newBanners);
+    saveMutation.mutate(newBanners);
   };
 
   const { data: categories } = useQuery({
@@ -297,7 +300,7 @@ export function AppBannerManagementPage() {
                 {/* Delete Button */}
                 <button 
                   onClick={() => {
-                    if (window.confirm("Remove this campaign banner? Remember to click 'Save Configuration' to deploy changes.")) {
+                    if (window.confirm("Are you sure you want to permanently delete this banner?")) {
                       removeBanner(index);
                     }
                   }}

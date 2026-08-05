@@ -517,7 +517,7 @@ export function ServiceCategoriesPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Category Icon</label>
-                                        <label className={`relative flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${file ? "bg-blue-50 border-blue-200" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-blue-400"}`}>
+                                        <label className={`relative group flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${file ? "bg-blue-50 border-blue-200" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-blue-400"}`}>
                                             <div className="w-full h-full flex items-center justify-center">
                                                 {previewUrl ? (
                                                     <img src={previewUrl} className="w-full h-full object-cover" />
@@ -530,13 +530,21 @@ export function ServiceCategoriesPage() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {(previewUrl || editingCategory?.imageUrl) && (
+                                                <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mb-1 backdrop-blur-sm">
+                                                        <UploadCloud size={14} className="text-white" />
+                                                    </div>
+                                                    <span className="text-white text-[9px] font-black uppercase tracking-widest">Change Asset</span>
+                                                </div>
+                                            )}
                                             <input type="file" className="hidden" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
                                         </label>
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Category Banner</label>
-                                        <label className={`relative flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${bannerFile ? "bg-blue-50 border-blue-200" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-blue-400"}`}>
+                                        <label className={`relative group flex flex-col items-center justify-center gap-2 w-full h-28 rounded-xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${bannerFile ? "bg-blue-50 border-blue-200" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-blue-400"}`}>
                                             <div className="w-full h-full flex items-center justify-center">
                                                 {bannerPreviewUrl ? (
                                                     <img src={bannerPreviewUrl} className="w-full h-full object-cover" />
@@ -549,6 +557,14 @@ export function ServiceCategoriesPage() {
                                                     </div>
                                                 )}
                                             </div>
+                                            {(bannerPreviewUrl || editingCategory?.bannerUrl) && (
+                                                <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mb-1 backdrop-blur-sm">
+                                                        <UploadCloud size={14} className="text-white" />
+                                                    </div>
+                                                    <span className="text-white text-[9px] font-black uppercase tracking-widest">Change Asset</span>
+                                                </div>
+                                            )}
                                             <input type="file" className="hidden" accept="image/*" onChange={(e) => setBannerFile(e.target.files?.[0] || null)} />
                                         </label>
                                     </div>

@@ -332,8 +332,13 @@ export function ServiceVerticalsPage() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Vertical Branding (Image)</label>
                                     <label className={`flex items-center gap-4 w-full h-20 px-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${preview ? "bg-blue-50 border-blue-200" : "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 hover:border-blue-500"}`}>
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-white/10 text-slate-400"}`}>
+                                        <div className={`relative group w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-white/10 text-slate-400"}`}>
                                             {preview ? <img src={preview} className="w-full h-full object-cover" /> : <UploadCloud size={24} />}
+                                            {preview && (
+                                                <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <UploadCloud size={14} className="text-white" />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex-1">
                                             <p className={`text-xs font-bold ${preview ? "text-blue-700" : "text-slate-400"}`}>

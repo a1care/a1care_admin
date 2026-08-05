@@ -417,7 +417,7 @@ export function AppManagementPage({ appKey }: Props) {
                         <ImageIcon size={20} />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-[var(--text-main)]">Festival Promotions</h3>
+                        <h3 className="text-sm font-bold text-[var(--text-main)]">Festival Banners</h3>
                         <p className="text-xs text-[var(--text-muted)]">Configure seasonal app dashboard banners.</p>
                       </div>
                     </div>
@@ -470,7 +470,7 @@ export function AppManagementPage({ appKey }: Props) {
                     {formState.landing.festivalBanners.length === 0 && (
                       <div className="py-12 text-center bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] text-[var(--text-muted)] flex flex-col items-center gap-2">
                         <Sparkles size={28} className="opacity-40" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">No active promotional banners</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider">No active festival banners</span>
                       </div>
                     )}
                   </div>

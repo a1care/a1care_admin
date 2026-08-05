@@ -376,8 +376,13 @@ export function ServiceSubServicesPage() {
                             <div className="space-y-1.5">
                                 <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Icon Visual</label>
                                 <label className={`flex items-center gap-4 w-full h-16 px-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${preview ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20" : "bg-[var(--bg-main)] border-[var(--border-color)] hover:border-indigo-400"}`}>
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-slate-200 text-slate-500"}`}>
+                                    <div className={`relative group w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden ${preview ? "bg-white shadow-sm" : "bg-slate-200 text-slate-500"}`}>
                                         {preview ? <img src={preview} className="w-full h-full object-cover" /> : <UploadCloud size={16} />}
+                                        {preview && (
+                                            <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <UploadCloud size={12} className="text-white" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex-1 overflow-hidden text-left">
                                         <p className={`text-xs font-bold truncate ${preview ? "text-indigo-700 dark:text-indigo-400" : "text-slate-400"}`}>
