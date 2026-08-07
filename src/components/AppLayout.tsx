@@ -45,7 +45,9 @@ import {
   Mail,
   BookOpen,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Wallet,
+  MapPin
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -56,6 +58,7 @@ const mainNav = (role: string) => [
   { to: "/bookings", label: "Service Bookings", icon: CalendarCheck },
   { to: "/op-bookings", label: "Consultations", icon: ClipboardList },
   ...(role === "super_admin" ? [
+    { to: "/super-admin-wallet", label: "Super Admin Wallet", icon: Wallet },
     { to: "/partner-revenue-model", label: "Subscription Plans", icon: BarChart3 },
     { to: "/payouts", label: "Partner Settlements", icon: Banknote },
     { to: "/commission-report", label: "Revenue Analytics", icon: ReceiptText },
@@ -363,6 +366,13 @@ export function AppLayout() {
                 <div className="flex items-center gap-3">
                   <BookOpen size={18} />
                   <span>Partner Knowledge Base</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/serviceable-areas" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <MapPin size={18} />
+                  <span>Serviceable Areas</span>
                 </div>
               </NavLink>
 

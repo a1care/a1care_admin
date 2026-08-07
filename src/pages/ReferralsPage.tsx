@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
     Gift,
@@ -49,6 +49,7 @@ const partyMobile = (p?: PartyRef | string) =>
     p && typeof p === "object" ? p.mobileNumber || "" : "";
 
 export function ReferralsPage() {
+    const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState("");
@@ -83,6 +84,19 @@ export function ReferralsPage() {
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Failed to update configuration");
+        }
+    });
+
+    const approveReferralMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await api.put(`/admin/referral/${id}/approve`);
+        },
+        onSuccess: () => {
+            toast.success("Referral reward credited successfully!");
+            queryClient.invalidateQueries({ queryKey: ["admin-referrals"] });
+        },
+        onError: (err: any) => {
+            toast.error(err?.response?.data?.message || "Failed to approve referral");
         }
     });
 
@@ -257,18 +271,19 @@ export function ReferralsPage() {
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Reward Amount</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Date Created</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[var(--border-color)]">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={7} className="p-0">
-                                        <TableSkeleton columns={7} rows={5} showHeader={false} />
+                                    <td colSpan={8} className="p-0">
+                                        <TableSkeleton columns={8} rows={5} showHeader={false} />
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="py-20 text-center">
+                                    <td colSpan={8} className="py-20 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
                                                 <Gift size={20} />
@@ -319,6 +334,22 @@ export function ReferralsPage() {
                                         </td>
                                         <td className="py-3.5 px-4 text-xs text-[var(--text-muted)] whitespace-nowrap">
                                             {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "—"}
+                                        </td>
+                                        <td className="py-3.5 px-4 text-right">
+                                            {r.status === "PENDING" && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm("Are you sure you want to credit this reward to the referrer's wallet?")) {
+                                                            approveReferralMutation.mutate(r._id);
+                                                        }
+                                                    }}
+                                                    disabled={approveReferralMutation.isPending}
+                                                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+                                                >
+                                                    {approveReferralMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Gift size={12} />}
+                                                    Credit
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

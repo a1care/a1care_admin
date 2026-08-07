@@ -19,6 +19,7 @@ import { DoctorStaffManagementPage } from "@/pages/DoctorStaffManagementPage";
 import { TicketsPage } from "@/pages/TicketsPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
 import { SubscriptionManagementPage } from "@/pages/SubscriptionManagementPage";
+import { SuperAdminWalletPage } from "@/pages/SuperAdminWalletPage";
 import { PayoutsPage } from "@/pages/PayoutsPage";
 import { CouponsPage } from "@/pages/CouponsPage";
 import { ReferralsPage } from "@/pages/ReferralsPage";
@@ -35,6 +36,7 @@ import { CommissionReportPage } from "./pages/CommissionReportPage";
 import { EmailTemplatesPage } from "./pages/EmailTemplatesPage";
 import CMSManagementPage from "./pages/CMSManagementPage";
 import KnowledgeBaseManagementPage from "./pages/KnowledgeBaseManagementPage";
+import ServiceableAreasPage from "./pages/ServiceableAreasPage";
 
 export default function App() {
   return (
@@ -54,10 +56,11 @@ export default function App() {
             <Route path="/service-child-services" element={<ServiceChildServicesPage />} />
             <Route path="/health-packages" element={<HealthPackagesPage />} />
 
-            {/* Revenue & Subscriptions */}
+            {/* Finance & Analytics */}
             <Route path="/partner-revenue-model" element={<SubscriptionManagementPage />} />
             <Route path="/payouts" element={<PayoutsPage />} />
             <Route path="/commission-report" element={<CommissionReportPage />} />
+            <Route path="/super-admin-wallet" element={<SuperAdminWalletPage />} />
             <Route path="/coupons" element={<CouponsPage />} />
             <Route path="/referrals" element={<ReferralsPage />} />
             <Route path="/reviews" element={<ReviewsPage />} />
@@ -99,6 +102,7 @@ export default function App() {
               <Route path="/manage-email-templates" element={<EmailTemplatesPage />} />
               <Route path="/cms-management/:type" element={<CMSManagementPage />} />
               <Route path="/knowledge-base" element={<KnowledgeBaseManagementPage />} />
+              <Route path="/serviceable-areas" element={<ServiceableAreasPage />} />
             </Route>
           </Route>
         </Route>
