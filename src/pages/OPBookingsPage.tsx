@@ -127,8 +127,30 @@ export function OPBookingsPage() {
         }
     });
 
+    const verifyPinMutation = useMutation({
+        mutationFn: async ({ id, pin }: { id: string, pin: string }) => {
+            const res = await api.post(`/service-bookings/verify-pin/${id}`, { pin });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin_service_bookings"] });
+        },
+        onError: (err: any) => {
+            alert(err?.response?.data?.message || "Invalid PIN or Verification Failed");
+        }
+    });
+
     const handleUpdateStatus = (id: string, status: string) => {
         updateStatusMutation.mutate({ id, status });
+    };
+
+    const handleVerifyPin = (id: string) => {
+        const pin = window.prompt("Enter the 4-digit check-in PIN provided by the patient:");
+        if (pin && pin.trim().length === 4) {
+            verifyPinMutation.mutate({ id, pin: pin.trim() });
+        } else if (pin !== null) {
+            alert("Please enter a valid 4-digit PIN.");
+        }
     };
 
     const getStatusLabel = (status: string): string => {
@@ -423,6 +445,17 @@ export function OPBookingsPage() {
                                                     >
                                                         <Eye size={14} />
                                                     </button>
+                                                    
+                                                    {booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") ? (
+                                                        <button
+                                                            onClick={() => handleVerifyPin(booking._id)}
+                                                            className="w-auto px-2 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
+                                                            title="Verify Arrival PIN"
+                                                        >
+                                                            Verify PIN
+                                                        </button>
+                                                    ) : null}
+
                                                     <button
                                                         disabled={!isPending}
                                                         onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}

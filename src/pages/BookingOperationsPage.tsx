@@ -401,6 +401,22 @@ export function BookingOperationsPage() {
                         </select>
                     </div>
 
+                    {/* Payment Filter Dropdown */}
+                    <div className="flex items-center bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg px-3 py-1.5 gap-2 shrink-0 shadow-sm transition-all hover:border-[var(--text-muted)] focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/30">
+                        <CreditCard size={14} className="text-[var(--text-muted)]" />
+                        <select 
+                            value={paymentFilter}
+                            onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
+                            className="bg-transparent text-xs font-semibold text-[var(--text-main)] outline-none cursor-pointer appearance-none pr-4"
+                            style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A6E8A%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right center', backgroundSize: '8px auto' }}
+                        >
+                            <option value="All">All Payments</option>
+                            <option value="COMPLETED">Paid / Completed</option>
+                            <option value="PENDING">Pending / Unpaid</option>
+                            <option value="PACKAGE">Package Redeemed</option>
+                        </select>
+                    </div>
+
                     {/* Service Category Pills (services tab only) */}
                     {activeTab === "services" && (
                         <div className="flex items-center gap-1.5 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg p-1 shrink-0">
@@ -504,7 +520,7 @@ export function BookingOperationsPage() {
                                                 </div>
                                             </td>
                                             <td className="py-3.5 px-4 text-center">
-                                                {activeTab === "services" && (isPending || isConfirmed) ? (
+                                                {activeTab === "services" && booking.fulfillmentMode !== "HOSPITAL_VISIT" && (isPending || isConfirmed) ? (
                                                     <button
                                                         onClick={() => setAcceptServiceModal({ bookingId: booking._id, booking })}
                                                         className={`h-8 px-3 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 text-white shadow-sm
@@ -513,12 +529,20 @@ export function BookingOperationsPage() {
                                                         <CheckCircle2 size={12} />
                                                         {isConfirmed ? "Re-assign" : "Assign"}
                                                     </button>
+                                                ) : booking.status?.toUpperCase() === "IN_PROGRESS" ? (
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "Completed")}
+                                                        className="h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
+                                                    >
+                                                        <CheckCircle2 size={12} />
+                                                        Complete
+                                                    </button>
                                                 ) : (
                                                     <button
-                                                        disabled={!isPending || activeTab === "services"}
+                                                        disabled={!isPending}
                                                         onClick={() => handleUpdateStatus(booking.bookingId || booking._id, (booking as any).bookingType || (activeTab === "doctors" ? "doctor" : "service"), "Confirmed")}
                                                         className={`h-8 px-3 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all
-                                                            ${isPending && activeTab !== "services"
+                                                            ${isPending
                                                                 ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
                                                                 : "bg-[var(--bg-main)] text-[var(--text-muted)] cursor-not-allowed border border-[var(--border-color)]"
                                                             }`}
@@ -537,6 +561,32 @@ export function BookingOperationsPage() {
                                                     >
                                                         <Eye size={14} />
                                                     </button>
+                                                    {booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                const pin = window.prompt("Enter the 4-digit check-in PIN provided by the patient:");
+                                                                if (pin && pin.trim().length === 4) {
+                                                                    // Since verifyPin is originally in OPBookingsPage, we might need to handle this differently if verifyPinMutation isn't available here.
+                                                                    // Wait, is verifyPinMutation defined in this file?
+                                                                    // We can use api.post directly here.
+                                                                    api.post(`/admin/bookings/services/verify-pin/${booking._id}`, { pin: pin.trim() })
+                                                                        .then(() => {
+                                                                            alert("PIN verified successfully! Patient arrived.");
+                                                                            window.location.reload();
+                                                                        })
+                                                                        .catch((err) => {
+                                                                            alert(err?.response?.data?.message || "Invalid PIN or Verification Failed");
+                                                                        });
+                                                                } else if (pin !== null) {
+                                                                    alert("Please enter a valid 4-digit PIN.");
+                                                                }
+                                                            }}
+                                                            className="w-auto px-2 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
+                                                            title="Verify Arrival PIN"
+                                                        >
+                                                            Verify PIN
+                                                        </button>
+                                                    ) : null}
                                                     <button
                                                         disabled={isFinal}
                                                         onClick={() => {
