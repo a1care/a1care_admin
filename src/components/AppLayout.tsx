@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/auth";
 import { toast } from "sonner";
 import {
+  Menu,
   LayoutDashboard,
   Users,
   CalendarCheck,
@@ -56,19 +57,18 @@ import { format } from "date-fns";
 const mainNav = (role: string) => [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bookings", label: "Service Bookings", icon: CalendarCheck },
-  { to: "/op-bookings", label: "Consultations", icon: ClipboardList },
+  { to: "/op-bookings", label: "OP Bookings", icon: ClipboardList },
   ...(role === "super_admin" ? [
     { to: "/super-admin-wallet", label: "Super Admin Wallet", icon: Wallet },
     { to: "/partner-revenue-model", label: "Subscription Plans", icon: BarChart3 },
     { to: "/payouts", label: "Partner Settlements", icon: Banknote },
-    { to: "/commission-report", label: "Revenue Analytics", icon: ReceiptText },
-    { to: "/coupons", label: "Promotions", icon: Tag },
+    { to: "/commission-report", label: "Commission Report", icon: ReceiptText },
+    { to: "/coupons", label: "Coupons", icon: Tag },
   ] : []),
-  { to: "/kyc-verification", label: "Identity Verification", icon: ShieldCheck },
+  { to: "/kyc-verification", label: "kyc Verification", icon: ShieldCheck },
   { to: "/referrals", label: "Referral Program", icon: Gift },
   { to: "/reviews", label: "Ratings & Feedback", icon: MessageSquare },
-  { to: "/support-tickets", label: "Support Desk", icon: Ticket },
-  { to: "/reports", label: "System Reports", icon: FileText },
+  { to: "/support-tickets", label: "Support Tickets", icon: Ticket },
   { to: "/notifications", label: "Notifications", icon: Bell },
 ];
 
@@ -77,6 +77,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
@@ -111,7 +112,6 @@ export function AppLayout() {
     { label: "System Settings", to: "/manage-system-config", icon: "⚙️", cat: "Admin" },
     { label: "Email Templates", to: "/manage-email-templates", icon: "✉️", cat: "Admin" },
     { label: "Payment Logs", to: "/payment-logs", icon: "🧾", cat: "Admin" },
-    { label: "Audit Logs", to: "/audit-logs", icon: "📜", cat: "Admin" },
     { label: "Account Deletion Requests", to: "/deletion-requests", icon: "🗑️", cat: "Admin" },
   ], []);
 
@@ -232,244 +232,37 @@ export function AppLayout() {
   });
 
   return (
-    <div className="shell min-h-screen">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="logo-box large">
-            <img src="/a1care_logo1.png" alt="A1Care Logo" className="w-full h-full object-contain" />
-          </div>
-          <div className="flex flex-col">
-            <h2 className="brand-name">A1Care Admin</h2>
-            <p className="role-label">Admin</p>
-          </div>
-        </div>
-
-        <nav>
-          <div className="nav-section">Core Operations</div>
-
-          {mainNav(user?.role || "admin").map((item) => (
-            <NavLink key={item.label} to={item.to} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-              <item.icon size={18} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-
-          <div className="nav-section">Account Management</div>
-
-          <button
-            className={`submenu-trigger ${usersActive ? "active" : ""}`}
-            onClick={() => setUsersOpen((prev) => !prev)}
-          >
-            <div className="flex items-center gap-3">
-              <Users size={18} />
-              <span>Accounts Registry</span>
-            </div>
-            {usersOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+    <div className="shell">
+      {/* Top Navbar */}
+      <header className="content-header h-20 backdrop-blur-2xl bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/50 dark:border-white/10 flex items-center justify-between sticky top-0 z-50 transition-colors w-full px-4 shrink-0">
+        <div className="flex items-center gap-4 w-[260px] shrink-0">
+          <button onClick={() => setSidebarOpen(prev => !prev)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-300 -ml-2">
+            <Menu size={24} />
           </button>
-
-          {usersOpen && (
-            <div className="submenu-list">
-              {[
-                { to: "/manage-patients", label: "Patients" },
-                { to: "/manage-doctors", label: "Medical Practitioners" },
-                { to: "/manage-nurses", label: "Nurses" },
-                { to: "/manage-ambulances", label: "Emergency Fleet" },
-                { to: "/manage-rentals", label: "Medical Equipment" },
-                { to: "/manage-labs", label: "Diagnostic Centers" },
-                { to: "/manage-services", label: "Allied Services" }
-              ].map(link => (
-                <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link ${isActive ? "active text-primary font-bold" : ""}`}>
-                  {link.label}
-                </NavLink>
-              ))}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black">A1</div>
+            <div className="flex flex-col">
+              <h2 className="brand-name">A1Care Admin</h2>
+              <p className="role-label text-blue-600 font-bold">Admin</p>
             </div>
-          )}
-
-          {user?.role === "super_admin" && (
-            <>
-              <button
-                className={`submenu-trigger ${servicesActive ? "active" : ""}`}
-                onClick={() => setServicesOpen((prev) => !prev)}
-              >
-                <div className="flex items-center gap-3">
-                  <Layers size={18} />
-                  <span>Service Master Data</span>
-                </div>
-                {servicesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-
-              {servicesOpen && (
-                <div className="submenu-list">
-                  {[
-                    // { to: "/service-Categories", label: "Categoriess Hub", icon: Briefcase },
-                    { to: "/service-categories", label: "Categories", icon: LayoutGrid },
-                    { to: "/service-subcategories", label: "Subcategories", icon: Layers },
-                    { to: "/service-child-services", label: "Service Variants", icon: Tag },
-                    { to: "/health-packages", label: "Health Packages", icon: Package }
-                  ].map(link => (
-                    <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active text-primary font-bold" : ""}`}>
-                      <link.icon size={13} /> {link.label}
-                    </NavLink>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-
-          {user?.role === "super_admin" && (
-            <>
-              <div className="nav-section">Growth & Marketing</div>
-
-              <button
-                className={`submenu-trigger ${customerAppActive ? "active" : ""}`}
-                onClick={() => setCustomerAppOpen((prev) => !prev)}
-              >
-                <div className="flex items-center gap-3">
-                  <Flame size={18} />
-                  <span>Campaign Banners</span>
-                </div>
-                {customerAppOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-
-              {customerAppOpen && (
-                <div className="submenu-list">
-                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners</NavLink>
-                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promotional Banners</NavLink>
-                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
-                </div>
-              )}
-
-              <div className="nav-section">Content Management System</div>
-
-              <NavLink to="/cms-management/privacy" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <Shield size={18} />
-                  <span>Privacy Policy</span>
-                </div>
-              </NavLink>
-
-              <NavLink to="/cms-management/terms" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <FileText size={18} />
-                  <span>Terms & Conditions</span>
-                </div>
-              </NavLink>
-
-              <NavLink to="/cms-management/faq" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <HelpCircle size={18} />
-                  <span>FAQs</span>
-                </div>
-              </NavLink>
-
-              <NavLink to="/knowledge-base" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <BookOpen size={18} />
-                  <span>Partner Knowledge Base</span>
-                </div>
-              </NavLink>
-
-              <NavLink to="/serviceable-areas" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <MapPin size={18} />
-                  <span>Serviceable Areas</span>
-                </div>
-              </NavLink>
-
-              <div className="nav-section">System Administration</div>
-
-              <button
-                className={`submenu-trigger ${appsActive ? "active" : ""}`}
-                onClick={() => setAppsOpen((prev) => !prev)}
-              >
-                <div className="flex items-center gap-3">
-                  <AppWindow size={18} />
-                  <span>Platform Configurations</span>
-                </div>
-                {appsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-
-              {appsOpen && (
-                <div className="submenu-list">
-                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Customer App Settings</NavLink>
-                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Partner App Settings</NavLink>
-                  <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                  <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>EHR Audit Logs</NavLink>
-                  <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
-                    <Receipt size={13} />
-                    Transaction History
-                  </NavLink>
-                  <NavLink to="/manage-system-config" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
-                    <ShieldCheck size={13} />
-                    API & Security
-                  </NavLink>
-                  <NavLink to="/manage-email-templates" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
-                    <Mail size={13} />
-                    Communication Templates
-                  </NavLink>
-                  <NavLink to="/audit-logs" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>System Audit Trail</NavLink>
-                </div>
-              )}
-
-              <div className="nav-section">Data & Compliance</div>
-
-              <NavLink to="/deletion-requests" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-rose-600 font-bold bg-[var(--bg-main)]" : "text-rose-500 hover:text-rose-600"}`}>
-                <div className="flex items-center gap-3">
-                  <Trash2 size={18} />
-                  <span>Delete Request</span>
-                </div>
-              </NavLink>
-            </>
-          )}
-        </nav>
-
-        <div className="mt-auto p-4 border-t border-[var(--border-color)]">
-          <div className="bg-[var(--sidebar-active)] rounded-[20px] p-3.5 flex items-center gap-3 transition-all hover:bg-[var(--border-color)] border border-transparent group overflow-hidden">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
-              {user?.name?.charAt(0) || 'A'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-black text-[var(--text-main)] truncate leading-none mb-1">
-                {user?.name || "Premium Admin"}
-              </p>
-              <p className="text-[9px] font-bold text-[var(--text-muted)] truncate uppercase tracking-widest opacity-80">
-                {user?.role?.replace(/_/g, ' ') || "Global Manager"}
-              </p>
-            </div>
-            <button
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all shrink-0"
-              onClick={logout}
-              title="Logout"
-            >
-              <LogOut size={16} />
-            </button>
           </div>
         </div>
-      </aside>
 
-      <main className="content">
-        <header className="content-header h-24 backdrop-blur-xl border-b flex items-center justify-between sticky top-0 z-50">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-6">
-              <div
-                onClick={() => setShowSearch(true)}
-                className="flex items-center gap-3 bg-slate-100/80 dark:bg-white/5 border border-transparent hover:border-blue-500/30 px-5 py-3 rounded-2xl text-slate-500 transition-all min-w-[380px] group cursor-pointer"
-              >
-                <Search size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
-                <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 w-full">Search modules (Ctrl+K)...</span>
-                <div className="flex items-center gap-1 opacity-40 shrink-0 bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-black">
-                  <Command size={10} /> K
-                </div>
-              </div>
+        <div className="flex-1 max-w-2xl mx-auto flex items-center justify-center px-4">
+          <div
+            onClick={() => setShowSearch(true)}
+            className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/50 hover:border-blue-400/50 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm px-4 py-2.5 rounded-full text-slate-500 transition-all duration-300 w-full max-w-xl group cursor-pointer"
+          >
+            <Search size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors shrink-0" />
+            <span className="text-[13px] font-medium text-slate-400 dark:text-slate-500 w-full tracking-wide text-left">Search modules...</span>
+            <div className="flex items-center gap-1 opacity-60 shrink-0 bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <Command size={10} /> K
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-5">
-            {/* Dark mode toggle hidden temporarily */}
-
-            <div className="w-px h-6 bg-slate-200"></div>
-
-            <div className="relative">
+        <div className="flex items-center gap-5 justify-end w-[260px] shrink-0">
+          <div className="relative">
               <button
                 onClick={() => setShowBell(!showBell)}
                 className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${showBell ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'hover:bg-slate-100 text-[var(--text-muted)]'}`}
@@ -561,10 +354,7 @@ export function AppLayout() {
               >
                 <div className="text-right hidden sm:block">
                   <p className="text-[13px] font-black text-[var(--text-main)] dark:text-white leading-none">{user?.name || "Admin User"}</p>
-                  <div className="flex items-center justify-end gap-1.5 mt-1">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Active Now</p>
-                  </div>
+                  <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 tracking-wide">{user?.email || "admin@a1care.com"}</p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-lg shadow-blue-100 group-hover:scale-105 transition-transform">
                   {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'}
@@ -626,9 +416,222 @@ export function AppLayout() {
               )}
             </div>
           </div>
-        </header>
+        
+      </header>
 
-        <div className="page-body">
+      <div className="main-layout flex flex-1 overflow-hidden">
+        <aside className={`sidebar ${!sidebarOpen ? 'mini' : ''}`}>
+          <nav>
+          <div className="nav-section">Core Operations</div>
+
+          {mainNav(user?.role || "admin").map((item) => (
+            <NavLink key={item.label} to={item.to} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <item.icon size={18} />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+
+          <div className="nav-section">Users Management</div>
+
+          <button
+            className={`submenu-trigger ${usersActive ? "active" : ""}`}
+            onClick={() => setUsersOpen((prev) => !prev)}
+          >
+            <div className="flex items-center gap-3">
+              <Users size={18} />
+              <span>Users</span>
+            </div>
+            {usersOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+
+          {usersOpen && (
+            <div className="submenu-list">
+              {[
+                { to: "/manage-patients", label: "Customers" },
+                { to: "/manage-doctors", label: "Doctors" },
+                { to: "/manage-nurses", label: "Nurses" },
+                { to: "/manage-ambulances", label: "Ambulances" },
+                { to: "/manage-rentals", label: "Medical Equipment" },
+                { to: "/manage-labs", label: "Diagnostic Centers" },
+                { to: "/manage-services", label: "Allied Services" }
+              ].map(link => (
+                <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link ${isActive ? "active text-primary font-bold" : ""}`}>
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {user?.role === "super_admin" && (
+            <>
+              <button
+                className={`submenu-trigger ${servicesActive ? "active" : ""}`}
+                onClick={() => setServicesOpen((prev) => !prev)}
+              >
+                <div className="flex items-center gap-3">
+                  <Layers size={18} />
+                  <span>Service Data</span>
+                </div>
+                {servicesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+
+              {servicesOpen && (
+                <div className="submenu-list">
+                  {[
+                    // { to: "/service-Categories", label: "Categoriess Hub", icon: Briefcase },
+                    { to: "/service-categories", label: "Categories", icon: LayoutGrid },
+                    { to: "/service-subcategories", label: "Subcategories", icon: Layers },
+                    { to: "/service-child-services", label: "Service Variants", icon: Tag },
+                    { to: "/health-packages", label: "Health Packages", icon: Package }
+                  ].map(link => (
+                    <NavLink key={link.to} to={link.to} className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active text-primary font-bold" : ""}`}>
+                      <link.icon size={13} /> {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {user?.role === "super_admin" && (
+            <>
+              <div className="nav-section">Growth & Marketing</div>
+
+              <button
+                className={`submenu-trigger ${customerAppActive ? "active" : ""}`}
+                onClick={() => setCustomerAppOpen((prev) => !prev)}
+              >
+                <div className="flex items-center gap-3">
+                  <Flame size={18} />
+                  <span>Campaign Banners</span>
+                </div>
+                {customerAppOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+
+              {customerAppOpen && (
+                <div className="submenu-list">
+                  <NavLink to="/app-banners/main" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Offer Banners</NavLink>
+                  <NavLink to="/app-banners/promotional" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Promotional Banners</NavLink>
+                  <NavLink to="/app-banners/knowledge" className={({ isActive }) => `sub-link ${isActive ? "active font-bold" : ""}`}>Knowledge Base</NavLink>
+                </div>
+              )}
+
+              <div className="nav-section">Content Management System</div>
+
+              <NavLink to="/cms-management/privacy" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <Shield size={18} />
+                  <span>Privacy Policy</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/cms-management/terms" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <FileText size={18} />
+                  <span>Terms & Conditions</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/cms-management/faq" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <HelpCircle size={18} />
+                  <span>FAQs</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/knowledge-base" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <BookOpen size={18} />
+                  <span>Partner Knowledge Base</span>
+                </div>
+              </NavLink>
+
+              <NavLink to="/serviceable-areas" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-primary font-bold bg-[var(--bg-main)]" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <MapPin size={18} />
+                  <span>Cities</span>
+                </div>
+              </NavLink>
+
+              <div className="nav-section">System Administration</div>
+
+              <button
+                className={`submenu-trigger ${appsActive ? "active" : ""}`}
+                onClick={() => setAppsOpen((prev) => !prev)}
+              >
+                <div className="flex items-center gap-3">
+                  <AppWindow size={18} />
+                  <span>Settings</span>
+                </div>
+                {appsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+
+              {appsOpen && (
+                <div className="submenu-list">
+                  <NavLink to="/manage-customer-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Customer App Settings</NavLink>
+                  <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Partner App Settings</NavLink>
+                  <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                  <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>EHR Audit Logs</NavLink>
+                  <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
+                    <Receipt size={13} />
+                    Transaction History
+                  </NavLink>
+                  <NavLink to="/manage-system-config" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
+                    <ShieldCheck size={13} />
+                    API & Security
+                  </NavLink>
+                  <NavLink to="/manage-email-templates" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
+                    <Mail size={13} />
+                    Communication Templates
+                  </NavLink>
+                </div>
+              )}
+
+              <div className="nav-section">Data & Compliance</div>
+
+              <NavLink to="/deletion-requests" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-rose-600 font-bold bg-[var(--bg-main)]" : "text-rose-500 hover:text-rose-600"}`}>
+                <div className="flex items-center gap-3">
+                  <Trash2 size={18} />
+                  <span>Users Delete Req</span>
+                </div>
+              </NavLink>
+            </>
+          )}
+        </nav>
+          <div className="mt-auto p-4">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-200/50 dark:border-white/5 p-3 flex items-center gap-3 transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 font-black shadow-sm border border-slate-200 dark:border-slate-700 shrink-0 group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+              </div>
+              
+              <div className="relative flex-1 min-w-0">
+                <p className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate leading-none mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  {user?.name || "Admin"}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate uppercase tracking-widest leading-none">
+                    {user?.role?.replace(/_/g, ' ') || "SUPER ADMIN"}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                className="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all shrink-0"
+                onClick={logout}
+                title="Secure Logout"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
+      
+        </aside>
+
+        <main className="content">
+          <div className="page-body">
           <Outlet />
         </div>
 
@@ -811,34 +814,29 @@ export function AppLayout() {
       </main>
 
       {activeAlerts.length > 0 && location.pathname !== "/bookings" && !showBell && (
-        <div className="fixed bottom-6 right-6 z-[999] w-[25%] min-w-[350px] h-[70vh] bg-white dark:bg-slate-950 border-2 border-red-500 shadow-2xl rounded-[32px] p-6 animate-in slide-in-from-bottom-8 slide-in-from-right-8 duration-500 flex flex-col">
-          {/* Header */}
-          <div className="flex justify-between items-center pb-4 border-b dark:border-slate-800">
-            <div>
-              <p className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">⚠️ Critical Action</p>
-              <h3 className="text-sm font-black text-slate-900 dark:text-white mt-0.5">{activeAlerts.length} Action{activeAlerts.length !== 1 ? 's' : ''} Required</h3>
+        <div className="fixed bottom-6 right-6 z-[999] w-80 max-h-[500px] bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/50 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 slide-in-from-right-4 duration-300">
+          <div className="bg-red-50 dark:bg-red-900/20 px-4 py-3 border-b border-red-100 dark:border-red-900/30 flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-2">
+              <Flame size={16} className="text-red-500 animate-pulse" />
+              <span className="text-xs font-bold text-red-700 dark:text-red-400">{activeAlerts.length} Critical Alert{activeAlerts.length !== 1 ? 's' : ''}</span>
             </div>
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering any parent layouts
-                // Dismiss all active alerts at once with current timestamp
+                e.stopPropagation();
                 const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
                 const now = Date.now();
-                activeAlerts.forEach(a => {
-                  dismissedMap[a._id] = now;
-                });
+                activeAlerts.forEach(a => dismissedMap[a._id] = now);
                 localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                setDismissTrigger(prev => prev + 1);
                 queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
               }}
-              className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all border border-slate-100 dark:border-slate-700"
+              className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
             >
               <X size={16} />
             </button>
           </div>
 
-          {/* Scrollable list of alerts */}
-          <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+          <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-slate-50/50 dark:bg-slate-900 custom-scrollbar">
             {activeAlerts.map((alert) => (
               <div 
                 key={alert._id} 
@@ -847,46 +845,32 @@ export function AppLayout() {
                   const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
                   dismissedMap[alert._id] = Date.now();
                   localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                  setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                  setDismissTrigger(prev => prev + 1);
                   queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
                 }}
-                className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 flex flex-col gap-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
+                className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:border-red-300 dark:hover:border-red-500/50 cursor-pointer transition-all group"
               >
-                <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-500 shrink-0">
-                    <Flame size={20} />
-                  </div>
+                <div className="flex gap-2">
                   <div className="flex-1">
-                    <p className="text-xs font-black text-slate-900 dark:text-white leading-tight">{alert.title}</p>
-                    <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-normal mt-1">{alert.body}</p>
+                    <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight mb-1">{alert.title}</p>
+                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{alert.body}</p>
                   </div>
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                  <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest group-hover:translate-x-0.5 transition-transform">
+                    View Details &rarr;
+                  </span>
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Avoid triggering card-level navigation
-                      navigate(alert.refType === "DoctorAppointment" ? "/op-bookings" : "/bookings");
+                      e.stopPropagation();
                       const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
                       dismissedMap[alert._id] = Date.now();
                       localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                      setDismissTrigger(prev => prev + 1); // Force immediate re-render
+                      setDismissTrigger(prev => prev + 1);
                       queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
                     }}
-                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] font-black transition-all text-center uppercase tracking-wider shadow-md shadow-red-500/10"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // Avoid triggering card-level navigation
-                      const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
-                      dismissedMap[alert._id] = Date.now();
-                      localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                      setDismissTrigger(prev => prev + 1); // Force immediate re-render
-                      queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
-                    }}
-                    className="px-4 py-2 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-[10px] font-bold transition-all"
+                    className="text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors uppercase tracking-widest px-2 py-1 bg-slate-50 dark:bg-slate-700/50 rounded"
                   >
                     Dismiss
                   </button>
@@ -897,6 +881,8 @@ export function AppLayout() {
         </div>
       )}
     </div>
+    </div>
   );
 }
+
 

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
     Plus, Trash2, Star, X, Package, ToggleLeft, ToggleRight,
-    Loader2, Pencil, Sparkles, CheckCircle2, ChevronDown, Check
+    Loader2, Pencil, Sparkles, Eye, CheckCircle2, ChevronDown, Check
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,48 +41,18 @@ const PRESET_COLORS = [
     { label: "Teal", value: "#11998E" },
 ];
 
-const emptyForm = {
-    name: "", description: "", price: "", originalPrice: "",
-    badge: "", color: "#2F80ED", testsIncluded: "", validityDays: "30", order: "0",
-};
-
 export function HealthPackagesPage() {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<HealthPackage | null>(null);
-    const [form, setForm] = useState({ ...emptyForm });
-    const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-    const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
-    const servicesDropdownRef = useRef<HTMLDivElement | null>(null);
-
-    const field = (key: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-        setForm(f => ({ ...f, [key]: e.target.value }));
-
-    const openCreate = () => { setEditTarget(null); setForm({ ...emptyForm }); setSelectedRoleIds([]); setServicesDropdownOpen(false); setIsModalOpen(true); };
-    const openEdit = (pkg: HealthPackage) => {
-        setEditTarget(pkg);
-        setSelectedRoleIds(Array.isArray(pkg.allowedRoleIds) ? pkg.allowedRoleIds : []);
-        setForm({
-            name: pkg.name, description: pkg.description,
-            price: String(pkg.price), originalPrice: String(pkg.originalPrice),
-            badge: pkg.badge || "", color: pkg.color,
-            testsIncluded: pkg.testsIncluded.join(", "),
-            validityDays: String(pkg.validityDays), order: String(pkg.order),
-        });
-        setServicesDropdownOpen(false);
-        setIsModalOpen(true);
-    };
-    const toggleRole = (roleId: string) => {
-        setSelectedRoleIds((prev) => prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]);
-    };
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
     // ── Fetch ──
-    const { data: packages, isLoading } = useQuery({
+    const { data: packages, isLoading } = useQuery<HealthPackage[]>({
         queryKey: ["admin_health_packages"],
         queryFn: async () => {
             const res = await api.get("/health-packages/admin/all");
-            return res.data.data as HealthPackage[];
-        },
+            return res.data?.data || [];
+        }
     });
     const { data: roles } = useQuery({
         queryKey: ["admin_services_for_packages"],
@@ -92,22 +63,6 @@ export function HealthPackagesPage() {
     });
 
     // ── Mutations ──
-    const saveMutation = useMutation({
-        mutationFn: async (data: any) => {
-            if (editTarget) {
-                return api.put(`/health-packages/admin/update/${editTarget._id}`, data);
-            } else {
-                return api.post("/health-packages/admin/create", data);
-            }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["admin_health_packages"] });
-            setIsModalOpen(false);
-            toast.success(editTarget ? "Package updated" : "Package created");
-        },
-        onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to save package"),
-    });
-
     const deleteMutation = useMutation({
         mutationFn: (id: string) => api.delete(`/health-packages/admin/delete/${id}`),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin_health_packages"] }); toast.success("Package deleted"); },
@@ -140,94 +95,21 @@ export function HealthPackagesPage() {
         onError: () => toast.error("Seed failed"),
     });
 
-    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const price = Number(form.price);
-        const originalPrice = Number(form.originalPrice);
-        const validityDays = Number(form.validityDays);
-        const order = Number(form.order);
-        const testsIncluded = form.testsIncluded.split(",").map(t => t.trim()).filter(Boolean);
-
-        if (!form.name.trim() || !form.description.trim()) {
-            toast.error("Package name and description are required");
-            return;
-        }
-        if (!Number.isFinite(price) || price <= 0) {
-            toast.error("Sale price must be greater than 0");
-            return;
-        }
-        if (!Number.isFinite(originalPrice) || originalPrice <= 0) {
-            toast.error("Original price must be greater than 0");
-            return;
-        }
-        if (originalPrice < price) {
-            toast.error("Original price cannot be less than sale price");
-            return;
-        }
-        if (!Number.isFinite(validityDays) || validityDays <= 0) {
-            toast.error("Validity days must be greater than 0");
-            return;
-        }
-        if (testsIncluded.length === 0) {
-            toast.error("Add at least one test for this health service package");
-            return;
-        }
-        if (selectedRoleIds.length === 0) {
-            toast.error("Select at least one applicable service");
-            return;
-        }
-        if (!Number.isFinite(order) || order < 0) {
-            toast.error("Display order cannot be negative");
-            return;
-        }
-
-        saveMutation.mutate({
-            ...form,
-            name: form.name.trim(),
-            description: form.description.trim(),
-            badge: form.badge.trim(),
-            price,
-            originalPrice,
-            validityDays,
-            order,
-            testsIncluded,
-            allowedRoleIds: selectedRoleIds,
-        });
-    };
-
-    const confirmDelete = () => {
-        if (deleteTargetId) {
-            deleteMutation.mutate(deleteTargetId);
-            setDeleteTargetId(null);
-        }
-    };
 
     const discount = (orig: number, price: number) => orig > price ? Math.round(((orig - price) / orig) * 100) : 0;
-
-    useEffect(() => {
-        const handleOutsideClick = (event: MouseEvent) => {
-            if (!servicesDropdownRef.current) return;
-            if (!servicesDropdownRef.current.contains(event.target as Node)) {
-                setServicesDropdownOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleOutsideClick);
-        return () => document.removeEventListener("mousedown", handleOutsideClick);
-    }, []);
 
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+            <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start">
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                 <div className="relative z-10 w-full flex items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Health Packages</h1>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Health Packages</h1>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                            <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                            <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide">
                                 Home • Healthcare Catalog • Checkup Packages
                             </p>
                         </div>
@@ -245,7 +127,7 @@ export function HealthPackagesPage() {
                         )}
                         <button 
                             className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0" 
-                            onClick={openCreate}
+                            onClick={() => navigate("/health-packages/create")}
                         >
                             <Plus size={16} />
                             <span>Add Package</span>
@@ -305,7 +187,7 @@ export function HealthPackagesPage() {
                             </thead>
                             <tbody className="divide-y divide-[var(--border-color)]">
                                 {packages.map((pkg, index) => (
-                                    <tr key={pkg._id} className="hover:bg-[var(--bg-main)]/50 transition-colors group">
+                                    <tr key={pkg._id} className="hover:bg-[var(--bg-main)]/50 transition-colors group cursor-pointer" onClick={() => navigate('/health-packages/' + pkg._id)}>
                                         {/* Index */}
                                         <td className="py-4 px-4 text-xs font-semibold text-[var(--text-muted)]">
                                             {String(index + 1).padStart(2, '0')}
@@ -362,7 +244,7 @@ export function HealthPackagesPage() {
                                         <td className="py-4 px-4 text-center">
                                             <button
                                                 title={pkg.isFeatured ? "Remove from featured" : "Mark as featured"}
-                                                onClick={() => toggleFeaturedMutation.mutate(pkg._id)}
+                                                onClick={(e) => { e.stopPropagation(); toggleFeaturedMutation.mutate(pkg._id); }}
                                                 className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all ${
                                                     pkg.isFeatured 
                                                         ? "bg-amber-100 text-amber-600 dark:bg-amber-950/20 dark:text-amber-400" 
@@ -376,7 +258,7 @@ export function HealthPackagesPage() {
                                         <td className="py-4 px-4 text-center">
                                             <button
                                                 title={pkg.isActive ? "Deactivate" : "Activate"}
-                                                onClick={() => toggleActiveMutation.mutate(pkg._id)}
+                                                onClick={(e) => { e.stopPropagation(); toggleActiveMutation.mutate(pkg._id); }}
                                                 className={`inline-flex items-center justify-center p-1.5 rounded-lg transition-all ${
                                                     pkg.isActive 
                                                         ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20" 
@@ -390,14 +272,21 @@ export function HealthPackagesPage() {
                                         <td className="py-4 px-4 text-right">
                                             <div className="flex gap-2 justify-end">
                                                 <button
-                                                    onClick={() => openEdit(pkg)}
+                                                    onClick={(e) => { e.stopPropagation(); navigate('/health-packages/' + pkg._id); }}
+                                                    className="w-8 h-8 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--bg-main)] hover:text-emerald-600 transition-all"
+                                                    title="View Package Details"
+                                                >
+                                                    <Eye size={13} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/health-packages/edit/${pkg._id}`); }}
                                                     className="w-8 h-8 rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--bg-main)] hover:text-blue-600 transition-all"
                                                     title="Edit Package"
                                                 >
                                                     <Pencil size={13} />
                                                 </button>
                                                 <button
-                                                    onClick={() => setDeleteTargetId(pkg._id)}
+                                                    onClick={(e) => { e.stopPropagation(); setDeleteTargetId(pkg._id); }}
                                                     className="w-8 h-8 rounded-lg border border-red-100 dark:border-red-950/20 bg-red-50/50 dark:bg-red-950/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
                                                     title="Delete Package"
                                                 >
@@ -417,147 +306,14 @@ export function HealthPackagesPage() {
                                     <h4 className="text-sm font-bold text-[var(--text-main)]">No Health Packages Yet</h4>
                                     <p className="text-xs text-[var(--text-muted)] mt-0.5">Seed packages or add a new health package bundle.</p>
                                 </div>
-                                <button className="button primary h-9 px-4 rounded-lg text-xs font-bold uppercase tracking-wider" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
-                                    <Sparkles size={14} /> Seed Default Packages
+                                <button className="button primary h-10 px-6 rounded-xl flex items-center gap-2 shadow-sm font-bold text-sm tracking-wide" onClick={() => navigate("/health-packages/create")}>
+                                    <Plus size={16} /> Add Package
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Create / Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-                    <div className="relative w-full max-w-md bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col">
-                        <div className="px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex justify-between items-center">
-                            <div>
-                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Healthcare Catalog</p>
-                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">{editTarget ? "Edit Package" : "New Health Package"}</h3>
-                            </div>
-                            <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all">
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Package Name *</label>
-                                <input className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.name} onChange={field("name")} placeholder="e.g. Basic Health Checkup" required />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Description *</label>
-                                <textarea
-                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold min-h-[70px]"
-                                    value={form.description} onChange={field("description") as any}
-                                    placeholder="Brief description shown in the app..."
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Sale Price (₹) *</label>
-                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.price} onChange={field("price")} placeholder="999" required />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Original Price (₹) *</label>
-                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.originalPrice} onChange={field("originalPrice")} placeholder="1499" required />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Badge Label</label>
-                                    <input className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.badge} onChange={field("badge")} placeholder="e.g. BEST VALUE" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Validity (Days)</label>
-                                    <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.validityDays} onChange={field("validityDays")} placeholder="30" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Tests Included (comma-separated)</label>
-                                <textarea
-                                    className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] px-3 py-2 rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold min-h-[60px]"
-                                    value={form.testsIncluded} onChange={field("testsIncluded") as any}
-                                    placeholder="CBC, Blood Sugar, ECG, Urine Routine..."
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Applicable Services *</label>
-                                <div ref={servicesDropdownRef} className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setServicesDropdownOpen((v) => !v)}
-                                        className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-left flex items-center justify-between"
-                                    >
-                                        <span className={selectedRoleIds.length ? "text-[var(--text-main)]" : "text-[var(--text-muted)]"}>
-                                            {selectedRoleIds.length
-                                                ? `${selectedRoleIds.length} service${selectedRoleIds.length > 1 ? "s" : ""} selected`
-                                                : "Select services"}
-                                        </span>
-                                        <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-250 ${servicesDropdownOpen ? "rotate-180" : ""}`} />
-                                    </button>
-                                    {servicesDropdownOpen && (
-                                        <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg max-h-48 overflow-y-auto z-30 shadow-lg">
-                                            {(roles || []).map((role) => {
-                                                const checked = selectedRoleIds.includes(role._id);
-                                                return (
-                                                    <button
-                                                        key={role._id}
-                                                        type="button"
-                                                        onClick={() => toggleRole(role._id)}
-                                                        className={`w-full border-none text-left p-2.5 flex items-center gap-2 text-xs font-semibold ${checked ? "bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400" : "text-[var(--text-main)] hover:bg-[var(--bg-main)]"}`}
-                                                    >
-                                                        <span className={`w-4.5 h-4.5 rounded border flex items-center justify-center shrink-0 ${checked ? "bg-blue-600 border-blue-600" : "bg-[var(--bg-main)] border-[var(--border-color)]"}`}>
-                                                            {checked && <Check size={11} className="text-white" />}
-                                                        </span>
-                                                        <span>{role.title || role.name}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider font-bold">Card Visual Color</label>
-                                <div className="flex gap-2 flex-wrap pt-1">
-                                    {PRESET_COLORS.map(c => (
-                                        <button
-                                            key={c.value} type="button"
-                                            onClick={() => setForm(f => ({ ...f, color: c.value }))}
-                                            className="w-8 h-8 rounded-full border-3 transition-all cursor-pointer"
-                                            style={{
-                                                backgroundColor: c.value,
-                                                borderColor: form.color === c.value ? "var(--text-main)" : "transparent"
-                                            }}
-                                            title={c.label}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Display Order</label>
-                                <input type="number" className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-semibold" value={form.order} onChange={field("order")} placeholder="0" />
-                            </div>
-
-                            <div className="pt-2">
-                                <button className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm disabled:opacity-50" disabled={saveMutation.isPending}>
-                                    {saveMutation.isPending ? "Saving..." : editTarget ? "Update Package" : "Create Package"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
             {/* Delete Confirmation Modal */}
             {deleteTargetId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -575,7 +331,9 @@ export function HealthPackagesPage() {
                         </div>
                         <div className="px-6 py-4 border-t border-[var(--border-color)] flex gap-2 bg-[var(--bg-main)]">
                             <button className="flex-1 h-9 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--bg-main)] transition-all" onClick={() => setDeleteTargetId(null)}>Cancel</button>
-                            <button className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors" onClick={confirmDelete}>Delete Permanently</button>
+                            <button className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors" disabled={deleteMutation.isPending} onClick={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); setDeleteTargetId(null); }}>
+                                {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                            </button>
                         </div>
                     </div>
                 </div>

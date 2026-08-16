@@ -1,8 +1,10 @@
 import { useState, useDeferredValue } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Clock, CheckCircle2, Calendar, CreditCard, Search, Eye, Check, CheckCheck, X, Filter, ChevronDown, RefreshCw, Loader2, TrendingUp, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, CheckCircle2, Calendar, Search, Eye, Check, CheckCheck, X, Filter, ChevronDown, RefreshCw, Loader2, TrendingUp, AlertCircle, ChevronLeft, ChevronRight, Stethoscope, Ticket } from "lucide-react";
+import { toast } from "sonner";
+import { useConfirm } from "@/context/ConfirmationContext";
 import { formatDate, formatDateTime, formatTime } from "@/lib/format";
 import { TableSkeleton } from "@/components/ui/Skeletons";
 
@@ -19,15 +21,25 @@ interface ServiceBooking {
     date?: string;
     startingTime?: string;
     notes?: string;
+    tokenNumber?: string;
+    checkInPin?: string;
+    assignedProviderId?: any;
+    acceptedBy?: any;
+    partnerId?: any;
+    hospitalId?: any;
+    providerId?: any;
 }
 
 export function OPBookingsPage() {
     const [searchParams] = useSearchParams();
     const [page, setPage] = useState(1);
     const queryClient = useQueryClient();
+    const confirm = useConfirm();
+    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All");
-    const [selectedBooking, setSelectedBooking] = useState<ServiceBooking | null>(null);
+    // 'doctor' = Doctor OP Consultations | 'token' = Hospital OP Tokens
+    const [bookingType, setBookingType] = useState<'doctor' | 'token'>('doctor');
 
     // Advanced Filters State
     const [showFilters, setShowFilters] = useState(false);
@@ -82,6 +94,7 @@ export function OPBookingsPage() {
             if (slotFilter !== "All") params.append("slot", slotFilter);
             if (patientTypeFilter !== "All") params.append("patientType", patientTypeFilter);
             if (statusFilter !== "All") params.append("status", STATUS_UI_TO_API[statusFilter] || statusFilter);
+            params.append("consultationType", "OP,VIRTUAL");
 
             const res = await api.get(`/admin/bookings/doctors?${params.toString()}`);
             const payload = normalizeBookingPayload(res.data.data);
@@ -99,7 +112,11 @@ export function OPBookingsPage() {
         placeholderData: (prev) => prev
     });
 
-    const serviceBookings = serviceData?.items || [];
+    const allBookings = serviceData?.items || [];
+    // Split into two types based on the isServiceRequest flag set by the backend
+    const doctorBookings = allBookings.filter((b: any) => !b.isServiceRequest);
+    const tokenBookings  = allBookings.filter((b: any) =>  b.isServiceRequest);
+    const serviceBookings = bookingType === 'doctor' ? doctorBookings : tokenBookings;
     const stats = serviceData?.stats || { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
     const totalPages = serviceData?.totalPages || 1;
 
@@ -175,7 +192,7 @@ export function OPBookingsPage() {
     const STAT_CARDS = [
         { label: "Total",     value: "All",       count: stats.all || 0,       color: "text-slate-700 dark:text-slate-300", icon: <TrendingUp size={14} /> },
         { label: "Pending",   value: "PENDING",   count: stats.pending || 0,   color: "text-amber-600 dark:text-amber-400", icon: <Clock size={14} /> },
-        { label: "Confirmed", value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:text-blue-400",   icon: <CheckCircle2 size={14} /> },
+        { label: "Confirmed", value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:blue-400",   icon: <CheckCircle2 size={14} /> },
         { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:emerald-400", icon: <CheckCircle2 size={14} /> },
         { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
     ];
@@ -183,14 +200,18 @@ export function OPBookingsPage() {
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+            <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start min-h-[160px] md:min-h-[180px]">
+                {/* Decorative Blobs */}
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                
                 <div className="relative z-10 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Doctor Appointments</h1>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">OP & Virtual Bookings</h1>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
                                     Home • Bookings • Doctor Appointments &nbsp;•&nbsp; Auto-refreshes every 15s
                                 </p>
                             </div>
@@ -201,6 +222,63 @@ export function OPBookingsPage() {
                 <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
+            {/* ── Booking Type Selector Cards ── */}
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    onClick={() => { setBookingType('doctor'); setPage(1); setStatusFilter('All'); }}
+                    className={`relative flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-lg group
+                        ${bookingType === 'doctor'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-md ring-1 ring-blue-500/20'
+                            : 'border-[var(--border-color)] bg-[var(--card-bg)] hover:border-blue-300'
+                        }`}
+                >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors
+                        ${bookingType === 'doctor' ? 'bg-blue-600 text-white shadow-sm' : 'bg-[var(--bg-main)] text-[var(--text-muted)] group-hover:bg-blue-100 group-hover:text-blue-600'}`}>
+                        <Stethoscope size={22} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-bold mb-0.5 ${bookingType === 'doctor' ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--text-main)]'}`}>
+                            Doctor OP Consultations
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] leading-snug">Doctor appointments booked via doctor profile</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                        <p className={`text-2xl font-black ${bookingType === 'doctor' ? 'text-blue-600 dark:text-blue-400' : 'text-[var(--text-main)]'}`}>
+                            {doctorBookings.length}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] font-medium">bookings</p>
+                    </div>
+                    {bookingType === 'doctor' && <div className="absolute top-3 right-3 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />}
+                </button>
+
+                <button
+                    onClick={() => { setBookingType('token'); setPage(1); setStatusFilter('All'); }}
+                    className={`relative flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-lg group
+                        ${bookingType === 'token'
+                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 shadow-md ring-1 ring-emerald-500/20'
+                            : 'border-[var(--border-color)] bg-[var(--card-bg)] hover:border-emerald-300'
+                        }`}
+                >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors
+                        ${bookingType === 'token' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-[var(--bg-main)] text-[var(--text-muted)] group-hover:bg-emerald-100 group-hover:text-emerald-600'}`}>
+                        <Ticket size={22} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-bold mb-0.5 ${bookingType === 'token' ? 'text-emerald-700 dark:text-emerald-300' : 'text-[var(--text-main)]'}`}>
+                            Hospital OP Tokens
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] leading-snug">Queue tokens booked for hospital departments</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                        <p className={`text-2xl font-black ${bookingType === 'token' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-main)]'}`}>
+                            {tokenBookings.length}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] font-medium">tokens</p>
+                    </div>
+                    {bookingType === 'token' && <div className="absolute top-3 right-3 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />}
+                </button>
+            </div>
+
             {/* ── Stats Row ── */}
             <div className="grid grid-cols-5 gap-3">
                 {STAT_CARDS.map(s => (
@@ -209,7 +287,7 @@ export function OPBookingsPage() {
                         onClick={() => { setStatusFilter(s.value); setPage(1); }}
                         className={`bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
                             ${statusFilter === s.value
-                                ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30"
+                                ? bookingType === 'doctor' ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30" : "border-emerald-500 shadow-sm ring-1 ring-emerald-500/30"
                                 : "border-[var(--border-color)] hover:border-[var(--text-muted)]"
                             }`}
                     >
@@ -222,131 +300,51 @@ export function OPBookingsPage() {
                 ))}
             </div>
 
-            {/* ── Toolbar ── */}
-            <div className="flex flex-row items-center justify-between gap-3 p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
-                <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
-                    {fetchingServices ? (
-                        <Loader2 size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3b82f6", animation: "spin 1s linear infinite", zIndex: 10 }} />
-                    ) : (
-                        <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
-                    )}
-                    <input
-                        type="text"
-                        placeholder="Search by TxnID, name, phone..."
-                        value={searchQuery}
-                        onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                        style={{
-                            width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
-                            background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
-                            fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
-                            fontFamily: "inherit", boxSizing: "border-box"
-                        }}
-                    />
-                </div>
-
-                {/* Filter Button */}
-                <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`flex items-center gap-1.5 h-9 px-4 rounded-lg text-xs font-semibold border transition-all shrink-0
-                        ${showFilters
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-[var(--card-bg)] text-[var(--text-main)] border-[var(--border-color)] hover:border-blue-400"
-                        }`}
-                >
-                    <Filter size={13} />
-                    Filters
-                    <ChevronDown size={13} className={`transition-transform ${showFilters ? "rotate-180" : ""}`} />
-                </button>
-            </div>
-
-            {/* ── Advanced Filters Panel ── */}
-            {showFilters && (
-                <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 animate-in slide-in-from-top-2 fade-in duration-150">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Advanced Filters</span>
-                        <button
-                            onClick={() => {
-                                setDateFrom(""); setDateTo(""); setPaymentFilter("All");
-                                setSourceFilter("All"); setDoctorFilter("All"); setDepartmentFilter("All");
-                                setPatientTypeFilter("All"); setSlotFilter("All"); setPage(1);
+{/* -- Toolbar -- */}
+                <div className="flex flex-row flex-wrap items-center gap-3 p-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                    <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
+                        {fetchingServices ? (
+                            <Loader2 size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3b82f6", animation: "spin 1s linear infinite", zIndex: 10 }} />
+                        ) : (
+                            <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
+                        )}
+                        <input
+                            type="text"
+                            placeholder="Search by TxnID, name, phone..."
+                            value={searchQuery}
+                            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                            style={{
+                                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
+                                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
+                                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
+                                fontFamily: "inherit", boxSizing: "border-box"
                             }}
-                            className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                            <RefreshCw size={11} /> Reset All
-                        </button>
+                        />
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">From Date</label>
+
+                    <div className="flex items-center xl:justify-end gap-3 flex-1 flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <label className="text-[11px] font-medium text-[var(--text-muted)] whitespace-nowrap">From:</label>
                             <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
+                                className="h-10 px-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
                         </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">To Date</label>
+                        <div className="flex items-center gap-2">
+                            <label className="text-[11px] font-medium text-[var(--text-muted)] whitespace-nowrap">To:</label>
                             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
+                                className="h-10 px-3 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg text-xs font-semibold text-[var(--text-main)] outline-none focus:border-blue-500" />
                         </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Payment</label>
-                            <select value={paymentFilter} onChange={e => { setPaymentFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Statuses</option>
-                                <option value="COMPLETED">Paid</option>
-                                <option value="PENDING">Pending</option>
-                                <option value="FAILED">Failed</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Doctor Assigned</label>
-                            <select value={doctorFilter} onChange={e => { setDoctorFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Doctors</option>
-                                <option value="Unassigned">Unassigned</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Department</label>
-                            <select value={departmentFilter} onChange={e => { setDepartmentFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Departments</option>
-                                {Array.isArray(categories) && categories.filter(c => c.type === 'doctor' || c.name.toLowerCase().includes('doctor')).map(c => (
-                                    <option key={c._id} value={c.name}>{c.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Slot Time</label>
-                            <select value={slotFilter} onChange={e => { setSlotFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Slots</option>
-                                <option value="Morning">Morning (8AM - 12PM)</option>
-                                <option value="Afternoon">Afternoon (12PM - 4PM)</option>
-                                <option value="Evening">Evening (4PM - 8PM)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Source</label>
-                            <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Sources</option>
-                                <option value="App">Mobile App</option>
-                                <option value="Walk-in">Walk-in</option>
-                                <option value="Admin">Admin Portal</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-[var(--text-muted)] mb-1">Patient Type</label>
-                            <select value={patientTypeFilter} onChange={e => { setPatientTypeFilter(e.target.value); setPage(1); }}
-                                className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-xs font-bold text-[var(--text-main)] outline-none focus:border-blue-500 cursor-pointer">
-                                <option value="All">All Types</option>
-                                <option value="New">New Patient</option>
-                                <option value="Returning">Returning Patient</option>
-                            </select>
-                        </div>
+                        {(dateFrom || dateTo) && (
+                            <button
+                                onClick={() => { setDateFrom(""); setDateTo(""); setPage(1); }}
+                                className="flex items-center gap-1 h-10 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                            >
+                                <RefreshCw size={11} /> Reset
+                            </button>
+                        )}
                     </div>
                 </div>
-            )}
 
+                
             {/* ── Data Table ── */}
             <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
@@ -381,16 +379,23 @@ export function OPBookingsPage() {
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
-                                                    #{booking._id.slice(-8).toUpperCase()}
+                                                    {bookingType === 'token' && booking.tokenNumber ? booking.tokenNumber : `#${booking._id.slice(-8).toUpperCase()}`}
                                                 </span>
                                             </td>
                                             <td className="py-3.5 px-4">
                                                 <div className="text-sm font-medium text-[var(--text-main)] truncate max-w-[200px]" title={booking.serviceId?.name}>
-                                                    {booking.serviceName || booking.serviceId?.name || "Doctor Consult"}
+                                                    {bookingType === 'token'
+                                                        ? (booking.doctorId?.name || 'Hospital OP Token')
+                                                        : (booking.serviceName || booking.serviceId?.name || "Doctor Consult")}
                                                 </div>
-                                                {booking.doctorId?.name && (
+                                                {bookingType === 'doctor' && booking.doctorId?.name && (
                                                     <div className="text-xs text-[var(--text-muted)] mt-0.5">
                                                         Dr. {booking.doctorId.name}
+                                                    </div>
+                                                )}
+                                                {bookingType === 'token' && booking.notes && (
+                                                    <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">
+                                                        {booking.notes.replace('[Auto-Accepted for Hospital OP Queue]', '').trim()}
                                                     </div>
                                                 )}
                                             </td>
@@ -439,51 +444,66 @@ export function OPBookingsPage() {
                                             <td className="py-3.5 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
-                                                        onClick={() => setSelectedBooking(booking)}
+                                                        onClick={() => navigate(`/op-bookings/${booking._id}`)}
                                                         className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 border border-[var(--border-color)] hover:border-blue-300 dark:hover:border-blue-500/30 transition-all"
                                                         title="View Details"
                                                     >
                                                         <Eye size={14} />
                                                     </button>
                                                     
-                                                    {booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") ? (
-                                                        <button
-                                                            onClick={() => handleVerifyPin(booking._id)}
-                                                            className="w-auto px-2 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
-                                                            title="Verify Arrival PIN"
-                                                        >
-                                                            Verify PIN
-                                                        </button>
+{bookingType === 'token' ? (
+                                                        booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") ? (
+                                                            <button
+                                                                onClick={() => handleVerifyPin(booking._id)}
+                                                                className="w-[76px] shrink-0 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
+                                                                title="Verify Arrival PIN"
+                                                            >
+                                                                Verify PIN
+                                                            </button>
+                                                        ) : (
+                                                            <div className="w-[76px] shrink-0" />
+                                                        )
                                                     ) : null}
 
-                                                    <button
-                                                        disabled={!isPending}
-                                                        onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
-                                                            ${isPending
-                                                                ? "text-[var(--text-muted)] hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 border-[var(--border-color)] hover:border-amber-300"
-                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                            }`}
-                                                        title="Confirm Appointment"
-                                                    >
-                                                        <Check size={14} />
-                                                    </button>
-                                                    <button
-                                                        disabled={!(isConfirmed || isPending)}
-                                                        onClick={() => handleUpdateStatus(booking._id, "COMPLETED")}
-                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
-                                                            ${(isConfirmed || isPending)
-                                                                ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 border-[var(--border-color)] hover:border-green-300"
-                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                            }`}
-                                                        title="Mark as Completed"
-                                                    >
-                                                        <CheckCheck size={14} />
-                                                    </button>
+                                                    {bookingType === 'token' && (
+                                                        <>
+                                                            <button
+                                                                disabled={!isPending}
+                                                                onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}
+                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
+                                                                    ${isPending 
+                                                                        ? "text-[var(--text-muted)] hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 border-[var(--border-color)] hover:border-amber-300" 
+                                                                        : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                                    }`}
+                                                                title="Confirm Appointment"
+                                                            >
+                                                                <Check size={14} />
+                                                            </button>
+                                                            <button
+                                                                disabled={!(isConfirmed || isPending)}
+                                                                onClick={() => handleUpdateStatus(booking._id, "COMPLETED")}
+                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
+                                                                    ${(isConfirmed || isPending) 
+                                                                        ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 border-[var(--border-color)] hover:border-green-300" 
+                                                                        : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                                    }`}
+                                                                title="Mark as Completed"
+                                                            >
+                                                                <CheckCheck size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    
                                                     <button
                                                         disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
-                                                        onClick={() => {
-                                                            if (!window.confirm(`Cancel this appointment for ${booking.patientId?.name || 'this patient'}?`)) return;
+                                                        onClick={async () => {
+                                                            const isConfirmed = await confirm({
+                                                                title: "Cancel Appointment",
+                                                                message: `Cancel this appointment for ${booking.patientId?.name || 'this patient'}?`,
+                                                                confirmText: "Cancel",
+                                                                type: "danger"
+                                                            });
+                                                            if (!isConfirmed) return;
                                                             handleUpdateStatus(booking._id, "CANCELLED");
                                                         }}
                                                         className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all
@@ -542,102 +562,6 @@ export function OPBookingsPage() {
                     </div>
                 </div>
             </div>
-
-            {/* ── View Details Modal ── */}
-            {selectedBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedBooking(null)} />
-                    <div className="relative w-full max-w-lg bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
-                            <div>
-                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Token Details</p>
-                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">
-                                    #{selectedBooking._id.toUpperCase()}
-                                </h3>
-                            </div>
-                            <button
-                                onClick={() => setSelectedBooking(null)}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Patient</p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.name || "Guest User"}</p>
-                                </div>
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Mobile</p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.patientId?.mobile || "N/A"}</p>
-                                </div>
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Service</p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{selectedBooking.serviceId?.name}</p>
-                                </div>
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Fulfillment</p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{( {'HOME_VISIT':'Home Visit','HOSPITAL_VISIT':'Hospital Visit','VIRTUAL':'Virtual / Online'} as Record<string,string> )[selectedBooking.fulfillmentMode] || selectedBooking.fulfillmentMode}</p>
-                                </div>
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Appointment Date</p>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">{new Date(selectedBooking.date || selectedBooking.createdAt).toLocaleDateString()}</p>
-                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">{selectedBooking.startingTime || new Date(selectedBooking.createdAt).toLocaleTimeString()}</p>
-                                </div>
-                                <div className="p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Status</p>
-                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
-                                        ${selectedBooking.status === 'Pending' ? 'bg-orange-50 text-orange-700 border-orange-200' : ''}
-                                        ${selectedBooking.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                                        ${selectedBooking.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}
-                                        ${selectedBooking.status === 'Cancelled' ? 'bg-slate-50 text-slate-600 border-slate-200' : ''}
-                                    `}>
-                                        <span className={`w-1.5 h-1.5 rounded-full
-                                            ${selectedBooking.status === 'Pending' ? 'bg-orange-400' : ''}
-                                            ${selectedBooking.status === 'Confirmed' ? 'bg-blue-400' : ''}
-                                            ${selectedBooking.status === 'Completed' ? 'bg-emerald-400' : ''}
-                                            ${selectedBooking.status === 'Cancelled' ? 'bg-slate-400' : ''}
-                                        `} />
-                                        {selectedBooking.status}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                <div>
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-0.5">Total Amount</p>
-                                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">₹{selectedBooking.totalAmount}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Payment Status</p>
-                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${selectedBooking.paymentStatus === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{selectedBooking.paymentStatus}</span>
-                                </div>
-                            </div>
-
-                            {selectedBooking.notes && (
-                                <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl">
-                                    <p className="text-[11px] font-semibold text-yellow-800 dark:text-yellow-500 uppercase tracking-wider mb-1">Notes</p>
-                                    <p className="text-xs font-medium text-yellow-900 dark:text-yellow-100">"{selectedBooking.notes}"</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end">
-                            <button
-                                onClick={() => setSelectedBooking(null)}
-                                className="h-9 px-6 bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-main)] text-sm font-semibold rounded-lg hover:bg-[var(--border-color)] transition-all"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

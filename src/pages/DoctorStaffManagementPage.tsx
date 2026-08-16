@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useConfirm } from "@/context/ConfirmationContext";
 import { TableSkeleton } from "@/components/ui/Skeletons";
 import {
     Users, Search, Filter, Plus,
@@ -33,6 +34,8 @@ interface Doctor {
 
 export function DoctorStaffManagementPage() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
+    const confirm = useConfirm();
     const [searchParams] = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
 
@@ -467,14 +470,14 @@ export function DoctorStaffManagementPage() {
                                                 {statusFilter === "Archived" ? (
                                                     <>
                                                         <button
-                                                            onClick={() => window.confirm("Restore this provider to the active directory?") && deleteMutation.mutate({ id: doc._id, type: 'restore' })}
+                                                            onClick={async () => (await confirm({ title: "Restore Provider", message: "Restore this provider to the active directory?", confirmText: "Restore", type: "info" })) && deleteMutation.mutate({ id: doc._id, type: 'restore' })}
                                                             className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 transition-all flex items-center gap-1"
                                                         >
                                                             <RefreshCw size={12} /> Restore
                                                         </button>
                                                         <button
-                                                            onClick={() => {
-                                                                if (window.confirm("WARNING: PERMANENT DELETE.\n\nThis will completely erase the provider from the database. This action CANNOT be undone.\n\nNote: If this provider has any past bookings, this operation will be blocked by the system.\n\nAre you absolutely sure?")) {
+                                                            onClick={async () => {
+                                                                if (await confirm({ title: "Permanent Delete", message: "WARNING: PERMANENT DELETE.\n\nThis will completely erase the provider from the database. This action CANNOT be undone.\n\nNote: If this provider has any past bookings, this operation will be blocked by the system.\n\nAre you absolutely sure?", confirmText: "Delete Permanently", type: "danger" })) {
                                                                     deleteMutation.mutate({ id: doc._id, type: 'hard' });
                                                                 }
                                                             }}
@@ -500,7 +503,7 @@ export function DoctorStaffManagementPage() {
                                                             <CalendarClock size={14} />
                                                         </button>
                                                         <button
-                                                            onClick={() => window.confirm("Archive this provider? They will be removed from the active directory but their history will be preserved.") && deleteMutation.mutate({ id: doc._id, type: 'soft' })}
+                                                            onClick={async () => (await confirm({ title: "Archive Provider", message: "Archive this provider? They will be removed from the active directory but their history will be preserved.", confirmText: "Archive", type: "warning" })) && deleteMutation.mutate({ id: doc._id, type: 'soft' })}
                                                             className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-[var(--border-color)] transition-all"
                                                             title="Archive (Soft Delete)"
                                                         >

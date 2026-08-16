@@ -1,81 +1,107 @@
+import { PageBanner } from "@/components/ui/PageBanner";
 import { useState, useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Users, Search, ChevronLeft, ChevronRight, Phone, Mail } from "lucide-react";
 import { TableSkeleton } from "@/components/ui/Skeletons";
-
 const PAGE_SIZE = 10;
-
 export function PatientsPage() {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [page, setPage] = useState(1);
-    const [statusFilter, setStatusFilter] = useState("All");
-    const deferredSearch = useDeferredValue(searchTerm);
-
-    const { data, isLoading } = useQuery({
-        queryKey: ["admin_patients_list", page, deferredSearch, statusFilter],
-        queryFn: async () => {
-            const params = new URLSearchParams({ page: page.toString(), limit: PAGE_SIZE.toString() });
-            if (deferredSearch) params.append("search", deferredSearch);
-            if (statusFilter !== "All") params.append("status", statusFilter);
-            const res = await api.get(`/admin/user-list/patient?${params}`);
-            return res.data.data as { items: any[]; total: number };
-        },
-        placeholderData: (prev) => prev,
-    });
-
-    const patients = data?.items ?? [];
-    const total = data?.total ?? 0;
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-
-    if (isLoading && !data) {
-        return (
-            <div className="flex-col gap-4">
-                <header className="flex justify-between items-center" style={{ marginBottom: '24px' }}>
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const deferredSearch = useDeferredValue(searchTerm);
+  const {
+    data,
+    isLoading
+  } = useQuery({
+    queryKey: ["admin_patients_list", page, deferredSearch, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: PAGE_SIZE.toString()
+      });
+      if (deferredSearch) params.append("search", deferredSearch);
+      if (statusFilter !== "All") params.append("status", statusFilter);
+      const res = await api.get(`/admin/user-list/patient?${params}`);
+      return res.data.data as {
+        items: any[];
+        total: number;
+      };
+    },
+    placeholderData: prev => prev
+  });
+  const patients = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (isLoading && !data) {
+    return <div className="flex-col gap-4">
+                <header className="flex justify-between items-center" style={{
+        marginBottom: '24px'
+      }}>
                     <div>
-                        <h1 className="brand-name" style={{ fontSize: '1.75rem' }}>Patients</h1>
-                        <p className="text-xs muted font-bold uppercase tracking-wider mt-1">Loading...</p>
+                        <div className="w-full mb-6"><PageBanner title="Patients" subtitle="Loading..." /></div>
+                        
                     </div>
                 </header>
                 <div className="card p-4">
                     <TableSkeleton columns={5} rows={10} />
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex-col gap-4">
-            <header className="flex justify-between items-center" style={{ marginBottom: '24px' }}>
+            </div>;
+  }
+  return <div className="flex-col gap-4">
+            <header className="flex justify-between items-center" style={{
+      marginBottom: '24px'
+    }}>
                 <div>
-                    <h1 className="brand-name" style={{ fontSize: '1.75rem' }}>Patients</h1>
+                    <h1 className="brand-name" style={{
+          fontSize: '1.75rem'
+        }}>Patients</h1>
                     <p className="text-xs muted font-bold uppercase tracking-wider mt-1">
                         {total} total registered patients
                     </p>
                 </div>
             </header>
 
-            <div className="card p-0 overflow-hidden" style={{ border: 'none' }}>
+            <div className="card p-0 overflow-hidden" style={{
+      border: 'none'
+    }}>
                 <div className="p-4 border-b flex justify-between items-center gap-3 bg-[var(--card-bg)]">
-                    <div style={{ position: "relative", width: "320px", flexShrink: 0 }}>
-                        <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none", zIndex: 10 }} />
-                        <input
-                            placeholder="Search by TxnID, name, phone..."
-                            value={searchTerm}
-                            onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-                            style={{
-                                width: "100%", height: 42, borderRadius: 12, paddingLeft: 38, paddingRight: 14,
-                                background: "var(--card-bg)", border: "1.5px solid var(--border-color)",
-                                fontSize: "0.875rem", color: "var(--text-main)", outline: "none",
-                                fontFamily: "inherit", boxSizing: "border-box"
-                            }}
-                        />
+                    <div style={{
+          position: "relative",
+          width: "320px",
+          flexShrink: 0
+        }}>
+                        <Search size={15} style={{
+            position: "absolute",
+            left: 13,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "var(--text-muted)",
+            pointerEvents: "none",
+            zIndex: 10
+          }} />
+                        <input placeholder="Search by TxnID, name, phone..." value={searchTerm} onChange={e => {
+            setSearchTerm(e.target.value);
+            setPage(1);
+          }} style={{
+            width: "100%",
+            height: 42,
+            borderRadius: 12,
+            paddingLeft: 38,
+            paddingRight: 14,
+            background: "var(--card-bg)",
+            border: "1.5px solid var(--border-color)",
+            fontSize: "0.875rem",
+            color: "var(--text-main)",
+            outline: "none",
+            fontFamily: "inherit",
+            boxSizing: "border-box"
+          }} />
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-                        className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 h-11 text-sm font-bold text-[var(--text-main)]"
-                    >
+                    <select value={statusFilter} onChange={e => {
+          setStatusFilter(e.target.value);
+          setPage(1);
+        }} className="bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-3 h-11 text-sm font-bold text-[var(--text-main)]">
                         <option value="All">All Status</option>
                         <option value="Verified">Verified</option>
                         <option value="Pending">Pending</option>
@@ -86,7 +112,9 @@ export function PatientsPage() {
                     <table className="management-table">
                         <thead>
                             <tr>
-                                <th style={{ paddingLeft: '24px' }}>PATIENT</th>
+                                <th style={{
+                paddingLeft: '24px'
+              }}>PATIENT</th>
                                 <th>CONTACT</th>
                                 <th>GENDER</th>
                                 <th>JOINED</th>
@@ -94,10 +122,13 @@ export function PatientsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {patients.length > 0 ? patients.map((patient) => (
-                                <tr key={patient._id}>
-                                    <td style={{ paddingLeft: '24px' }}>
-                                        <div className="font-bold text-[var(--text-main)]" style={{ fontSize: '0.9rem' }}>{patient.name || "Anonymous User"}</div>
+                            {patients.length > 0 ? patients.map(patient => <tr key={patient._id}>
+                                    <td style={{
+                paddingLeft: '24px'
+              }}>
+                                        <div className="font-bold text-[var(--text-main)]" style={{
+                  fontSize: '0.9rem'
+                }}>{patient.name || "Anonymous User"}</div>
                                         <div className="text-xs muted mt-1">ID: {patient._id.slice(-6).toUpperCase()}</div>
                                     </td>
                                     <td>
@@ -115,9 +146,7 @@ export function PatientsPage() {
                                             </span>
                                         </div>
                                     </td>
-                                </tr>
-                            )) : (
-                                <tr>
+                                </tr>) : <tr>
                                     <td colSpan={5} className="py-20 text-center">
                                         <div className="flex-col items-center gap-2">
                                             <Users size={40} className="text-[var(--text-muted)] mx-auto mb-3" />
@@ -125,32 +154,24 @@ export function PatientsPage() {
                                             <p className="text-xs muted">{deferredSearch ? `No results for "${deferredSearch}"` : 'No patients registered yet'}</p>
                                         </div>
                                     </td>
-                                </tr>
-                            )}
+                                </tr>}
                         </tbody>
                     </table>
                 </div>
 
-                {totalPages > 1 && (
-                    <div className="p-4 border-t flex justify-between items-center bg-[var(--card-bg)] text-xs muted font-bold uppercase tracking-wider">
+                {totalPages > 1 && <div className="p-4 border-t flex justify-between items-center bg-[var(--card-bg)] text-xs muted font-bold uppercase tracking-wider">
                         <p>Page {page} of {totalPages} — {total} patients</p>
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="icon-button disabled:opacity-40"
-                                style={{ border: '1px solid #f1f5f9', borderRadius: '8px' }}
-                            ><ChevronLeft size={16} /></button>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="icon-button disabled:opacity-40"
-                                style={{ border: '1px solid #f1f5f9', borderRadius: '8px' }}
-                            ><ChevronRight size={16} /></button>
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="icon-button disabled:opacity-40" style={{
+            border: '1px solid #f1f5f9',
+            borderRadius: '8px'
+          }}><ChevronLeft size={16} /></button>
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="icon-button disabled:opacity-40" style={{
+            border: '1px solid #f1f5f9',
+            borderRadius: '8px'
+          }}><ChevronRight size={16} /></button>
                         </div>
-                    </div>
-                )}
+                    </div>}
             </div>
-        </div>
-    );
+        </div>;
 }

@@ -235,8 +235,8 @@ export function DashboardPage() {
       </div>
 
       {/* ── Doctor Performance Card ── */}
-      <section className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
-        <div className="px-5 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] flex flex-col sm:flex-row items-center gap-3">
+      <section className="space-y-4">
+        <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
             <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center shrink-0">
               <Stethoscope size={20} />
@@ -247,123 +247,119 @@ export function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            <div className="relative w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto flex-1 sm:flex-none min-w-[240px]">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                placeholder="Search provider..."
-                className="w-full sm:w-60 h-9 pl-9 pr-4 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold"
-                value={performanceSearch}
-                onChange={(e) => { setPerformanceSearch(e.target.value); setPerformancePage(1); }}
-              />
+              <input type="text" placeholder="Search provider..." className="w-full h-9 pl-9 pr-4 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold" value={performanceSearch} onChange={e => {
+              setPerformanceSearch(e.target.value);
+              setPerformancePage(1);
+            }} />
             </div>
-            <button
-              onClick={() => { setPerformanceSearch(""); setPerformancePage(1); }}
-              className="h-9 px-3 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 rounded-lg text-xs font-semibold transition-all shrink-0"
-              title="Reset Filters"
-            >
+            <button onClick={() => {
+            setPerformanceSearch("");
+            setPerformancePage(1);
+          }} className="h-9 px-3 border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 rounded-lg text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5" title="Reset Filters">
               <Filter size={14} />
+              <span className="hidden sm:inline">Reset</span>
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[700px]">
-            <thead>
-              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
-                <th className="py-3 px-4">
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-[var(--text-main)] transition-colors">
-                    Provider Detail <ArrowUpDown size={12} />
-                  </button>
-                </th>
-                <th className="py-3 px-4 text-center">
-                  <button onClick={() => handleSort('stats.total')} className="flex items-center justify-center gap-1 mx-auto hover:text-[var(--text-main)] transition-colors">
-                    Total Bookings <ArrowUpDown size={12} />
-                  </button>
-                </th>
-                <th className="py-3 px-4 text-center">Pending</th>
-                <th className="py-3 px-4 text-center">Confirmed</th>
-                <th className="py-3 px-4 text-center">Completed</th>
-                <th className="py-3 px-4 text-center">Cancelled</th>
-                <th className="py-3 px-4 text-right">
-                  <button onClick={() => handleSort('stats.revenue')} className="flex items-center justify-end gap-1 ml-auto hover:text-[var(--text-main)] transition-colors">
-                    Revenue <ArrowUpDown size={12} />
-                  </button>
-                </th>
-                <th className="py-3 px-4 w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border-color)]">
-              {paginatedPerformance?.map((doc) => (
-                <tr key={doc.id} className="hover:bg-[var(--bg-main)] transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
-                        {doc.name?.[0] || 'D'}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-sm text-[var(--text-main)]">{doc.name || 'Unknown Doctor'}</div>
-                        <div className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">#{doc.id.substring(0, 8).toUpperCase()}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-center text-sm font-semibold text-[var(--text-main)]">{doc.stats.total}</td>
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">{doc.stats.pending}</span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20">{doc.stats.confirmed}</span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">{doc.stats.completed}</span>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">{doc.stats.cancelled}</span>
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold text-[var(--text-main)] text-sm">₹{doc.stats.revenue.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => navigate(`/manage-doctors?search=${encodeURIComponent(doc.name || "")}`)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-[var(--border-color)] transition-all"
-                    >
-                      <Eye size={14} />
+        <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                  <th className="py-3 px-4 w-10 text-center">#</th>
+                  <th className="py-3 px-4">
+                    <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-[var(--text-main)] transition-colors">
+                      Provider Detail <ArrowUpDown size={12} />
                     </button>
-                  </td>
+                  </th>
+                  <th className="py-3 px-4 text-center">
+                    <button onClick={() => handleSort('stats.total')} className="flex items-center justify-center gap-1 mx-auto hover:text-[var(--text-main)] transition-colors">
+                      Total Bookings <ArrowUpDown size={12} />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4 text-center">Pending</th>
+                  <th className="py-3 px-4 text-center">Confirmed</th>
+                  <th className="py-3 px-4 text-center">Completed</th>
+                  <th className="py-3 px-4 text-center">Cancelled</th>
+                  <th className="py-3 px-4 text-right">
+                    <button onClick={() => handleSort('stats.revenue')} className="flex items-center justify-end gap-1 ml-auto hover:text-[var(--text-main)] transition-colors">
+                      Revenue <ArrowUpDown size={12} />
+                    </button>
+                  </th>
+                  <th className="py-3 px-4 w-12 text-right">Actions</th>
                 </tr>
-              ))}
-              {paginatedPerformance?.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-xs text-[var(--text-muted)] font-semibold">No performance data found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Controls */}
-        {performanceTotalPages > 1 && (
-          <div className="px-5 py-3.5 border-t border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-main)]">
-            <p className="text-xs text-[var(--text-muted)] font-semibold">
-              Page <span className="text-[var(--text-main)] font-bold">{performancePage}</span> / {performanceTotalPages}
-            </p>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setPerformancePage((p) => Math.max(1, p - 1))}
-                disabled={performancePage === 1}
-                className="w-8 h-8 rounded-lg bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30"
-              >
-                <ChevronLeft size={15} />
-              </button>
-              <button
-                onClick={() => setPerformancePage((p) => Math.min(performanceTotalPages, p + 1))}
-                disabled={performancePage === performanceTotalPages}
-                className="w-8 h-8 rounded-lg bg-[var(--card-bg)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30"
-              >
-                <ChevronRight size={15} />
-              </button>
-            </div>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-color)]">
+                {paginatedPerformance?.map((doc: any, index: number) => <tr key={doc.id} className="hover:bg-[var(--bg-main)] transition-colors">
+                    <td className="py-3 px-4 text-center text-xs font-medium text-[var(--text-muted)]">
+                      {String((performancePage - 1) * 50 + index + 1).padStart(2, '0')}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+                          {doc.name?.[0] || 'D'}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm text-[var(--text-main)]">{doc.name || 'Unknown Doctor'}</div>
+                          <div className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5 text-blue-600 dark:text-blue-400">#{doc.id.substring(0, 8).toUpperCase()}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-center text-sm font-semibold text-[var(--text-main)]">{doc.stats.total}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">{doc.stats.pending}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20">{doc.stats.confirmed}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">{doc.stats.completed}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold border bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">{doc.stats.cancelled}</span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-[var(--text-main)] text-sm">₹{doc.stats.revenue.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right">
+                      <button onClick={() => navigate(`/manage-doctors?search=${encodeURIComponent(doc.name || "")}`)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-[var(--border-color)] hover:border-blue-300 transition-all ml-auto">
+                        <Eye size={14} />
+                      </button>
+                    </td>
+                  </tr>)}
+                {paginatedPerformance?.length === 0 && <tr>
+                    <td colSpan={9} className="py-12 text-center text-xs text-[var(--text-muted)] font-semibold">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-12 h-12 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl flex items-center justify-center">
+                                <Stethoscope size={20} className="text-[var(--text-muted)]" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-[var(--text-main)]">No performance data found</p>
+                                <p className="text-xs text-[var(--text-muted)] mt-0.5">Try adjusting your filters or search query.</p>
+                            </div>
+                        </div>
+                    </td>
+                  </tr>}
+              </tbody>
+            </table>
           </div>
-        )}
+
+          {/* Pagination Controls */}
+          {performanceTotalPages > 0 && <div className="px-5 py-3.5 border-t border-[var(--border-color)] flex items-center justify-between bg-[var(--card-bg)]">
+              <p className="text-xs text-[var(--text-muted)] font-semibold">
+                Showing <span className="font-semibold text-[var(--text-main)]">{(performancePage - 1) * 50 + (paginatedPerformance.length > 0 ? 1 : 0)}</span> to <span className="font-semibold text-[var(--text-main)]">{Math.min(performancePage * 50, (performancePage - 1) * 50 + paginatedPerformance.length)}</span> of <span className="font-semibold text-[var(--text-main)]">{(performancePage - 1) * 50 + paginatedPerformance.length}</span> entries
+              </p>
+              <div className="flex gap-1.5">
+                <button onClick={() => setPerformancePage(p => Math.max(1, p - 1))} disabled={performancePage === 1} className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30">
+                  <ChevronLeft size={15} />
+                </button>
+                <button onClick={() => setPerformancePage(p => Math.min(performanceTotalPages, p + 1))} disabled={performancePage === performanceTotalPages} className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-blue-600 hover:border-blue-400 transition-all disabled:opacity-30">
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            </div>}
+        </div>
       </section>
     </div>
   );

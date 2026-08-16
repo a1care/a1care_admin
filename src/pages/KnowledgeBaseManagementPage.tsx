@@ -1,22 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { BookOpen, Plus, Search, Edit2, Trash2, Save, X, Loader2, BookType, LayoutGrid, Users, CheckCircle2, FileText, AlertCircle } from "lucide-react";
+import { BookOpen, Plus, Search, Edit2, Trash2, Loader2, BookType, LayoutGrid, Users, CheckCircle2, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/context/ConfirmationContext";
 import { TableSkeleton } from "@/components/ui/Skeletons";
 
 export default function KnowledgeBaseManagementPage() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    // Form state
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [title, setTitle] = useState("");
-    const [category, setCategory] = useState("General");
-    const [targetAudience, setTargetAudience] = useState("All");
-    const [content, setContent] = useState("");
-    const [isActive, setIsActive] = useState(true);
 
     const { data: articles, isLoading, isFetching } = useQuery({
         queryKey: ["knowledgeBaseAdmin"],
@@ -26,25 +21,7 @@ export default function KnowledgeBaseManagementPage() {
         }
     });
 
-    const saveMutation = useMutation({
-        mutationFn: async (payload: any) => {
-            if (editingId) {
-                const res = await api.put(`/knowledge-base/admin/${editingId}`, payload);
-                return res.data;
-            } else {
-                const res = await api.post("/knowledge-base/admin", payload);
-                return res.data;
-            }
-        },
-        onSuccess: () => {
-            toast.success(editingId ? "Article updated successfully!" : "Article published successfully!");
-            queryClient.invalidateQueries({ queryKey: ["knowledgeBaseAdmin"] });
-            closeModal();
-        },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to save article. Please try again.");
-        }
-    });
+
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
@@ -56,68 +33,34 @@ export default function KnowledgeBaseManagementPage() {
         }
     });
 
-    const openCreate = () => {
-        setEditingId(null);
-        setTitle("");
-        setCategory("General");
-        setTargetAudience("All");
-        setContent("");
-        setIsActive(true);
-        setIsModalOpen(true);
-    };
-
-    const openEdit = (article: any) => {
-        setEditingId(article._id);
-        setTitle(article.title);
-        setCategory(article.category);
-        setTargetAudience(article.targetAudience);
-        setContent(article.content);
-        setIsActive(article.isActive);
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-    };
-
-    const handleSave = () => {
-        if (!title.trim() || !content.trim()) {
-            return toast.error("Please provide both a Title and Content for the article.");
-        }
-        saveMutation.mutate({ title, category, targetAudience, content, isActive });
-    };
-
-    const filtered = articles?.filter((a: any) => 
-        a.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filtered = articles?.filter((a: any) =>
+        a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.category.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+            <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start">
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                 <div className="relative z-10 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Knowledge Base</h1>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Knowledge Base</h1>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
-                                    Home • Resources • Knowledge Base Management
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
+                                    Home &bull; Resources &bull; Knowledge Base Management
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={openCreate}
-                            className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
-                        >
+                        <button onClick={() => navigate("/knowledge-base/create")} className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0">
                             <Plus size={16} />
                             <span>Create Article</span>
                         </button>
                     </div>
                 </div>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
             {/* ── Search & Filter Toolbar ── */}
@@ -198,7 +141,7 @@ export default function KnowledgeBaseManagementPage() {
                                 </tr>
                             ) : (
                                 filtered.map((article: any) => (
-                                    <tr key={article._id} className="hover:bg-[var(--bg-main)] transition-colors group">
+                                    <tr key={article._id} className="hover:bg-[var(--bg-main)] transition-colors group cursor-pointer" onClick={() => navigate(`/knowledge-base/${article._id}`)}>
                                         <td className="py-4 px-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
@@ -233,16 +176,26 @@ export default function KnowledgeBaseManagementPage() {
                                         </td>
                                         <td className="py-4 px-5 text-right">
                                             <div className="flex justify-end gap-2 transition-opacity">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/knowledge-base/${article._id}`); }}
+                                                    className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-main)] border border-[var(--border-color)] hover:bg-[var(--card-bg)] hover:text-blue-600 rounded-lg transition-colors shadow-sm"
+                                                    title="View Article"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
                                                 <button 
-                                                    onClick={() => openEdit(article)} 
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/knowledge-base/edit/${article._id}`); }} 
                                                     className="w-8 h-8 flex items-center justify-center text-blue-600 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-600 hover:text-white rounded-lg transition-colors shadow-sm"
                                                     title="Edit Article"
                                                 >
                                                     <Edit2 size={14} />
                                                 </button>
                                                 <button 
-                                                    onClick={() => {
-                                                        if(window.confirm('Are you sure you want to delete this article? This action cannot be undone.')) deleteMutation.mutate(article._id);
+                                                    onClick={async (e) => { 
+                                                        e.stopPropagation(); 
+                                                        if(await confirm({ title: "Delete Article", message: "Are you sure you want to delete this article? This action cannot be undone.", confirmText: "Delete", type: "danger" })) {
+                                                            deleteMutation.mutate(article._id); 
+                                                        }
                                                     }} 
                                                     className="w-8 h-8 flex items-center justify-center text-rose-600 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-600 hover:text-white rounded-lg transition-colors shadow-sm"
                                                     title="Delete Article"
@@ -259,134 +212,6 @@ export default function KnowledgeBaseManagementPage() {
                 </div>
             </div>
 
-            {/* ── Edit/Create Modal ── */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[var(--card-bg)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-[var(--border-color)]">
-                        {/* Modal Header */}
-                        <div className="px-6 py-5 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-main)]">
-                            <div>
-                                <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Knowledge Base Editor</p>
-                                <h2 className="text-xl font-black text-[var(--text-main)]">
-                                    {editingId ? "Edit Resource Article" : "Create New Resource"}
-                                </h2>
-                            </div>
-                            <button onClick={closeModal} className="w-8 h-8 rounded-xl flex items-center justify-center bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--border-color)] hover:text-[var(--text-main)] transition-colors shadow-sm">
-                                <X size={18} />
-                            </button>
-                        </div>
-                        
-                        {/* Modal Body */}
-                        <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                            
-                            <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl p-4 flex gap-3 text-left">
-                                <AlertCircle className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" size={18} />
-                                <div>
-                                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-300">Content Formatting</h4>
-                                    <p className="text-xs text-blue-700 dark:text-blue-400/80 mt-1 font-medium leading-relaxed">
-                                        Use HTML or Markdown for the article body. The content will be rendered natively in the partner apps. Ensure any embedded links are valid and properly structured.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Article Title</label>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm font-semibold text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
-                                        placeholder="e.g. Navigating the Wallet Dashboard"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Category Section</label>
-                                        <div className="relative">
-                                            <LayoutGrid size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-                                            <input
-                                                type="text"
-                                                value={category}
-                                                onChange={(e) => setCategory(e.target.value)}
-                                                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-3 text-sm font-semibold text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm"
-                                                placeholder="e.g. Booking, Wallet, Profile"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Target Audience</label>
-                                        <div className="relative">
-                                            <Users size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-                                            <select
-                                                value={targetAudience}
-                                                onChange={(e) => setTargetAudience(e.target.value)}
-                                                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-3 text-sm font-semibold text-[var(--text-main)] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all shadow-sm appearance-none cursor-pointer"
-                                            >
-                                                <option value="All">All Partners & Users</option>
-                                                <option value="Doctor">Doctors Only</option>
-                                                <option value="Nurse">Nurses Only</option>
-                                                <option value="Ambulance">Ambulance Providers</option>
-                                                <option value="Rental">Equipment Rentals</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
-                                        Body Content
-                                    </label>
-                                    <textarea
-                                        value={content}
-                                        onChange={(e) => setContent(e.target.value)}
-                                        className="w-full h-72 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl p-4 text-sm font-mono font-medium text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all resize-y shadow-sm leading-relaxed"
-                                        placeholder="<h2>How to receive payments</h2>&#10;<p>Start writing the comprehensive guide here...</p>"
-                                    />
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="px-6 py-5 border-t border-[var(--border-color)] bg-[var(--bg-main)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <label className="flex items-center gap-3 cursor-pointer p-2 hover:bg-[var(--card-bg)] rounded-lg transition-colors border border-transparent hover:border-[var(--border-color)]">
-                                <div className="relative">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={isActive}
-                                        onChange={(e) => setIsActive(e.target.checked)}
-                                    />
-                                    <div className="w-10 h-5 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-[var(--text-main)]">{isActive ? 'Published State' : 'Draft State'}</span>
-                                    <span className="text-[10px] font-semibold text-[var(--text-muted)]">{isActive ? 'Visible to target audience' : 'Hidden from end users'}</span>
-                                </div>
-                            </label>
-
-                            <div className="flex gap-3 shrink-0">
-                                <button 
-                                    onClick={closeModal} 
-                                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-[var(--text-main)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all uppercase tracking-wider shadow-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    disabled={saveMutation.isPending}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 min-w-[140px]"
-                                >
-                                    {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                                    {editingId ? "Update Article" : "Publish Article"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -8,9 +9,10 @@ import {
     ChevronLeft, ChevronRight, Phone, Mail,
     ShieldCheck, CheckCircle2, Clock,
     BarChart3, UserCheck, UserPlus, Users2,
-    X, Trash2, Eye,
+    X, Trash2, Eye, MapPin, Calendar, Activity,
     FileText, CreditCard, Filter
 } from "lucide-react";
+import { PageBanner } from "@/components/ui/PageBanner";
 
 interface CategoryStats {
     total: number;
@@ -23,11 +25,11 @@ interface CategoryStats {
 
 export function UserManagementPage({ category }: { category: string }) {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("All");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [viewingDocument, setViewingDocument] = useState<any | null>(null);
     const [deleteConfig, setDeleteConfig] = useState<{ id: string, type: 'patient' | 'doctor' | 'nurse' | 'ambulance' | 'rental' } | null>(null);
@@ -38,7 +40,6 @@ export function UserManagementPage({ category }: { category: string }) {
         api.delete(`/admin/users/${type}/${id}`).then(() => {
             queryClient.invalidateQueries({ queryKey: ["category_users"] });
             queryClient.invalidateQueries({ queryKey: ["category_stats"] });
-            setSelectedUser(null);
             setDeleteConfig(null);
             toast.success("Member record deleted.");
         }).catch((err: any) => {
@@ -52,7 +53,7 @@ export function UserManagementPage({ category }: { category: string }) {
     const [newEmail, setNewEmail] = useState("");
     const [newSpecialization, setNewSpecialization] = useState("");
 
-    const isAnyModalOpen = !!selectedUser || isAddModalOpen || !!viewingDocument;
+    const isAnyModalOpen = isAddModalOpen || !!viewingDocument || !!deleteConfig;
 
     useEffect(() => {
         if (!isAnyModalOpen) return;
@@ -118,9 +119,6 @@ export function UserManagementPage({ category }: { category: string }) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["category_users", category] });
             queryClient.invalidateQueries({ queryKey: ["category_stats", category] });
-            if (selectedUser) {
-                queryClient.invalidateQueries({ queryKey: ["user_details", category, selectedUser._id] });
-            }
         }
     });
 
@@ -186,24 +184,15 @@ export function UserManagementPage({ category }: { category: string }) {
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
-                <div className="relative z-10">
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">{title} Registry</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • User Directory • {title}</p>
-                    </div>
-                </div>
+            <PageBanner title={`${title} Registry`} subtitle={`Manage and view all registered ${title.toLowerCase()} accounts.`}>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="relative z-10 flex items-center gap-2 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
+                    className="flex items-center gap-2 h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl transition-all backdrop-blur-sm shrink-0"
                 >
-                    <UserPlus size={16} />
+                    <UserPlus size={15} />
                     <span>Add {title.slice(0, -1)}</span>
                 </button>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-            </header>
+            </PageBanner>
 
             {/* ── Stats Row ── */}
             <div className="grid grid-cols-5 gap-4">
@@ -291,7 +280,7 @@ export function UserManagementPage({ category }: { category: string }) {
                                 filteredUsers.map((user: any, index: number) => (
                                     <tr
                                         key={user._id}
-                                        onClick={() => setSelectedUser(user)}
+                                        onClick={() => navigate(`/manage-${category}s/${user._id}`)}
                                         className="hover:bg-[var(--bg-main)] transition-colors cursor-pointer group"
                                     >
                                         <td className="py-3.5 px-4 text-xs font-semibold text-[var(--text-muted)]">
@@ -423,96 +412,6 @@ export function UserManagementPage({ category }: { category: string }) {
                 </div>
             </div>
 
-            {/* ── User Detail Modal ── */}
-            {selectedUser && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
-                    <div
-                        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl flex flex-col animate-in zoom-in-95 duration-150"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)] shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shrink-0 overflow-hidden">
-                                    {selectedUser.profileImage ? (
-                                        <img src={selectedUser.profileImage} alt={selectedUser.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        selectedUser.name?.charAt(0) || "U"
-                                    )}
-                                </div>
-                                <div>
-                                    <h2 className="font-bold text-base text-[var(--text-main)]">{selectedUser.name || "Member Profile"}</h2>
-                                    <p className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">ID: {selectedUser._id}</p>
-                                </div>
-                            </div>
-                            <button
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all"
-                                onClick={() => setSelectedUser(null)}
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div className="p-6 space-y-6">
-                            {/* Personal Details */}
-                            <section>
-                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Personal Details</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)]">
-                                    {[
-                                        { label: "Mobile Number", value: selectedUser.mobileNumber },
-                                        { label: "Email Address", value: selectedUser.email || "No Email" },
-                                        { label: "Gender", value: selectedUser.gender || "Unspecified" },
-                                        { label: "Verification Status", value: category === 'patient' ? (selectedUser.isRegistered ? "Verified" : "Unverified") : selectedUser.status }
-                                    ].map(item => (
-                                        <div key={item.label}>
-                                            <dt className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">{item.label}</dt>
-                                            <dd className="mt-1 text-sm text-[var(--text-main)] font-semibold break-words">{item.value}</dd>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <WalletSection user={selectedUser} category={category} />
-
-                            {/* KYC Documents */}
-                            <section>
-                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">KYC Documents</h3>
-                                <div className="space-y-2">
-                                    {(selectedUser.documents || []).length > 0 ? (
-                                        Array.isArray(selectedUser.documents) && selectedUser.documents.map((doc: any, i: number) => (
-                                            <div key={i} className="p-3 bg-[var(--bg-main)] rounded-lg flex items-center justify-between border border-[var(--border-color)]">
-                                                <span className="text-xs font-semibold text-[var(--text-main)] uppercase">{doc.type}</span>
-                                                <button
-                                                    className="text-[10px] font-semibold text-blue-600 hover:underline uppercase"
-                                                    onClick={() => setViewingDocument(doc)}
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-[var(--text-muted)] font-semibold bg-[var(--bg-main)] p-3 rounded-lg border border-[var(--border-color)]">No documents uploaded.</p>
-                                    )}
-                                </div>
-                            </section>
-
-                            {/* Account Management */}
-                            <section>
-                                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-rose-500 mb-3">Account Management</h3>
-                                <button
-                                    className="w-full h-10 rounded-lg bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider border border-rose-200 dark:border-rose-500/20 transition-all flex items-center justify-center gap-2"
-                                    onClick={() => setDeleteConfig({ id: selectedUser._id, type: category as any })}
-                                >
-                                    <Trash2 size={13} />
-                                    Delete Account
-                                </button>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* ── Add User Modal ── */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)}>
@@ -641,140 +540,6 @@ export function UserManagementPage({ category }: { category: string }) {
                 </div>
             )}
 
-            {/* ── Document Viewer Modal ── */}
-            {viewingDocument && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setViewingDocument(null)}>
-                    <div
-                        className="relative w-full max-w-3xl max-h-[90vh] bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
-                            <h2 className="font-bold text-base text-[var(--text-main)]">{viewingDocument.type}</h2>
-                            <button
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all"
-                                onClick={() => setViewingDocument(null)}
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-6 flex items-center justify-center bg-[var(--bg-main)]">
-                            {viewingDocument.url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
-                                <img src={viewingDocument.url} className="w-full h-auto rounded-xl" alt="Preview" />
-                            ) : (
-                                <div className="text-center space-y-4">
-                                    <div className="w-16 h-16 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl flex items-center justify-center mx-auto text-[var(--text-muted)]">
-                                        <FileText size={28} />
-                                    </div>
-                                    <p className="text-sm font-semibold text-[var(--text-main)]">Document File</p>
-                                    <a
-                                        href={viewingDocument.url}
-                                        target="_blank"
-                                        className="inline-flex items-center gap-2 h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
-                                    >
-                                        <Eye size={14} /> Open Document
-                                    </a>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
-    );
-}
-
-function WalletSection({ user, category }: { user: any, category: string }) {
-    const queryClient = useQueryClient();
-    const [amount, setAmount] = useState("");
-    const [description, setDescription] = useState("");
-    const [isAdjusting, setIsAdjusting] = useState(false);
-
-    const { data: wallet, isLoading } = useQuery({
-        queryKey: ["user_wallet", user._id],
-        queryFn: async () => {
-            const res = await api.get(`/admin/users/${category}/${user._id}/wallet-balance`);
-            return res.data.data;
-        }
-    });
-
-    const adjustMutation = useMutation({
-        mutationFn: async (type: 'Credit' | 'Debit') => {
-            const res = await api.post(`/admin/users/${category}/${user._id}/wallet-adjust`, {
-                amount: parseFloat(amount),
-                description,
-                type
-            });
-            return res.data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user_wallet", user._id] });
-            toast.success("Wallet balance updated.");
-            setAmount("");
-            setDescription("");
-            setIsAdjusting(false);
-        },
-        onError: (err: any) => {
-            toast.error(err?.response?.data?.message || "Wallet update failed.");
-        }
-    });
-
-    return (
-        <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-3">Wallet Management</h3>
-            <div className="p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <p className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Available Balance</p>
-                    <div className="flex items-center gap-2">
-                        <CreditCard size={16} className="text-blue-500" />
-                        <h4 className="text-2xl font-black text-[var(--text-main)]">
-                            {isLoading ? "---" : `₹${wallet?.balance || 0}`}
-                        </h4>
-                    </div>
-                </div>
-
-                {!isAdjusting ? (
-                    <button
-                        onClick={() => setIsAdjusting(true)}
-                        className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shrink-0"
-                    >
-                        Adjust Balance
-                    </button>
-                ) : (
-                    <div className="w-full sm:w-[280px] space-y-2 p-3 bg-[var(--card-bg)] rounded-lg border border-[var(--border-color)]">
-                        <input
-                            type="number"
-                            placeholder="Enter amount..."
-                            value={amount}
-                            onChange={e => setAmount(e.target.value)}
-                            className="w-full h-9 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold"
-                        />
-                        <input
-                            placeholder="Memo (e.g. Bonus, Refund)..."
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
-                            className="w-full h-9 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none focus:border-blue-500 transition-all font-semibold"
-                        />
-                        <div className="flex gap-1.5">
-                            <button
-                                onClick={() => adjustMutation.mutate('Credit')}
-                                disabled={adjustMutation.isPending}
-                                className="flex-1 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 transition-colors"
-                            >Credit (+)</button>
-                            <button
-                                onClick={() => adjustMutation.mutate('Debit')}
-                                disabled={adjustMutation.isPending}
-                                className="flex-1 h-8 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 transition-colors"
-                            >Debit (-)</button>
-                            <button
-                                onClick={() => setIsAdjusting(false)}
-                                className="w-8 h-8 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center transition-colors"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </section>
     );
 }

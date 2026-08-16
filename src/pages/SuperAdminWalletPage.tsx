@@ -15,6 +15,22 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { StatsSkeleton, TableSkeleton } from "@/components/ui/Skeletons";
+import { PageBanner } from "@/components/ui/PageBanner";
+
+function KPICard({ title, value, icon, loading }: { title: string, value: string, icon: React.ReactNode, loading?: boolean }) {
+  return (
+    <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-between transition-all hover:shadow-md min-h-[90px] overflow-hidden">
+      <div className="flex justify-between items-start mb-1.5">
+        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider pr-2 leading-tight">{title}</span>
+        <div className="shrink-0 p-1 rounded-md bg-[var(--bg-main)] text-[var(--text-main)]">
+          {icon}
+        </div>
+      </div>
+      <div className="text-lg sm:text-xl font-bold text-[var(--text-main)] truncate">{loading ? "..." : value}</div>
+    </div>
+  );
+}
 
 interface LedgerEntry {
   id: string;
@@ -53,10 +69,9 @@ export function SuperAdminWalletPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-[var(--color-primary)] mb-4" />
-        <h2 className="text-2xl font-bold text-[var(--text-main)]">Loading Wallet Data...</h2>
-        <p className="text-lg text-[var(--text-muted)]">Gathering financial reports from the server.</p>
+      <div className="space-y-6 animate-in pb-12">
+        <StatsSkeleton count={4} />
+        <TableSkeleton columns={5} rows={5} showHeader={false} />
       </div>
     );
   }
@@ -80,214 +95,145 @@ export function SuperAdminWalletPage() {
   }
 
   return (
-    <div className="flex-1 bg-[var(--bg-main)] min-h-screen">
-      {/* ── Header ── */}
-      <div className="bg-[var(--card-bg)] border-b border-[var(--border-color)] px-8 py-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 max-w-7xl mx-auto">
-          <div>
-            <h1 className="text-4xl font-extrabold text-[var(--text-main)] tracking-tight flex items-center gap-3">
-              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
-                <Wallet size={32} />
-              </div>
-              Super Admin Wallet
-            </h1>
-            <p className="text-xl text-[var(--text-muted)] mt-2 font-medium">
-              A comprehensive ledger of all money flowing through A1Care.
-            </p>
-          </div>
+    <div className="space-y-6 animate-in">
+      {/* ── Page Header ── */}
+      <PageBanner 
+          title="Super Admin Wallet" 
+          subtitle="A comprehensive ledger of all money flowing through A1Care."
+      >
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
-            className="px-6 py-4 bg-white border-2 border-[var(--border-color)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] text-[var(--text-main)] font-bold rounded-xl text-lg flex items-center gap-3 transition-all shadow-sm"
+            className="flex items-center gap-2 h-9 px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all shadow-sm shrink-0 backdrop-blur-sm"
           >
-            <RefreshCcw size={24} className={isRefetching ? "animate-spin" : ""} />
-            {isRefetching ? "Refreshing..." : "Refresh Data"}
+            <RefreshCcw size={14} className={isRefetching ? "animate-spin" : ""} />
+            <span>{isRefetching ? "Refreshing..." : "Refresh Data"}</span>
           </button>
-        </div>
+      </PageBanner>
+
+      {/* ── Stats Rows ── */}
+      <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+        <div className="flex sm:grid sm:grid-cols-7 gap-3 min-w-[900px] sm:min-w-0">
+        <KPICard title="Net Profit" value={`₹${data.netRevenue.toLocaleString()}`} icon={<TrendingUp size={14} className="text-emerald-500" />} loading={isRefetching} />
+        <KPICard title="Total Commission" value={`₹${data.totalCommission.toLocaleString()}`} icon={<Building size={14} className="text-blue-500" />} loading={isRefetching} />
+        <KPICard title="Gross Volume" value={`₹${data.grossVolume.toLocaleString()}`} icon={<ArrowUpRight size={14} className="text-purple-500" />} loading={isRefetching} />
+        <KPICard title="Pending Payouts" value={`₹${data.pendingPayouts.toLocaleString()}`} icon={<Clock size={14} className="text-orange-500" />} loading={isRefetching} />
+        <KPICard title="Subscription Revenue" value={`₹${data.subscriptionRevenue.toLocaleString()}`} icon={<Receipt size={14} className="text-blue-500" />} loading={isRefetching} />
+        <KPICard title="Referral Rewards" value={`₹${data.totalReferralRewards.toLocaleString()}`} icon={<Gift size={14} className="text-pink-500" />} loading={isRefetching} />
+        <KPICard title="Payouts Paid Out" value={`₹${data.paidPayouts.toLocaleString()}`} icon={<ArrowDownRight size={14} className="text-emerald-500" />} loading={isRefetching} />
+      </div>
       </div>
 
-      <div className="p-8 max-w-7xl mx-auto space-y-8">
-        {/* ── Key Metrics Cards ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
-          {/* Card 1: Net Revenue (Profit) */}
-          <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-lg font-bold text-emerald-800 uppercase tracking-wide">Net Platform Profit</p>
-                <p className="text-sm font-semibold text-emerald-600 mt-1">Total Commission + Subscriptions (minus Rewards)</p>
-              </div>
-              <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600">
-                <TrendingUp size={28} />
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-5xl font-black text-emerald-700">₹{data.netRevenue.toLocaleString()}</h3>
-            </div>
-          </div>
-
-          {/* Card 2: Total Commission */}
-          <div className="bg-[var(--card-bg)] border-2 border-[var(--border-color)] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-lg font-bold text-[var(--text-main)] uppercase tracking-wide">Total Commission</p>
-                <p className="text-sm font-semibold text-[var(--text-muted)] mt-1">A1Care's cut from all bookings</p>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-xl text-blue-600 border border-blue-100">
-                <Building size={28} />
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-4xl font-black text-[var(--text-main)]">₹{data.totalCommission.toLocaleString()}</h3>
-            </div>
-          </div>
-
-          {/* Card 3: GMV */}
-          <div className="bg-[var(--card-bg)] border-2 border-[var(--border-color)] rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-lg font-bold text-[var(--text-main)] uppercase tracking-wide">Gross Volume</p>
-                <p className="text-sm font-semibold text-[var(--text-muted)] mt-1">Total money spent by customers</p>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-xl text-purple-600 border border-purple-100">
-                <ArrowUpRight size={28} />
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-4xl font-black text-[var(--text-main)]">₹{data.grossVolume.toLocaleString()}</h3>
-            </div>
-          </div>
-
-          {/* Card 4: Pending Liabilities */}
-          <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-lg font-bold text-orange-800 uppercase tracking-wide">Pending Payouts</p>
-                <p className="text-sm font-semibold text-orange-600 mt-1">Money sitting in bank owed to partners</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-xl text-orange-600">
-                <Clock size={28} />
-              </div>
-            </div>
-            <div className="mt-6">
-              <h3 className="text-4xl font-black text-orange-700">₹{data.pendingPayouts.toLocaleString()}</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Sub Metrics ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wide">Subscription Revenue</p>
-              <h4 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">₹{data.subscriptionRevenue.toLocaleString()}</h4>
-            </div>
-            <Receipt className="text-blue-500 opacity-50" size={32} />
-          </div>
-          
-          <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wide">Referral Rewards Paid</p>
-              <h4 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">₹{data.totalReferralRewards.toLocaleString()}</h4>
-            </div>
-            <Gift className="text-pink-500 opacity-50" size={32} />
-          </div>
-
-          <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wide">Total Payouts Paid Out</p>
-              <h4 className="text-2xl font-extrabold text-[var(--text-main)] mt-1">₹{data.paidPayouts.toLocaleString()}</h4>
-            </div>
-            <ArrowDownRight className="text-emerald-500 opacity-50" size={32} />
-          </div>
-        </div>
-
-        {/* ── Ledger Table ── */}
-        <div className="bg-[var(--card-bg)] border-2 border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden mt-8">
-          <div className="px-6 py-5 border-b-2 border-[var(--border-color)] bg-gray-50">
-            <h2 className="text-2xl font-extrabold text-[var(--text-main)]">Recent Transactions Ledger</h2>
-            <p className="text-base text-[var(--text-muted)] font-medium mt-1">A timeline of money moving through the system.</p>
-          </div>
-          
-          {data.recentLedger.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-xl font-bold text-[var(--text-muted)]">No recent transactions found.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="py-4 px-6 text-sm font-bold text-gray-700 uppercase tracking-wider">Date & Time</th>
-                    <th className="py-4 px-6 text-sm font-bold text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="py-4 px-6 text-sm font-bold text-gray-700 uppercase tracking-wider">Description</th>
-                    <th className="py-4 px-6 text-sm font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="py-4 px-6 text-sm font-bold text-gray-700 uppercase tracking-wider text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y-2 divide-[var(--border-color)]">
-                  {currentLedgerPage.map((entry, idx) => (
-                    <tr key={`${entry.id}-${idx}`} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-6 whitespace-nowrap text-base font-semibold text-[var(--text-muted)]">
-                        {new Date(entry.date).toLocaleString()}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold border
-                          ${entry.type === "CREDIT" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : 
-                            entry.type === "CREDIT_GMV" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                            "bg-orange-50 text-orange-700 border-orange-200"}`}
-                        >
-                          {entry.type === "DEBIT" ? <ArrowDownRight size={16} /> : <ArrowUpRight size={16} />}
-                          {entry.type}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-base font-bold text-[var(--text-main)]">
+      {/* ── Ledger Table ── */}
+      <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[900px]">
+            <thead>
+              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider w-10">#</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Txn ID</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-[180px]">Description</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Type</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Date & Time</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                <th className="py-3 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-color)]">
+              {data.recentLedger.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-12 text-center text-sm font-medium text-[var(--text-muted)]">
+                    No recent transactions found.
+                  </td>
+                </tr>
+              ) : (
+                currentLedgerPage.map((entry, idx) => (
+                  <tr key={`${entry.id}-${idx}`} className="hover:bg-[var(--bg-main)] transition-colors group">
+                    <td className="py-3.5 px-4 text-xs font-medium text-[var(--text-muted)]">
+                      {String((currentPage - 1) * 10 + idx + 1).padStart(2, '0')}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded">
+                        #{entry.id.slice(-8).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="text-sm font-medium text-[var(--text-main)] truncate block max-w-[250px]">
                         {entry.title}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg border border-gray-200">
-                          {entry.status}
-                        </span>
-                      </td>
-                      <td className={`py-4 px-6 text-right text-lg font-black whitespace-nowrap
-                        ${entry.type === "DEBIT" ? "text-orange-600" : "text-emerald-600"}`}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                        ${entry.type === "CREDIT" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" : 
+                          entry.type === "CREDIT_GMV" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20" :
+                          "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20"}`}
                       >
-                        {entry.type === "DEBIT" ? "-" : "+"} ₹{entry.amount.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        <span className={`w-1.5 h-1.5 rounded-full
+                          ${entry.type === "CREDIT" ? "bg-emerald-400" : entry.type === "CREDIT_GMV" ? "bg-blue-400" : "bg-orange-400"}
+                        `} />
+                        {entry.type}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--text-main)]">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                        {new Date(entry.date).toLocaleTimeString()}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
+                          ${entry.status === "COMPLETED" || entry.status === "SUCCESS" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" : 
+                            entry.status === "PENDING" ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20" : 
+                            "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20"}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full
+                          ${entry.status === "COMPLETED" || entry.status === "SUCCESS" ? "bg-emerald-400" : entry.status === "PENDING" ? "bg-orange-400" : "bg-slate-400"}
+                        `} />
+                        {entry.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className={`text-sm font-semibold ${entry.type === "DEBIT" ? "text-[var(--text-main)]" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        ₹{entry.amount.toLocaleString()}
+                      </div>
+                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        {entry.status}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
           
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t-2 border-[var(--border-color)] bg-white">
-              <span className="text-sm font-semibold text-gray-600">
+            <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)] bg-[var(--bg-main)]">
+              <span className="text-xs font-semibold text-[var(--text-muted)]">
                 Showing page {currentPage} of {totalPages}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                  className="w-8 h-8 rounded-lg border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] hover:text-[var(--text-main)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={14} />
                 </button>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                  className="w-8 h-8 rounded-lg border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] hover:text-[var(--text-main)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <ChevronRight size={20} />
+                  <ChevronRight size={14} />
                 </button>
               </div>
             </div>
           )}
         </div>
-
-      </div>
     </div>
   );
 }

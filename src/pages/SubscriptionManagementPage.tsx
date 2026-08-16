@@ -7,6 +7,7 @@ import {
     Users, BadgeCheck, ChevronRight, RefreshCw, Filter
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/context/ConfirmationContext";
 import { CardSkeleton, StatsSkeleton } from "@/components/ui/Skeletons";
 
 type SubscriptionTier = "Basic" | "Standard" | "Premium";
@@ -63,6 +64,7 @@ const TIER_ORDER: Record<SubscriptionTier, number> = { Basic: 0, Standard: 1, Pr
 
 export function SubscriptionManagementPage() {
     const qc = useQueryClient();
+    const confirm = useConfirm();
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
     const [selectedTierFilter, setSelectedTierFilter] = useState<string>("All");
     const [editingPlan, setEditingPlan] = useState<Partial<Plan> | null>(null);
@@ -632,7 +634,15 @@ export function SubscriptionManagementPage() {
                                     {editingPlan._id && (
                                         <button
                                             type="button"
-                                            onClick={() => { if (window.confirm("Permanently delete this plan?")) deleteMutation.mutate(editingPlan._id!); }}
+                                            onClick={async () => {
+                                                const isConfirmed = await confirm({
+                                                    title: "Delete Plan",
+                                                    message: "Permanently delete this plan?",
+                                                    confirmText: "Delete",
+                                                    type: "danger"
+                                                });
+                                                if (isConfirmed) deleteMutation.mutate(editingPlan._id!);
+                                            }}
                                             className="h-9 px-4 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 text-red-600 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
                                         >
                                             <Trash2 size={13} /> Delete

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import JoditEditor from 'jodit-react';
 import { TableSkeleton } from "@/components/ui/Skeletons";
+import { PageBanner } from "@/components/ui/PageBanner";
 
 interface EmailTemplate {
     _id: string;
@@ -73,18 +74,10 @@ export function EmailTemplatesPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-300">
             {/* Page Header */}
-            <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
-                <div className="relative z-10">
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1 flex items-center gap-3">
-                        <Mail className="text-blue-500" size={28} />
-                        Email Templates
-                    </h1>
-                    <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
-                        Home • Communication • Email Templates
-                    </p>
-                </div>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-            </header>
+            <PageBanner 
+                title="Email Templates" 
+                subtitle="Communication • Email Templates"
+            />
 
             {/* List View */}
             <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">

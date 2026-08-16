@@ -4,9 +4,9 @@ import { api } from "@/lib/api";
 import { FileText, ShieldAlert, HelpCircle, Save, Plus, Trash2, Edit2, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useParams } from "react-router-dom";
-import ReactQuill from 'react-quill-new';
+import JoditEditor from 'jodit-react';
 import { FormSkeleton } from "@/components/ui/Skeletons";
-import 'react-quill-new/dist/quill.snow.css';
+import { PageBanner } from "@/components/ui/PageBanner";
 
 type AppTarget = "CUSTOMER" | "PARTNER";
 
@@ -18,6 +18,8 @@ export default function CMSManagementPage() {
 
     const [content, setContent] = useState("");
     const [faqs, setFaqs] = useState<{ question: string; answer: string; isActive: boolean }[]>([]);
+    const [isAddFaqOpen, setIsAddFaqOpen] = useState(false);
+    const [newFaq, setNewFaq] = useState({ question: "", answer: "", isActive: true });
 
     const { data: cmsList, isLoading } = useQuery({
         queryKey: ["cmsList", activeTab],
@@ -78,13 +80,24 @@ export default function CMSManagementPage() {
     };
 
     // FAQ Handlers
-    const addFaq = () => {
-        setFaqs([...faqs, { question: "", answer: "", isActive: true }]);
+    const openAddFaqModal = () => {
+        setNewFaq({ question: "", answer: "", isActive: true });
+        setIsAddFaqOpen(true);
     };
-    const updateFaq = (index: number, key: "question" | "answer", val: string) => {
+
+    const handleAddFaqSubmit = () => {
+        if (!newFaq.question.trim() || !newFaq.answer.trim()) {
+            toast.error("Please fill in both question and answer");
+            return;
+        }
+        setFaqs([...faqs, { ...newFaq }]);
+        setIsAddFaqOpen(false);
+    };
+    const updateFaq = (index: number, key: "question" | "answer" | "isActive", val: string | boolean) => {
         const newFaqs = [...faqs];
-        if (key === "question") newFaqs[index].question = val;
-        if (key === "answer") newFaqs[index].answer = val;
+        if (key === "question") newFaqs[index].question = val as string;
+        if (key === "answer") newFaqs[index].answer = val as string;
+        if (key === "isActive") newFaqs[index].isActive = val as boolean;
         setFaqs(newFaqs);
     };
     const removeFaq = (index: number) => {
@@ -113,27 +126,10 @@ export default function CMSManagementPage() {
 
     return (
         <div className="w-full py-8 px-4 sm:px-6 lg:px-8 min-h-full flex flex-col space-y-6 animate-in">
-            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-white/50 relative overflow-hidden">
-                <div className="relative z-10 flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center border border-gray-100 shrink-0">
-                        {iconMap[activeTab as keyof typeof iconMap]}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                                Content Management System
-                            </p>
-                        </div>
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-                            {titleMap[activeTab as keyof typeof titleMap]}
-                        </h1>
-                    </div>
-                </div>
-
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-12 left-20 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" />
-            </header>
+            <PageBanner 
+                title={titleMap[activeTab as keyof typeof titleMap]} 
+                subtitle="Content Management System"
+            />
 
             <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col relative z-10">
                 <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
@@ -190,25 +186,17 @@ export default function CMSManagementPage() {
                                 </span>
                             </div>
                             
-                            <div className="bg-white rounded-2xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-400/10 transition-all shadow-sm" style={{ minHeight: '600px' }}>
-                                <ReactQuill 
-                                    theme="snow" 
-                                    value={content} 
-                                    onChange={setContent}
-                                    className="border-none"
-                                    style={{ border: 'none' }}
-                                    modules={{
-                                        toolbar: [
-                                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                                            ['bold', 'italic', 'underline', 'strike'],
-                                            [{ 'color': [] }, { 'background': [] }],
-                                            ['blockquote', 'code-block'],
-                                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                            [{ 'align': [] }],
-                                            ['link', 'image'],
-                                            ['clean']
-                                        ]
+                            <div className="bg-white rounded-2xl border-2 border-gray-200 focus-within:border-blue-400 transition-all shadow-sm overflow-hidden" style={{ minHeight: '600px' }}>
+                                <JoditEditor
+                                    value={content}
+                                    config={{
+                                        readonly: false,
+                                        height: 600,
+                                        toolbarAdaptive: false,
+                                        buttons: "bold,italic,underline,strikethrough,ul,ol,font,fontsize,paragraph,lineHeight,superscript,subscript,classSpan,file,image,video,spellcheck,cut,copy,paste,selectall,copyformat,align,undo,redo,hr,eraser,copyformat,symbol,fullsize,print,source"
                                     }}
+                                    onBlur={newContent => setContent(newContent)}
+                                    onChange={newContent => setContent(newContent)}
                                 />
                             </div>
                             <div className="flex items-center gap-2 mt-4 text-gray-400">
@@ -223,9 +211,18 @@ export default function CMSManagementPage() {
                                     <h3 className="text-lg font-black text-gray-900 tracking-tight">Manage Questions</h3>
                                     <p className="text-sm font-medium text-gray-500 mt-1">Add, edit, or remove frequently asked questions.</p>
                                 </div>
-                                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                                    {faqs.length} {faqs.length === 1 ? 'Question' : 'Questions'}
-                                </span>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                                        {faqs.length} {faqs.length === 1 ? 'Question' : 'Questions'}
+                                    </span>
+                                    <button
+                                        onClick={openAddFaqModal}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm"
+                                    >
+                                        <Plus size={16} />
+                                        Add FAQ
+                                    </button>
+                                </div>
                             </div>
 
                             {faqs.map((faq, idx) => (
@@ -243,6 +240,14 @@ export default function CMSManagementPage() {
                                             Q{idx + 1}
                                         </div>
                                         <div className="h-px flex-1 bg-gray-100"></div>
+                                        <select
+                                            value={faq.isActive ? "true" : "false"}
+                                            onChange={(e) => updateFaq(idx, "isActive" as any, e.target.value === "true" as any)}
+                                            className="text-xs font-bold px-2 py-1 rounded-md border border-gray-200 bg-gray-50 outline-none"
+                                        >
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </select>
                                     </div>
 
                                     <div className="space-y-5">
@@ -268,54 +273,87 @@ export default function CMSManagementPage() {
                                     </div>
                                 </div>
                             ))}
-                            
-                            <button
-                                onClick={addFaq}
-                                className="w-full py-5 border-2 border-dashed border-gray-300 rounded-2xl text-gray-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Plus size={18} />
-                                Add New Question Block
-                            </button>
                         </div>
                     )}
                 </div>
             </div>
             
             <style>{`
-                .quill {
-                    display: block;
-                }
-                .ql-toolbar.ql-snow {
-                    border: none !important;
+                .jodit-toolbar__box {
                     border-bottom: 1px solid #e5e7eb !important;
-                    background: #f8fafc;
-                    padding: 12px 16px !important;
-                    font-family: inherit;
-                    border-top-left-radius: 1rem;
-                    border-top-right-radius: 1rem;
+                    background: #f8fafc !important;
+                    padding: 8px !important;
                 }
-                .ql-container.ql-snow {
-                    border: none !important;
-                    font-family: inherit;
+                .jodit-workplace {
                     font-size: 0.95rem;
                 }
-                .ql-editor {
+                .jodit-wysiwyg {
                     padding: 2rem !important;
                     min-height: 400px;
-                    height: auto;
                     line-height: 1.7;
                     color: #374151;
                 }
-                .ql-editor h1, .ql-editor h2, .ql-editor h3 {
-                    color: #111827;
-                    font-weight: 800;
-                    margin-top: 1.5rem;
-                    margin-bottom: 1rem;
-                }
-                .ql-editor p {
-                    margin-bottom: 1rem;
-                }
             `}</style>
+
+            {/* Add FAQ Modal */}
+            {isAddFaqOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="w-full max-w-2xl bg-[#F4F9F7] rounded-2xl shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                        <div className="p-6 md:p-8 space-y-6 flex-1 overflow-y-auto">
+                            <h2 className="text-xl font-bold text-gray-900">Add FAQ</h2>
+                            
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900">Question</label>
+                                <textarea 
+                                    rows={3}
+                                    placeholder="Enter question"
+                                    value={newFaq.question}
+                                    onChange={(e) => setNewFaq({ ...newFaq, question: e.target.value })}
+                                    className="w-full p-4 rounded-xl border-none outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white shadow-sm resize-none"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900">Answer</label>
+                                <textarea 
+                                    rows={5}
+                                    placeholder="Enter answer"
+                                    value={newFaq.answer}
+                                    onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
+                                    className="w-full p-4 rounded-xl border-none outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white shadow-sm resize-y"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900">Status</label>
+                                <select 
+                                    value={newFaq.isActive ? "true" : "false"}
+                                    onChange={(e) => setNewFaq({ ...newFaq, isActive: e.target.value === "true" })}
+                                    className="w-full p-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white shadow-sm appearance-none"
+                                >
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="px-6 md:px-8 py-4 border-t border-gray-200/60 bg-[#F4F9F7] flex justify-end gap-3">
+                            <button 
+                                onClick={() => setIsAddFaqOpen(false)}
+                                className="px-6 py-2.5 rounded-lg bg-[#1F2937] hover:bg-[#111827] text-white text-sm font-bold transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleAddFaqSubmit}
+                                className="px-6 py-2.5 rounded-lg bg-[#CCA65B] hover:bg-[#B9924B] text-white text-sm font-bold transition-colors shadow-sm"
+                            >
+                                Create
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

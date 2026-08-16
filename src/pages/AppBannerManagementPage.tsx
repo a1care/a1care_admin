@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CardSkeleton } from "@/components/ui/Skeletons";
+import { PageBanner } from "@/components/ui/PageBanner";
+import { useConfirm } from "@/context/ConfirmationContext";
+
 
 const createBanner = (): FestivalBanner => ({
   id: `banner_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -31,6 +34,7 @@ const createBanner = (): FestivalBanner => ({
 
 export function AppBannerManagementPage() {
   const { type } = useParams<{ type: string }>();
+  const confirm = useConfirm();
   const appKey = "user_app"; // Banners are currently for customer app
   
   const [banners, setBanners] = useState<FestivalBanner[]>([]);
@@ -144,40 +148,28 @@ export function AppBannerManagementPage() {
   return (
     <div className="space-y-6 animate-in pb-10">
       {/* ── Page Header ── */}
-      <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-3xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
-        <div className="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest">
-                App Control
-              </span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">{bannerTypeLabel}</h1>
-            <p className="text-sm font-medium text-[var(--text-muted)] tracking-wide">
-              Manage and organize visual assets for the customer application
-            </p>
-          </div>
-          {/* Header Actions */}
+      <PageBanner 
+          title={bannerTypeLabel} 
+          subtitle="Manage and organize visual assets for the customer application"
+      >
           <div className="flex items-center gap-3 shrink-0">
             <button 
-              className="flex items-center gap-2 h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-all shadow-sm disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+              className="flex items-center gap-2 h-9 px-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all shadow-sm disabled:opacity-60 backdrop-blur-sm"
               onClick={() => saveMutation.mutate(undefined)}
               disabled={saveMutation.isPending}
             >
-              {saveMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+              {saveMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               <span>Save Configuration</span>
             </button>
             <button 
-              className="flex items-center gap-1.5 h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+              className="flex items-center gap-2 h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl transition-all shadow-sm backdrop-blur-sm"
               onClick={addBanner}
             >
-              <Plus size={18} />
+              <Plus size={15} />
               <span>New Banner</span>
             </button>
           </div>
-        </div>
-        <div className="absolute -bottom-24 -right-12 w-72 h-72 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      </header>
+      </PageBanner>
 
       {/* ── Status Bar ── */}
       <div className="flex items-center justify-between px-2">
@@ -249,11 +241,8 @@ export function AppBannerManagementPage() {
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">On-Click Action (Deep Link)</label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Link2 size={14} className="text-[var(--text-muted)]" />
-                      </div>
                       <select 
-                        className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-9 pr-8 py-2.5 font-semibold text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer appearance-none"
+                        className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl pl-4 pr-8 py-2.5 font-semibold text-sm text-[var(--text-main)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all cursor-pointer appearance-none"
                         style={{
                             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                             backgroundPosition: `right 0.5rem center`,
@@ -299,8 +288,14 @@ export function AppBannerManagementPage() {
 
                 {/* Delete Button */}
                 <button 
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to permanently delete this banner?")) {
+                  onClick={async () => {
+                    const isConfirmed = await confirm({
+                      title: "Delete Banner",
+                      message: "Are you sure you want to permanently delete this banner?",
+                      confirmText: "Delete",
+                      type: "danger"
+                    });
+                    if (isConfirmed) {
                       removeBanner(index);
                     }
                   }}

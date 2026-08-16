@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api, resolveAssetUrl } from "@/lib/api";
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { PageBanner } from "@/components/ui/PageBanner";
 import type { FestivalBanner, ManagedAppConfig, ManagedAppKey } from "@/types";
 import {
   Globe, Palette, Phone, Layout, Image as ImageIcon,
   Save, AlertCircle, CheckCircle2, Upload, Trash2, Plus,
-  Monitor, Smartphone, Link, Shield, ChevronRight, Sparkles,
+  Monitor, Smartphone, Link, ChevronRight, Sparkles,
   Activity, Loader2
 } from "lucide-react";
 
@@ -58,7 +57,7 @@ const createBanner = (): FestivalBanner => ({
   active: true
 });
 
-type SectionKey = "env" | "branding" | "contact" | "landing" | "banners" | "legal";
+type SectionKey = "env" | "branding" | "contact" | "landing" | "banners";
 
 const sections: Array<{ key: SectionKey; label: string; icon: any }> = [
   { key: "env", label: "Gateways", icon: Globe },
@@ -66,7 +65,6 @@ const sections: Array<{ key: SectionKey; label: string; icon: any }> = [
   { key: "contact", label: "Contact", icon: Phone },
   { key: "landing", label: "Landing", icon: Layout },
   { key: "banners", label: "Banners", icon: ImageIcon },
-  { key: "legal", label: "Legal", icon: Shield },
   { key: "system" as any, label: "System", icon: Monitor }
 ];
 
@@ -203,30 +201,22 @@ export function AppManagementPage({ appKey }: Props) {
   return (
     <div className="space-y-6 animate-in">
       {/* ── Page Header ── */}
-      <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
-        <div className="relative z-10 text-left">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">
-            {title} Config
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • App Management • Config Control Center</p>
+      <PageBanner 
+          title={`${title} Config`} 
+          subtitle="Config Control Center"
+      >
+          <div className="flex items-center gap-2 relative z-10 shrink-0">
+            <button
+              type="button"
+              className="h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl flex items-center gap-2 shadow-sm disabled:opacity-60 transition-all backdrop-blur-sm"
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              <span>Save Settings</span>
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2 relative z-10 shrink-0">
-          <button
-            type="button"
-            className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl flex items-center gap-2 shadow-sm disabled:opacity-60 transition-all"
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            <span>Save Settings</span>
-          </button>
-        </div>
-        <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-      </header>
+      </PageBanner>
 
       {/* ── Main Layout Grid (Left Tabs, Right Panel Content) ── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -327,7 +317,9 @@ export function AppManagementPage({ appKey }: Props) {
                         { label: "Accent", path: "branding.accentColor", value: formState.branding.accentColor },
                       ].map((theme) => (
                         <div key={theme.path} className="flex items-center gap-3 bg-[var(--bg-main)] p-2.5 rounded-lg border border-[var(--border-color)]">
-                          <input type="color" className="w-8 h-8 rounded border-none cursor-pointer" value={theme.value} onChange={(e) => updatePath(theme.path, e.target.value)} />
+                          <label className="w-9 h-9 rounded-lg border-2 border-[var(--border-color)] cursor-pointer shrink-0 shadow-sm overflow-hidden relative" style={{ backgroundColor: theme.value || "#cccccc" }}>
+                            <input type="color" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" value={theme.value} onChange={(e) => updatePath(theme.path, e.target.value)} />
+                          </label>
                           <div className="text-left">
                             <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider">{theme.label}</p>
                             <p className="text-xs font-mono font-bold text-[var(--text-main)]">{theme.value}</p>
@@ -477,38 +469,7 @@ export function AppManagementPage({ appKey }: Props) {
                 </section>
               )}
 
-              {activeSection === "legal" && (
-                <section className="space-y-6">
-                  <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4 text-left">
-                    <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center">
-                      <Shield size={20} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-[var(--text-main)]">Legal Agreements</h3>
-                      <p className="text-xs text-[var(--text-muted)]">Configure official terms, conditions, and FAQ document paths.</p>
-                    </div>
-                  </div>
 
-                  <div className="grid sm:grid-cols-2 gap-4 text-left">
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Privacy Policy</label>
-                      <div className="bg-white rounded-lg text-black overflow-hidden border border-[var(--border-color)]">
-                        <ReactQuill theme="snow" value={formState.contact.privacyPolicy} onChange={(val) => updatePath("contact.privacyPolicy", val)} />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Terms & Conditions</label>
-                      <div className="bg-white rounded-lg text-black overflow-hidden border border-[var(--border-color)]">
-                        <ReactQuill theme="snow" value={formState.contact.termsAndConditions} onChange={(val) => updatePath("contact.termsAndConditions", val)} />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider ml-0.5">Frequently Asked Questions (FAQ)</label>
-                      <input className="w-full h-10 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg px-4 text-[var(--text-main)] font-semibold text-xs outline-none focus:border-blue-500 transition-all" value={formState.contact.faq} onChange={(e) => updatePath("contact.faq", e.target.value)} />
-                    </div>
-                  </div>
-                </section>
-              )}
 
               {activeSection === ("system" as any) && (
                 <SystemSettingsSection />

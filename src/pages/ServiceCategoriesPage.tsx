@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/ui/Skeletons";
+import { PageBanner } from "@/components/ui/PageBanner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Category {
@@ -333,31 +334,18 @@ export function ServiceCategoriesPage() {
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
-                <div className="relative z-10 w-full">
-                    <div className="flex items-center justify-between gap-4 w-full">
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">
-                                {filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Categories` : "Categories"}
-                            </h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
-                                    Home • Healthcare Catalog • Sector Categories
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => { resetForm(); setIsModalOpen(true); }}
-                            className="relative z-10 flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
-                        >
-                            <Plus size={16} />
-                            <span>Add Category</span>
-                        </button>
-                    </div>
-                </div>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-            </header>
+            <PageBanner 
+                title={filterType ? `${filterType.charAt(0).toUpperCase() + filterType.slice(1)} Categories` : "Categories"} 
+                subtitle="Manage and organize healthcare service categories."
+            >
+                <button
+                    onClick={() => { resetForm(); setIsModalOpen(true); }}
+                    className="flex items-center gap-2 h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl transition-all backdrop-blur-sm shrink-0"
+                >
+                    <Plus size={15} />
+                    <span>Add Category</span>
+                </button>
+            </PageBanner>
 
             {/* ── Main Catalog Table Log Card ── */}
             <div className="bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-sm">

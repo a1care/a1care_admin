@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, Search, Edit2, Trash2, MapPin, CheckCircle2, XCircle, Loader2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/context/ConfirmationContext";
 import { TableSkeleton } from "@/components/ui/Skeletons";
 
 // ── India States & Cities Data ─────────────────────────────────────────────
@@ -55,6 +56,7 @@ const SELECT_STYLE = {
 
 export default function ServiceableAreasPage() {
     const queryClient = useQueryClient();
+    const confirm = useConfirm();
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     
@@ -314,9 +316,15 @@ export default function ServiceableAreasPage() {
                                                     <Edit2 size={14} />
                                                 </button>
                                                 {/* Delete */}
-                                                <button
-                                                    onClick={() => {
-                                                        if (confirm("Are you sure you want to delete this area?")) {
+                                                <button 
+                                                    onClick={async () => {
+                                                        const isConfirmed = await confirm({
+                                                            title: "Delete Area",
+                                                            message: "Are you sure you want to delete this area?",
+                                                            confirmText: "Delete",
+                                                            type: "danger"
+                                                        });
+                                                        if (isConfirmed) {
                                                             deleteMutation.mutate(area._id);
                                                         }
                                                     }}
