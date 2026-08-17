@@ -336,12 +336,12 @@ export function BookingOperationsPage() {
             </header>
 
             {/* ── Stats Row ── */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                 {STAT_CARDS.map(s => (
                     <button
                         key={s.value}
                         onClick={() => { setStatusFilter(s.value); setPage(1); }}
-                        className={`bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
+                        className={`flex-1 min-w-[140px] bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
                             ${statusFilter === s.value
                                 ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30"
                                 : "border-[var(--border-color)] hover:border-[var(--text-muted)]"
