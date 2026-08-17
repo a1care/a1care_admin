@@ -280,12 +280,12 @@ export function OPBookingsPage() {
             </div>
 
             {/* ── Stats Row ── */}
-            <div className="grid grid-cols-5 gap-3">
+            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                 {STAT_CARDS.map(s => (
                     <button
                         key={s.value}
                         onClick={() => { setStatusFilter(s.value); setPage(1); }}
-                        className={`bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
+                        className={`flex-1 min-w-[140px] bg-[var(--card-bg)] border rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md
                             ${statusFilter === s.value
                                 ? bookingType === 'doctor' ? "border-blue-500 shadow-sm ring-1 ring-blue-500/30" : "border-emerald-500 shadow-sm ring-1 ring-emerald-500/30"
                                 : "border-[var(--border-color)] hover:border-[var(--text-muted)]"
