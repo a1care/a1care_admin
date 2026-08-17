@@ -87,8 +87,9 @@ export function BookingOperationsPage() {
     const deferredSearch = useDeferredValue(searchQuery);
 
     const [showFilters, setShowFilters] = useState(false);
-    const [dateFrom, setDateFrom] = useState("");
-    const [dateTo, setDateTo] = useState("");
+    const todayStr = new Date().toISOString().split("T")[0];
+    const [dateFrom, setDateFrom] = useState(todayStr);
+    const [dateTo, setDateTo] = useState(todayStr);
     const [paymentFilter, setPaymentFilter] = useState("All");
     const [departmentFilter, setDepartmentFilter] = useState("All");
     const [serviceFilter, setServiceFilter] = useState("All");
