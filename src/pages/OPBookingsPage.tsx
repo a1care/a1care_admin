@@ -82,7 +82,7 @@ export function OPBookingsPage() {
     const deferredSearch = useDeferredValue(searchQuery);
 
     const { data: serviceData, isLoading: loadingServices, isFetching: fetchingServices } = useQuery({
-        queryKey: ["admin_service_bookings", page, deferredSearch, statusFilter, dateFrom, dateTo, paymentFilter, sourceFilter, patientTypeFilter, doctorFilter, departmentFilter, slotFilter],
+        queryKey: ["admin_op_bookings", bookingType, page, deferredSearch, statusFilter, dateFrom, dateTo, paymentFilter, sourceFilter, patientTypeFilter, doctorFilter, departmentFilter, slotFilter],
         queryFn: async () => {
             const params = new URLSearchParams({ page: page.toString(), limit: "10" });
             if (deferredSearch) params.append("search", deferredSearch);
@@ -94,18 +94,23 @@ export function OPBookingsPage() {
             if (doctorFilter !== "All") params.append("doctor", doctorFilter);
             if (slotFilter !== "All") params.append("slot", slotFilter);
             if (patientTypeFilter !== "All") params.append("patientType", patientTypeFilter);
-            if (statusFilter !== "All") params.append("status", STATUS_UI_TO_API[statusFilter] || statusFilter);
-            params.append("consultationType", "OP,VIRTUAL");
+            if (statusFilter !== "All") {
+                if (statusFilter === "OVERDUE") {
+                    params.append("overdue", "true");
+                } else {
+                    params.append("status", STATUS_UI_TO_API[statusFilter] || statusFilter);
+                }
+            }
+            params.append("opType", bookingType);
 
-            const res = await api.get(`/admin/bookings/doctors?${params.toString()}`);
-            const payload = normalizeBookingPayload(res.data.data);
+            const res = await api.get(`/admin/bookings/services?${params.toString()}`);
+            const payload = res.data.data;
             const items = Array.isArray(payload.items) ? payload.items : [];
             const normalizedItems = items.map((item: any) => {
-                const specialization = item?.serviceName || (Array.isArray(item?.doctorId?.specialization) ? item.doctorId.specialization[0] : "");
-                const fallbackName = item?.serviceId?.name || item?.doctorId?.name || "Doctor Consultation";
+                const fallbackName = item?.childServiceId?.name || "OP Booking";
                 return {
                     ...item,
-                    serviceId: { ...(item?.serviceId || {}), name: specialization || fallbackName },
+                    serviceId: { ...(item?.serviceId || {}), name: fallbackName },
                 };
             });
             return { ...payload, items: normalizedItems };
@@ -113,11 +118,7 @@ export function OPBookingsPage() {
         placeholderData: (prev) => prev
     });
 
-    const allBookings = serviceData?.items || [];
-    // Split into two types based on the isServiceRequest flag set by the backend
-    const doctorBookings = allBookings.filter((b: any) => !b.isServiceRequest);
-    const tokenBookings  = allBookings.filter((b: any) =>  b.isServiceRequest);
-    const serviceBookings = bookingType === 'doctor' ? doctorBookings : tokenBookings;
+    const serviceBookings = serviceData?.items || [];
     const stats = serviceData?.stats || { all: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
     const totalPages = serviceData?.totalPages || 1;
 
