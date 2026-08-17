@@ -805,7 +805,8 @@ export function BookingOperationsPage() {
                                         placeholder="Search providers..."
                                         value={providerSearch}
                                         onChange={e => setProviderSearch(e.target.value)}
-                                        className="w-full h-9 pl-9 pr-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-colors"
+                                        className="w-full h-9 pr-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-colors"
+                                        style={{ paddingLeft: "2.25rem" }}
                                     />
                                 </div>
                                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
