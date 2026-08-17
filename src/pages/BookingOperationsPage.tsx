@@ -306,14 +306,18 @@ export function BookingOperationsPage() {
         <div className="space-y-6 animate-in">
 
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+            <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start min-h-[160px] md:min-h-[180px]">
+                {/* Decorative Blobs */}
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                
                 <div className="relative z-10 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Service Orders</h1>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Service Orders</h1>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
                                     Home • Bookings • Service Orders &nbsp;•&nbsp; Auto-refreshes every 15s
                                 </p>
                             </div>

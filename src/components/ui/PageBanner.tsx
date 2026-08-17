@@ -1,13 +1,15 @@
 
 import React from "react";
+import { ChevronLeft } from "lucide-react";
 
 interface PageBannerProps {
   title: string;
   subtitle?: React.ReactNode;
+  onBack?: () => void;
   children?: React.ReactNode;
 }
 
-export function PageBanner({ title, subtitle, children }: PageBannerProps) {
+export function PageBanner({ title, subtitle, onBack, children }: PageBannerProps) {
   return (
     <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start mb-6 min-h-[160px] md:min-h-[180px]">
       <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -15,17 +17,27 @@ export function PageBanner({ title, subtitle, children }: PageBannerProps) {
 
       <div className="relative z-10 w-full">
         <div className="flex flex-col items-start gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">{title}</h1>
-            
-            {subtitle && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)] shrink-0" />
-                <div className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
-                  {subtitle}
-                </div>
-              </div>
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all shadow-sm shrink-0 backdrop-blur-sm"
+              >
+                <ChevronLeft size={20} />
+              </button>
             )}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">{title}</h1>
+              
+              {subtitle && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)] shrink-0" />
+                  <div className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
+                    {subtitle}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
           {children && (

@@ -129,29 +129,23 @@ export function ServiceSubServicesPage() {
   return (
     <div className="space-y-6 animate-in">
         {/* ── Page Header ── */}
-        <div className="flex items-start lg:items-center gap-3 flex-col lg:flex-row">
-            <button onClick={() => navigate("/service-categories")} className="w-10 h-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm shrink-0">
-                <ChevronLeft size={18} />
+        <PageBanner 
+            title={currentCategory ? `${currentCategory.name} Subcategories` : "Subcategories"} 
+            subtitle="Manage specialized subdivisions within healthcare sectors."
+            onBack={() => navigate("/service-categories")}
+        >
+            <button disabled={!selectedCatId} onClick={() => {
+                setEditingSub(null);
+                setName("");
+                setDesc("");
+                setFile(null);
+                setPreview(null);
+                setIsModalOpen(true);
+            }} className="flex items-center gap-2 h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl transition-all backdrop-blur-sm shrink-0 disabled:opacity-50">
+                <Plus size={15} />
+                <span>Add Subcategory</span>
             </button>
-            <div className="flex-1 w-full">
-                <PageBanner 
-                    title={currentCategory ? `${currentCategory.name} Subcategories` : "Subcategories"} 
-                    subtitle="Manage specialized subdivisions within healthcare sectors."
-                >
-                    <button disabled={!selectedCatId} onClick={() => {
-                        setEditingSub(null);
-                        setName("");
-                        setDesc("");
-                        setFile(null);
-                        setPreview(null);
-                        setIsModalOpen(true);
-                    }} className="flex items-center gap-2 h-9 px-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-semibold rounded-xl transition-all backdrop-blur-sm shrink-0 disabled:opacity-50">
-                        <Plus size={15} />
-                        <span>Add Subcategory</span>
-                    </button>
-                </PageBanner>
-            </div>
-        </div>
+        </PageBanner>
 
         {/* ── Main Catalog Subcategory Table Layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">

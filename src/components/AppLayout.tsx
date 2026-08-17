@@ -503,7 +503,7 @@ export function AppLayout() {
               >
                 <div className="flex items-center gap-3">
                   <Flame size={18} />
-                  <span>Campaign Banners</span>
+                  <span>Banners</span>
                 </div>
                 {customerAppOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
@@ -572,10 +572,7 @@ export function AppLayout() {
                   <NavLink to="/manage-provider-app" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>Partner App Settings</NavLink>
                   <div className="h-px bg-slate-100 my-1 mx-2"></div>
                   <NavLink to="/audit-health-vault" className={({ isActive }) => `sub-link ${isActive ? "active" : ""}`}>EHR Audit Logs</NavLink>
-                  <NavLink to="/payment-logs" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
-                    <Receipt size={13} />
-                    Transaction History
-                  </NavLink>
+
                   <NavLink to="/manage-system-config" className={({ isActive }) => `sub-link flex items-center gap-2 ${isActive ? "active" : ""}`}>
                     <ShieldCheck size={13} />
                     API & Security
@@ -592,7 +589,7 @@ export function AppLayout() {
               <NavLink to="/deletion-requests" className={({ isActive }) => `submenu-trigger ${isActive ? "active text-rose-600 font-bold bg-[var(--bg-main)]" : "text-rose-500 hover:text-rose-600"}`}>
                 <div className="flex items-center gap-3">
                   <Trash2 size={18} />
-                  <span>Users Delete Req</span>
+                  <span>Users Delete Reqs</span>
                 </div>
               </NavLink>
             </>

@@ -100,26 +100,33 @@ export function DashboardPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* ── Page Header ── */}
-      <A1Card className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 md:p-8">
-        <div className="relative z-10 text-left">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-100 rounded-md">
-            <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-bold text-success uppercase tracking-wider">System Operational</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mt-2 mb-1">Admin Dashboard</h1>
-          <p className="text-xs md:text-sm font-medium text-slate-500 tracking-wide">Monitor network activity, performance, and incoming alerts.</p>
-        </div>
+      <header className="flex flex-col gap-2 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start min-h-[160px]">
+          {/* Decorative Blobs */}
+          <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-4 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200">
-          <Calendar className="text-slate-500" size={18} />
-          <div className="flex flex-col text-left">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider leading-none mb-1">Today's Date</span>
-            <span className="text-xs font-semibold text-slate-900 leading-none">
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-            </span>
+          <div className="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="text-left">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 border border-white/20 rounded-md backdrop-blur-sm">
+                      <div className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse shadow-[0_0_8px_rgba(110,231,183,0.8)]"></div>
+                      <span className="text-[10px] font-bold text-emerald-50 uppercase tracking-wider">System Operational</span>
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mt-2 mb-1">Admin Dashboard</h1>
+                  <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">Monitor network activity, performance, and incoming alerts.</p>
+              </div>
+
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-4 py-3 rounded-xl border border-white/20 shadow-inner self-start">
+                  <Calendar className="text-emerald-100" size={18} />
+                  <div className="flex flex-col text-left">
+                      <span className="text-[9px] font-bold text-emerald-200 uppercase tracking-wider leading-none mb-1">Today's Date</span>
+                      <span className="text-xs font-semibold text-white leading-none">
+                          {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                  </div>
+              </div>
           </div>
-        </div>
-      </A1Card>
+      </header>
 
       {/* ── Primary KPI Cluster (Unified row structure) ── */}
       <section className="grid grid-cols-7 gap-4">

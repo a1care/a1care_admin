@@ -314,23 +314,26 @@ export function DoctorStaffManagementPage() {
             {selectedDoctor && <VerificationModal doctor={selectedDoctor} />}
 
             {/* ── Page Header ── */}
-            <header className="flex items-center justify-between gap-4 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden">
+            <header className="flex flex-col gap-4 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden min-h-[160px] items-start text-left">
+                {/* Decorative Blobs */}
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
                 <div className="relative z-10">
-                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Doctor Registry</h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">Home • User Directory • Doctors</p>
+                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Doctor Registry</h1>
+                    <div className="flex items-center gap-2 mt-1 mb-4">
+                        <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                        <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">Home • User Directory • Doctors</p>
                     </div>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 h-10 px-5 bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold rounded-xl transition-all shadow-lg w-fit"
+                    >
+                        <UserPlus size={16} />
+                        <span>Add Doctor</span>
+                    </button>
                 </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="relative z-10 flex items-center gap-2 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
-                >
-                    <UserPlus size={16} />
-                    <span>Add Doctor</span>
-                </button>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
             {/* ── Stats Row ── */}

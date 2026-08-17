@@ -168,37 +168,36 @@ export default function ServiceableAreasPage() {
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
-            <header className="flex flex-col gap-2 bg-[var(--card-bg)] p-6 md:p-8 rounded-2xl shadow-sm border border-[var(--border-color)] relative overflow-hidden text-left items-start">
+            <header className="flex flex-col gap-4 bg-gradient-to-br from-[var(--primary)] to-emerald-800 p-6 md:p-8 rounded-2xl shadow-lg shadow-emerald-900/10 border-0 relative overflow-hidden text-left items-start min-h-[160px]">
+                {/* Decorative Blobs */}
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
                 <div className="relative z-10 w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-[var(--text-main)] mb-1">Serviceable Areas</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                                <p className="text-xs md:text-sm font-medium text-[var(--text-muted)] tracking-wide">
-                                    Home • Settings • Serviceable Areas
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => seedMutation.mutate()}
-                                className="flex items-center gap-1.5 h-10 px-5 bg-[var(--bg-main)] border border-[var(--border-color)] hover:bg-[var(--hover-bg)] text-[var(--text-main)] text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
-                            >
-                                <span>Seed Default Areas</span>
-                            </button>
-                            <button
-                                onClick={openCreate}
-                                className="flex items-center gap-1.5 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm shrink-0"
-                            >
-                                <Plus size={16} />
-                                <span>Add Area</span>
-                            </button>
-                        </div>
+                    <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white mb-1">Serviceable Areas</h1>
+                    <div className="flex items-center gap-2 mt-1 mb-4">
+                        <span className="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                        <p className="text-xs md:text-sm font-medium text-emerald-50 tracking-wide opacity-90">
+                            Home • Settings • Serviceable Areas
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => seedMutation.mutate()}
+                            className="flex items-center gap-1.5 h-10 px-5 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-sm font-semibold rounded-xl transition-all backdrop-blur-sm shadow-sm shrink-0"
+                        >
+                            <span>Seed Default Areas</span>
+                        </button>
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-1.5 h-10 px-5 bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold rounded-xl transition-all shadow-lg shrink-0"
+                        >
+                            <Plus size={16} />
+                            <span>Add Area</span>
+                        </button>
                     </div>
                 </div>
-                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -top-12 right-32 w-48 h-48 bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
             </header>
 
             {/* ── Search & Filter Toolbar ── */}

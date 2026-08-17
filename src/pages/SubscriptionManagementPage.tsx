@@ -180,28 +180,28 @@ export function SubscriptionManagementPage() {
     return (
         <div className="space-y-6 animate-in">
             {/* ── Hero Header ── */}
-            <header className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-violet-700 rounded-2xl p-8 text-white shadow-xl">
+            <header className="relative overflow-hidden bg-gradient-to-br from-[var(--primary)] to-emerald-800 rounded-2xl p-8 text-white shadow-lg shadow-emerald-900/10 border-0">
                 <div className="relative z-10 flex items-start justify-between gap-4 flex-wrap">
                     <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                             <Crown size={16} className="text-yellow-300" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-100">Partner Subscriptions</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-50">Partner Subscriptions</p>
                         </div>
                         <h1 className="text-3xl font-black tracking-tight">Plan Management</h1>
-                        <p className="text-sm text-blue-100 font-medium max-w-md">
+                        <p className="text-sm text-emerald-50 font-medium max-w-md opacity-90">
                             Configure tiered subscription models, commissions, and feature access per plan — all live and dynamic.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => { qc.invalidateQueries({ queryKey: ["all-subscription-plans"] }); qc.invalidateQueries({ queryKey: ["subscription-categories"] }); }}
-                            className="h-9 px-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
+                            className="h-9 px-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 backdrop-blur-sm"
                         >
                             <RefreshCw size={13} /> Refresh
                         </button>
                         <button
                             onClick={openCreate}
-                            className="flex items-center gap-2 h-9 px-5 bg-white text-blue-700 font-bold text-sm rounded-xl hover:bg-blue-50 transition-all shadow-lg"
+                            className="flex items-center gap-2 h-9 px-5 bg-white text-emerald-700 font-bold text-sm rounded-xl hover:bg-emerald-50 transition-all shadow-lg"
                         >
                             <Plus size={16} /> New Plan
                         </button>
@@ -210,19 +210,19 @@ export function SubscriptionManagementPage() {
 
                 {/* ── Category tabs (dynamic from DB) ── */}
                 <div className="relative z-10 mt-6">
-                    <p className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-2">Filter by Category</p>
+                    <p className="text-[9px] font-black text-emerald-100 uppercase tracking-widest mb-2">Filter by Category</p>
                     {catsLoading ? (
                         <div className="mt-4"><StatsSkeleton count={4} /></div>
                     ) : (
-                        <div className="flex flex-wrap gap-1.5 bg-white/10 backdrop-blur-sm p-1.5 rounded-xl w-fit">
+                        <div className="flex flex-wrap gap-1.5 bg-white/10 backdrop-blur-sm p-1.5 rounded-xl w-fit border border-white/10">
                             {allCategories.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                                         selectedCategory === cat
-                                            ? "bg-white text-blue-700 shadow-md"
-                                            : "text-blue-100 hover:text-white hover:bg-white/10"
+                                            ? "bg-white text-emerald-700 shadow-md"
+                                            : "text-emerald-50 hover:text-white hover:bg-white/10"
                                     }`}
                                 >
                                     {cat}
@@ -233,8 +233,9 @@ export function SubscriptionManagementPage() {
                 </div>
 
                 {/* Decorative blobs */}
-                <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-violet-400/20 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
             </header>
 
             {/* ── Stats Strip ── */}
