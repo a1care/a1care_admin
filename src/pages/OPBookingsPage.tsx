@@ -37,14 +37,15 @@ export function OPBookingsPage() {
     const confirm = useConfirm();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All");
+    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "PENDING");
     // 'doctor' = Doctor OP Consultations | 'token' = Hospital OP Tokens
     const [bookingType, setBookingType] = useState<'doctor' | 'token'>('doctor');
 
     // Advanced Filters State
     const [showFilters, setShowFilters] = useState(false);
-    const [dateFrom, setDateFrom] = useState("");
-    const [dateTo, setDateTo] = useState("");
+    const todayStr = new Date().toISOString().split('T')[0];
+    const [dateFrom, setDateFrom] = useState(todayStr);
+    const [dateTo, setDateTo] = useState(todayStr);
     const [paymentFilter, setPaymentFilter] = useState("All");
     const [sourceFilter, setSourceFilter] = useState("All");
     const [patientTypeFilter, setPatientTypeFilter] = useState("All");
