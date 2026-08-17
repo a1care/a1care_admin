@@ -130,7 +130,11 @@ export function BookingOperationsPage() {
         queryFn: async () => {
             if (activeTab !== "services") return null;
             const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
-            if (statusFilter !== "All") params.append("status", statusFilter);
+            if (statusFilter === "OVERDUE") {
+                params.append("overdue", "true");
+            } else if (statusFilter !== "All") {
+                params.append("status", statusFilter);
+            }
             if (deferredSearch) params.append("search", deferredSearch);
             if (dateFrom) params.append("dateFrom", dateFrom);
             if (dateTo) params.append("dateTo", dateTo);
@@ -300,6 +304,9 @@ export function BookingOperationsPage() {
         { label: "Assigned",  value: "CONFIRMED", count: stats.confirmed || 0, color: "text-blue-600 dark:text-blue-400",   icon: <CheckCircle2 size={14} /> },
         { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:text-emerald-400", icon: <CheckCircle2 size={14} /> },
         { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
+        ...(activeTab === "services" ? [
+            { label: "Overdue", value: "OVERDUE", count: "!", color: "text-rose-600 dark:text-rose-400", icon: <AlertCircle size={14} /> }
+        ] : []),
     ];
 
     return (
@@ -347,7 +354,7 @@ export function BookingOperationsPage() {
             </header>
 
             {/* ── Stats Row ── */}
-            <div className="grid grid-cols-5 gap-3">
+            <div className={`grid gap-3 ${activeTab === "services" ? "grid-cols-6" : "grid-cols-5"}`}>
                 {STAT_CARDS.map(s => (
                     <button
                         key={s.value}
@@ -579,6 +586,23 @@ export function BookingOperationsPage() {
                                                             Verify PIN
                                                         </button>
                                                     ) : null}
+                                                    {/* Re-broadcast for RETURNED_TO_ADMIN service bookings */}
+                                                    {activeTab === "services" && booking.status === "RETURNED_TO_ADMIN" && (
+                                                        <button
+                                                            onClick={() => {
+                                                                api.post(`/admin/bookings/services/${booking._id}/rebroadcast`)
+                                                                    .then(() => {
+                                                                        queryClient.invalidateQueries({ queryKey: ["admin_service_bookings"] });
+                                                                        toast.success("Re-broadcast initiated");
+                                                                    })
+                                                                    .catch((err: any) => toast.error(err?.response?.data?.message || "Re-broadcast failed"));
+                                                            }}
+                                                            className="w-8 h-8 rounded-lg flex items-center justify-center border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-500/10 dark:hover:text-purple-400 hover:border-purple-300 transition-all"
+                                                            title="Re-broadcast to Partners"
+                                                        >
+                                                            <RefreshCw size={13} />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         disabled={isFinal}
                                                         onClick={() => {

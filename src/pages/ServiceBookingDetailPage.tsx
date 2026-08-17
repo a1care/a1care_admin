@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
     ChevronLeft, User, Calendar, CreditCard, MapPin,
     Phone, Mail, Clock, Briefcase, CheckCircle2, AlertCircle,
-    Package, Activity
+    Package, Activity, RefreshCw, XCircle, CheckSquare, Loader2
 } from "lucide-react";
 import { formatDate, formatDateTime, formatTime } from "@/lib/format";
 
@@ -37,6 +38,20 @@ function InfoCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export function ServiceBookingDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const qc = useQueryClient();
+    const [confirmAction, setConfirmAction] = useState<"cancel" | "complete" | null>(null);
+
+    const invalidate = () => qc.invalidateQueries({ queryKey: ["service_booking_detail", id] });
+
+    const statusMutation = useMutation({
+        mutationFn: (status: string) => api.put(`/admin/bookings/services/${id}/status`, { status }),
+        onSuccess: () => { setConfirmAction(null); invalidate(); },
+    });
+
+    const rebroadcastMutation = useMutation({
+        mutationFn: () => api.post(`/admin/bookings/services/${id}/rebroadcast`),
+        onSuccess: invalidate,
+    });
 
     const { data: booking, isLoading, isError } = useQuery({
         queryKey: ["service_booking_detail", id],
@@ -112,6 +127,83 @@ export function ServiceBookingDetailPage() {
                     {cfg.label}
                 </span>
             </div>
+
+            {/* Admin Actions */}
+            {!["COMPLETED", "CANCELLED"].includes(status) && (
+                <div className="flex flex-wrap gap-3 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] shadow-sm">
+                    <p className="w-full text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Admin Actions</p>
+
+                    {/* Re-broadcast */}
+                    <button
+                        onClick={() => rebroadcastMutation.mutate()}
+                        disabled={rebroadcastMutation.isPending}
+                        className="flex items-center gap-2 h-9 px-4 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-all disabled:opacity-50"
+                    >
+                        {rebroadcastMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                        Re-broadcast to Partners
+                    </button>
+
+                    {/* Mark Complete */}
+                    {["ACCEPTED", "IN_PROGRESS", "PARTNER_ASSIGNED"].includes(status) && (
+                        confirmAction === "complete" ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-[var(--text-muted)]">Mark complete?</span>
+                                <button
+                                    onClick={() => statusMutation.mutate("COMPLETED")}
+                                    disabled={statusMutation.isPending}
+                                    className="h-7 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    {statusMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : null} Confirm
+                                </button>
+                                <button onClick={() => setConfirmAction(null)} className="h-7 px-3 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setConfirmAction("complete")}
+                                className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all"
+                            >
+                                <CheckSquare size={13} /> Mark Completed
+                            </button>
+                        )
+                    )}
+
+                    {/* Cancel */}
+                    {confirmAction === "cancel" ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-[var(--text-muted)]">
+                                Cancel booking{booking?.paymentStatus === "COMPLETED" ? " + refund?" : "?"}
+                            </span>
+                            <button
+                                onClick={() => statusMutation.mutate("CANCELLED")}
+                                disabled={statusMutation.isPending}
+                                className="h-7 px-3 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-all disabled:opacity-50 flex items-center gap-1"
+                            >
+                                {statusMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : null} Confirm Cancel
+                            </button>
+                            <button onClick={() => setConfirmAction(null)} className="h-7 px-3 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+                                Keep
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setConfirmAction("cancel")}
+                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all ml-auto"
+                        >
+                            <XCircle size={13} />
+                            Cancel Booking{booking?.paymentStatus === "COMPLETED" ? " + Refund" : ""}
+                        </button>
+                    )}
+
+                    {/* Error display */}
+                    {(statusMutation.isError || rebroadcastMutation.isError) && (
+                        <p className="w-full text-xs text-rose-600 font-semibold mt-1">
+                            Action failed — {((statusMutation.error || rebroadcastMutation.error) as any)?.response?.data?.message || "please try again"}
+                        </p>
+                    )}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* ── Left Column: Booking Details ── */}

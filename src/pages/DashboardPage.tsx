@@ -21,7 +21,8 @@ import {
   ChevronRight,
   FileText,
   BadgeCheck,
-  IndianRupee
+  IndianRupee,
+  AlertTriangle
 } from "lucide-react";
 
 import { TableSkeleton, StatsSkeleton, CardSkeleton } from "@/components/ui/Skeletons";
@@ -77,6 +78,7 @@ export function DashboardPage() {
 
   const kpis = overview?.kpis;
   const bookings = overview?.bookings;
+  const alerts = (overview as any)?.alerts;
 
   // --- Performance Table Logic ---
   const sortedPerformance = [...performance].sort((a, b) => {
@@ -155,6 +157,44 @@ export function DashboardPage() {
           </A1Card>
         ))}
       </section>
+
+      {/* ── Needs Attention ── */}
+      {alerts && (alerts.pendingVerifications > 0 || alerts.openTickets > 0 || alerts.failedPayments > 0) && (
+        <section className="space-y-3">
+          <h2 className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] text-left flex items-center gap-2">
+            <AlertTriangle size={13} className="text-amber-500" /> Needs Attention
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            {alerts.pendingVerifications > 0 && (
+              <div onClick={() => navigate("/kyc-verification")} className="flex items-center gap-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4 cursor-pointer hover:border-amber-400 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600"><ShieldCheck size={18} /></div>
+                <div className="text-left">
+                  <p className="text-xl font-black text-amber-700 dark:text-amber-400">{alerts.pendingVerifications}</p>
+                  <p className="text-[9px] font-bold text-amber-600/80 uppercase tracking-wider">Pending KYC Reviews</p>
+                </div>
+              </div>
+            )}
+            {alerts.openTickets > 0 && (
+              <div onClick={() => navigate("/support-tickets")} className="flex items-center gap-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 cursor-pointer hover:border-rose-400 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center text-rose-600"><FileText size={18} /></div>
+                <div className="text-left">
+                  <p className="text-xl font-black text-rose-700 dark:text-rose-400">{alerts.openTickets}</p>
+                  <p className="text-[9px] font-bold text-rose-600/80 uppercase tracking-wider">Open Support Tickets</p>
+                </div>
+              </div>
+            )}
+            {alerts.failedPayments > 0 && (
+              <div onClick={() => navigate("/payment-logs")} className="flex items-center gap-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 cursor-pointer hover:border-red-400 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-500/20 flex items-center justify-center text-red-600"><CreditCard size={18} /></div>
+                <div className="text-left">
+                  <p className="text-xl font-black text-red-700 dark:text-red-400">{alerts.failedPayments}</p>
+                  <p className="text-[9px] font-bold text-red-600/80 uppercase tracking-wider">Failed Payments</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── Commission Intelligence ── */}
       <section className="space-y-3">

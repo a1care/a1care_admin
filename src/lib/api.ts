@@ -48,9 +48,12 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
-      // Bounce to login so an expired session doesn't leave the admin on a dead page.
       if (!window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
+        const msg = document.createElement('div');
+        msg.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.3)';
+        msg.textContent = 'Session expired. Redirecting to login…';
+        document.body.appendChild(msg);
+        setTimeout(() => { window.location.href = "/login"; }, 1500);
       }
     }
     return Promise.reject(error);

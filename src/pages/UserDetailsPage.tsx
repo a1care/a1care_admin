@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { 
+import {
     ChevronLeft, Phone, Mail,
     Users2, Calendar, FileText,
-    Trash2, Eye, X, CreditCard
+    Trash2, Eye, X, CreditCard, ShieldOff, ShieldCheck, Loader2
 } from "lucide-react";
 import { PageBanner } from "@/components/ui/PageBanner";
 
@@ -17,6 +17,7 @@ export function UserDetailsPage({ category }: { category: string }) {
     
     const [viewingDocument, setViewingDocument] = useState<any | null>(null);
     const [deleteConfig, setDeleteConfig] = useState<{ id: string, type: string } | null>(null);
+    const [suspendConfirm, setSuspendConfirm] = useState(false);
 
     const { data: user, isLoading } = useQuery({
         queryKey: ["user_details", category, id],
@@ -39,6 +40,17 @@ export function UserDetailsPage({ category }: { category: string }) {
             toast.error(err?.response?.data?.message || "Failed to delete record.");
         });
     };
+
+    const suspendMutation = useMutation({
+        mutationFn: (newStatus: "Suspended" | "Active") =>
+            api.put(`/admin/users/${category}/${id}/status`, { status: newStatus }),
+        onSuccess: () => {
+            setSuspendConfirm(false);
+            queryClient.invalidateQueries({ queryKey: ["user_details", category, id] });
+            toast.success("Account status updated.");
+        },
+        onError: (err: any) => toast.error(err?.response?.data?.message || "Action failed"),
+    });
 
     if (isLoading || !user) {
         return (
@@ -115,9 +127,41 @@ export function UserDetailsPage({ category }: { category: string }) {
                                 </div>
                             </div>
                         </div>
-                        {/* Wallet Action Button on the Right */}
-                        <div className="shrink-0 mt-4 sm:mt-0">
+                        {/* Action Buttons */}
+                        <div className="shrink-0 mt-4 sm:mt-0 flex flex-col gap-2 items-end">
                             <WalletAction user={user} category={category} />
+                            {/* Suspend / Activate — partners only */}
+                            {category !== 'patient' && (
+                                user.status === "Suspended" ? (
+                                    <button
+                                        onClick={() => suspendMutation.mutate("Active")}
+                                        disabled={suspendMutation.isPending}
+                                        className="flex items-center gap-2 h-9 px-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 transition-all disabled:opacity-50"
+                                    >
+                                        {suspendMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
+                                        Restore Account
+                                    </button>
+                                ) : suspendConfirm ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-[var(--text-muted)]">Suspend account?</span>
+                                        <button
+                                            onClick={() => suspendMutation.mutate("Suspended")}
+                                            disabled={suspendMutation.isPending}
+                                            className="h-7 px-3 rounded-lg bg-orange-600 text-white text-xs font-bold hover:bg-orange-700 transition-all disabled:opacity-50"
+                                        >
+                                            {suspendMutation.isPending ? "..." : "Confirm"}
+                                        </button>
+                                        <button onClick={() => setSuspendConfirm(false)} className="h-7 px-3 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)]">Cancel</button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setSuspendConfirm(true)}
+                                        className="flex items-center gap-2 h-9 px-4 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 text-orange-700 dark:text-orange-400 text-xs font-bold hover:bg-orange-100 transition-all"
+                                    >
+                                        <ShieldOff size={13} /> Suspend Account
+                                    </button>
+                                )
+                            )}
                         </div>
                     </div>
 
