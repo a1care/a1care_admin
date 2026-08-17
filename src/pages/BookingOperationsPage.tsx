@@ -306,7 +306,7 @@ export function BookingOperationsPage() {
         { label: "Completed", value: "COMPLETED", count: stats.completed || 0, color: "text-emerald-600 dark:text-emerald-400", icon: <CheckCircle2 size={14} /> },
         { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
         ...(activeTab === "services" ? [
-            { label: "Overdue", value: "OVERDUE", count: "!", color: "text-rose-600 dark:text-rose-400", icon: <AlertCircle size={14} /> }
+            { label: "Overdue", value: "OVERDUE", count: stats.overdue || 0, color: "text-rose-600 dark:text-rose-400", icon: <AlertCircle size={14} /> }
         ] : []),
     ];
 
