@@ -208,6 +208,7 @@ export function BookingOperationsPage() {
 
     const [acceptServiceModal, setAcceptServiceModal] = useState<{ bookingId: string; booking: any } | null>(null);
     const [selectedHospitalId, setSelectedHospitalId] = useState("");
+    const [providerSearch, setProviderSearch] = useState("");
 
     const getProviderRoleId = (provider: DoctorListItem) =>
         typeof provider.roleId === "string" ? provider.roleId : provider.roleId?._id || "";
@@ -786,7 +787,7 @@ export function BookingOperationsPage() {
                     <div className="relative w-full max-w-sm bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl animate-in zoom-in-95 duration-150">
                         <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
                             <h3 className="text-base font-bold text-[var(--text-main)]">Assign Provider</h3>
-                            <button onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}
+                            <button onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); setProviderSearch(""); }}
                                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-main)] border border-[var(--border-color)] transition-all">
                                 <X size={14} />
                             </button>
@@ -794,9 +795,23 @@ export function BookingOperationsPage() {
                         <div className="p-6 space-y-5">
                             <p className="text-sm text-[var(--text-muted)]">Select an active provider eligible for this service booking.</p>
                             <div>
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Providers</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Providers</label>
+                                </div>
+                                <div className="relative mb-3">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search providers..."
+                                        value={providerSearch}
+                                        onChange={e => setProviderSearch(e.target.value)}
+                                        className="w-full h-9 pl-9 pr-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-main)] outline-none focus:border-blue-500 transition-colors"
+                                    />
+                                </div>
                                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                                    {getEligibleProvidersForBooking(acceptServiceModal.booking).map(d => (
+                                    {getEligibleProvidersForBooking(acceptServiceModal.booking)
+                                        .filter(p => !providerSearch || p.name.toLowerCase().includes(providerSearch.toLowerCase()) || (p.mobileNumber && p.mobileNumber.includes(providerSearch)))
+                                        .map(d => (
                                         <button
                                             key={d._id}
                                             onClick={() => setSelectedHospitalId(d._id)}
@@ -821,17 +836,17 @@ export function BookingOperationsPage() {
                                             )}
                                         </button>
                                     ))}
-                                    {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
+                                    {getEligibleProvidersForBooking(acceptServiceModal.booking).filter(p => !providerSearch || p.name.toLowerCase().includes(providerSearch.toLowerCase()) || (p.mobileNumber && p.mobileNumber.includes(providerSearch))).length === 0 && (
                                         <div className="p-6 text-center border border-dashed border-rose-200 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
                                             <AlertCircle className="mx-auto h-6 w-6 text-rose-500 mb-2" />
-                                            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">No active matching providers found.</p>
+                                            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">No matching providers found.</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
                             <div className="flex gap-3 pt-3">
                                 <button
-                                    onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}
+                                    onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); setProviderSearch(""); }}
                                     className="flex-1 h-11 rounded-xl border border-[var(--border-color)] text-sm font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
                                 >
                                     Cancel
