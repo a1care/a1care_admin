@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import {
     ChevronLeft, User, Calendar, CreditCard, MapPin,
     Phone, Mail, Clock, Briefcase, CheckCircle2, AlertCircle,
-    Package, Activity, RefreshCw, XCircle, CheckSquare, Loader2
+    Package, Activity, RefreshCw, XCircle, CheckSquare, Loader2, DollarSign
 } from "lucide-react";
 import { formatDate, formatDateTime, formatTime } from "@/lib/format";
 
@@ -40,6 +40,9 @@ export function ServiceBookingDetailPage() {
     const navigate = useNavigate();
     const qc = useQueryClient();
     const [confirmAction, setConfirmAction] = useState<"cancel" | "complete" | null>(null);
+    const [refundOpen, setRefundOpen] = useState(false);
+    const [refundAmount, setRefundAmount] = useState("");
+    const [refundReason, setRefundReason] = useState("");
 
     const invalidate = () => qc.invalidateQueries({ queryKey: ["service_booking_detail", id] });
 
@@ -51,6 +54,11 @@ export function ServiceBookingDetailPage() {
     const rebroadcastMutation = useMutation({
         mutationFn: () => api.post(`/admin/bookings/services/${id}/rebroadcast`),
         onSuccess: invalidate,
+    });
+
+    const refundMutation = useMutation({
+        mutationFn: () => api.post(`/admin/bookings/services/${id}/refund`, { amount: Number(refundAmount), reason: refundReason }),
+        onSuccess: () => { setRefundOpen(false); setRefundAmount(""); setRefundReason(""); invalidate(); },
     });
 
     const { data: booking, isLoading, isError } = useQuery({
@@ -127,6 +135,56 @@ export function ServiceBookingDetailPage() {
                     {cfg.label}
                 </span>
             </div>
+
+            {/* Standalone Refund Panel — available on paid completed bookings */}
+            {booking?.paymentStatus === "COMPLETED" && (
+                <div className="p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--border-color)] shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-3">Refund</p>
+                    {refundOpen ? (
+                        <div className="space-y-3">
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    placeholder="Amount (₹)"
+                                    value={refundAmount}
+                                    onChange={e => setRefundAmount(e.target.value)}
+                                    className="w-32 h-9 px-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-main)] text-sm font-semibold text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Reason (optional)"
+                                    value={refundReason}
+                                    onChange={e => setRefundReason(e.target.value)}
+                                    className="flex-1 h-9 px-3 rounded-lg border border-[var(--border-color)] bg-[var(--bg-main)] text-sm text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => refundMutation.mutate()}
+                                    disabled={!refundAmount || Number(refundAmount) <= 0 || refundMutation.isPending}
+                                    className="h-8 px-4 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    {refundMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : null} Issue Refund
+                                </button>
+                                <button onClick={() => setRefundOpen(false)} className="h-8 px-3 rounded-lg bg-[var(--bg-main)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+                                    Cancel
+                                </button>
+                            </div>
+                            {refundMutation.isError && (
+                                <p className="text-xs text-rose-600 font-semibold">{(refundMutation.error as any)?.response?.data?.message || "Refund failed — please try again"}</p>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setRefundOpen(true)}
+                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all"
+                        >
+                            <DollarSign size={13} /> Issue Goodwill / Partial Refund
+                        </button>
+                    )}
+                </div>
+            )}
 
             {/* Admin Actions */}
             {!["COMPLETED", "CANCELLED"].includes(status) && (
