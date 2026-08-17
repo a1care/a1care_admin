@@ -79,7 +79,7 @@ export function BookingOperationsPage() {
     const [activeTab, setActiveTab] = useState<"doctors" | "services" | "hospital">("services");
     const [serviceCategory, setServiceCategory] = useState<string>("All");
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "RETURNED_TO_ADMIN");
+    const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "PENDING");
     const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [page, setPage] = useState(1);
@@ -330,23 +330,6 @@ export function BookingOperationsPage() {
                             </div>
                         </div>
 
-                        {/* Tab Switcher */}
-                        <div className="flex items-center bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl p-1 gap-0.5 self-start">
-                            {TAB_CONFIG.map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => { setActiveTab(tab.id as any); setPage(1); setStatusFilter("All"); }}
-                                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 whitespace-nowrap
-                                        ${activeTab === tab.id
-                                            ? "bg-[var(--card-bg)] text-blue-600 dark:text-blue-400 shadow-sm"
-                                            : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
-                                        }`}
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
                 <div className="absolute -bottom-24 -right-12 w-64 h-64 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
