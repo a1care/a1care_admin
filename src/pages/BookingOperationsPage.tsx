@@ -794,39 +794,58 @@ export function BookingOperationsPage() {
                                 <X size={14} />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-5">
                             <p className="text-sm text-[var(--text-muted)]">Select an active provider eligible for this service booking.</p>
                             <div>
-                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Provider</label>
-                                <select
-                                    value={selectedHospitalId}
-                                    onChange={e => setSelectedHospitalId(e.target.value)}
-                                    className="w-full h-10 px-3 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-lg text-sm text-[var(--text-main)] outline-none focus:border-blue-500"
-                                >
-                                    <option value="">Select provider...</option>
+                                <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Providers</label>
+                                <div className="space-y-2 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
                                     {getEligibleProvidersForBooking(acceptServiceModal.booking).map(d => (
-                                        <option key={d._id} value={d._id}>
-                                            {d.name}{d.specialization?.length ? ` — ${d.specialization.join(", ")}` : ""}{d.mobileNumber ? ` (${d.mobileNumber})` : ""}
-                                        </option>
+                                        <button
+                                            key={d._id}
+                                            onClick={() => setSelectedHospitalId(d._id)}
+                                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left ${selectedHospitalId === d._id ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 shadow-sm" : "border-[var(--border-color)] bg-[var(--bg-main)] hover:border-blue-300 hover:shadow-sm"}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center ${selectedHospitalId === d._id ? "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                                                    <User size={16} />
+                                                </div>
+                                                <div>
+                                                    <p className={`text-sm font-semibold ${selectedHospitalId === d._id ? "text-blue-700 dark:text-blue-300" : "text-[var(--text-main)]"}`}>{d.name}</p>
+                                                    <p className="text-xs text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
+                                                        {d.specialization?.length ? d.specialization.join(", ") : "Provider"}
+                                                        {d.mobileNumber && <span>• {d.mobileNumber}</span>}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {selectedHospitalId === d._id && (
+                                                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-sm">
+                                                    <CheckCircle2 size={12} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </button>
                                     ))}
-                                </select>
-                                {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
-                                    <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-2">No active matching providers found.</p>
-                                )}
+                                    {getEligibleProvidersForBooking(acceptServiceModal.booking).length === 0 && (
+                                        <div className="p-6 text-center border border-dashed border-rose-200 bg-rose-50 dark:bg-rose-500/10 rounded-xl">
+                                            <AlertCircle className="mx-auto h-6 w-6 text-rose-500 mb-2" />
+                                            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">No active matching providers found.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex gap-2 pt-1">
+                            <div className="flex gap-3 pt-3">
                                 <button
                                     onClick={() => { setAcceptServiceModal(null); setSelectedHospitalId(""); }}
-                                    className="flex-1 h-9 rounded-lg border border-[var(--border-color)] text-sm font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
+                                    className="flex-1 h-11 rounded-xl border border-[var(--border-color)] text-sm font-semibold text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleAcceptServiceWithHospital}
                                     disabled={!selectedHospitalId || updateStatusMutation.isPending}
-                                    className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
                                 >
-                                    {updateStatusMutation.isPending ? "Assigning..." : "Assign"}
+                                    {updateStatusMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                                    Assign Provider
                                 </button>
                             </div>
                         </div>
