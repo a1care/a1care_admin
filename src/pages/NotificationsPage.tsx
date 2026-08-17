@@ -140,7 +140,7 @@ export function NotificationsPage() {
     }
   });
   const deleteNotificationMutation = useMutation({
-    mutationFn: async (id: string) => api.delete(`/notifications/${id}`),
+    mutationFn: async (id: string) => api.delete(`/admin/notifications/${id}`),
     onSuccess: () => {
       refetchHistory();
       toast.success("Notification deleted.");
