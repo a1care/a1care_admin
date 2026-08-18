@@ -231,6 +231,11 @@ export function AppLayout() {
     }
   });
 
+  const deleteAlertMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/notifications/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] }),
+  });
+
   return (
     <div className="shell">
       {/* Top Navbar */}
@@ -595,35 +600,6 @@ export function AppLayout() {
             </>
           )}
         </nav>
-          <div className="mt-auto p-4">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50 border border-slate-200/50 dark:border-white/5 p-3 flex items-center gap-3 transition-all hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900/50 group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              <div className="relative w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 font-black shadow-sm border border-slate-200 dark:border-slate-700 shrink-0 group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent transition-all duration-300">
-                {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-              </div>
-              
-              <div className="relative flex-1 min-w-0">
-                <p className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate leading-none mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {user?.name || "Admin"}
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 truncate uppercase tracking-widest leading-none">
-                    {user?.role?.replace(/_/g, ' ') || "SUPER ADMIN"}
-                  </p>
-                </div>
-              </div>
-              
-              <button
-                className="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all shrink-0"
-                onClick={logout}
-                title="Secure Logout"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          </div>
       
         </aside>
 
@@ -820,12 +796,7 @@ export function AppLayout() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
-                const now = Date.now();
-                activeAlerts.forEach(a => dismissedMap[a._id] = now);
-                localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                setDismissTrigger(prev => prev + 1);
-                queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                activeAlerts.forEach(a => deleteAlertMutation.mutate(a._id));
               }}
               className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
             >
@@ -861,11 +832,7 @@ export function AppLayout() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const dismissedMap = JSON.parse(localStorage.getItem("dismissed_admin_alerts_timestamp") || "{}");
-                      dismissedMap[alert._id] = Date.now();
-                      localStorage.setItem("dismissed_admin_alerts_timestamp", JSON.stringify(dismissedMap));
-                      setDismissTrigger(prev => prev + 1);
-                      queryClient.invalidateQueries({ queryKey: ["admin-system-alerts"] });
+                      deleteAlertMutation.mutate(alert._id);
                     }}
                     className="text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors uppercase tracking-widest px-2 py-1 bg-slate-50 dark:bg-slate-700/50 rounded"
                   >
