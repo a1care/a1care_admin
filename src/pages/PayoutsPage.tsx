@@ -35,6 +35,7 @@ export function PayoutsPage() {
   const [adminNote, setAdminNote] = useState("");
   const [isReconciling, setIsReconciling] = useState(false);
   const [inspectPayout, setInspectPayout] = useState<Payout | null>(null);
+  const [approvingPayout, setApprovingPayout] = useState<Payout | null>(null);
   const {
     data: payoutData,
     isLoading,
@@ -265,19 +266,7 @@ export function PayoutsPage() {
                                                     </button>
                                                     {/* APPROVE AND REJECT */}
                                                     {isPending && <>
-                                                            <button onClick={() => {
-                        toast.info("Confirm Settlement?", {
-                          description: `Approve and finalise payout of ₹${payout.amount} to this provider?`,
-                          action: {
-                            label: "Approve & Pay",
-                            onClick: () => updateStatusMutation.mutate({
-                              id: payout._id,
-                              status: 'COMPLETED',
-                              fromStatus: payout.status
-                            })
-                          }
-                        });
-                      }} className="w-8 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 border-[var(--border-color)] hover:border-green-300 transition-all" title="Approve & Pay">
+                                                            <button onClick={() => setApprovingPayout(payout)} disabled={updateStatusMutation.isPending} className="w-8 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 border-[var(--border-color)] hover:border-green-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed" title="Approve & Pay">
                                                                 <Check size={14} />
                                                             </button>
                                                             <button onClick={() => setSelectedPayout(payout)} className="w-8 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 border-[var(--border-color)] hover:border-rose-300 transition-all" title="Reject Request">
@@ -391,27 +380,53 @@ export function PayoutsPage() {
                             {inspectPayout.status === 'PENDING' && <>
                                     <button onClick={() => {
               setSelectedPayout(inspectPayout);
-            }} className="h-9 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold uppercase tracking-wider rounded-lg transition-all">
+            }} disabled={updateStatusMutation.isPending} className="h-9 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50">
                                         Reject
                                     </button>
-                                    <button onClick={() => {
-              toast.info("Confirm Settlement?", {
-                description: `Approve and finalise payout of ₹${inspectPayout.amount} to this provider?`,
-                action: {
-                  label: "Approve & Pay",
-                  onClick: () => updateStatusMutation.mutate({
-                    id: inspectPayout._id,
-                    status: 'COMPLETED',
-                    fromStatus: inspectPayout.status
-                  })
-                }
-              });
-            }} className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all">
+                                    <button onClick={() => setApprovingPayout(inspectPayout)} disabled={updateStatusMutation.isPending} className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                         Approve & Pay
                                     </button>
                                 </>}
                             <button onClick={() => setInspectPayout(null)} className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all">
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>}
+
+            {/* ── Approval Confirm Modal ── */}
+            {approvingPayout && <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setApprovingPayout(null)} />
+                    <div className="relative w-full max-w-sm bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <div>
+                                <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Confirm Settlement</p>
+                                <h3 className="text-base font-bold text-[var(--text-main)] mt-0.5">Approve & Pay</h3>
+                            </div>
+                            <button onClick={() => setApprovingPayout(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-bg)] border border-[var(--border-color)] transition-all">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-center">
+                                <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">₹{approvingPayout.amount.toLocaleString()}</p>
+                                <p className="text-xs text-emerald-600 dark:text-emerald-500 font-semibold mt-1">to {approvingPayout.staffId?.name || "Partner"}</p>
+                            </div>
+                            <p className="text-xs text-[var(--text-muted)] text-center">This action cannot be undone. Approve this payout?</p>
+                        </div>
+                        <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-end gap-2 bg-[var(--bg-main)]">
+                            <button onClick={() => setApprovingPayout(null)} disabled={updateStatusMutation.isPending} className="h-9 px-4 border border-[var(--border-color)] text-[var(--text-main)] text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-[var(--border-color)] transition-all disabled:opacity-50">
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    updateStatusMutation.mutate({ id: approvingPayout._id, status: 'COMPLETED', fromStatus: approvingPayout.status });
+                                    setApprovingPayout(null);
+                                }}
+                                disabled={updateStatusMutation.isPending}
+                                className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {updateStatusMutation.isPending ? "Processing..." : "Approve & Pay"}
                             </button>
                         </div>
                     </div>

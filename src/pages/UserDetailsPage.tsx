@@ -27,18 +27,24 @@ export function UserDetailsPage({ category }: { category: string }) {
         }
     });
 
-    const confirmGenericDelete = () => {
-        if (!deleteConfig) return;
-        const { id: deleteId, type } = deleteConfig;
-        api.delete(`/admin/users/${type}/${deleteId}`).then(() => {
+    const deleteMutation = useMutation({
+        mutationFn: ({ deleteId, type }: { deleteId: string; type: string }) =>
+            api.delete(`/admin/users/${type}/${deleteId}`),
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["category_users"] });
             queryClient.invalidateQueries({ queryKey: ["category_stats"] });
             setDeleteConfig(null);
             toast.success("Member record deleted.");
             navigate(-1);
-        }).catch((err: any) => {
+        },
+        onError: (err: any) => {
             toast.error(err?.response?.data?.message || "Failed to delete record.");
-        });
+        },
+    });
+
+    const confirmGenericDelete = () => {
+        if (!deleteConfig) return;
+        deleteMutation.mutate({ deleteId: deleteConfig.id, type: deleteConfig.type });
     };
 
     const suspendMutation = useMutation({
@@ -383,10 +389,11 @@ export function UserDetailsPage({ category }: { category: string }) {
                                 Cancel
                             </button>
                             <button
-                                className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                className="flex-1 h-9 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={confirmGenericDelete}
+                                disabled={deleteMutation.isPending}
                             >
-                                Delete Record
+                                {deleteMutation.isPending ? "Deleting..." : "Delete Record"}
                             </button>
                         </div>
                     </div>

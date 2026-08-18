@@ -61,6 +61,8 @@ export function ServiceBookingDetailPage() {
         onSuccess: () => { setRefundOpen(false); setRefundAmount(""); setRefundReason(""); invalidate(); },
     });
 
+    const isAnyActionPending = statusMutation.isPending || rebroadcastMutation.isPending || refundMutation.isPending;
+
     const { data: booking, isLoading, isError } = useQuery({
         queryKey: ["service_booking_detail", id],
         queryFn: async () => {
@@ -178,7 +180,8 @@ export function ServiceBookingDetailPage() {
                     ) : (
                         <button
                             onClick={() => setRefundOpen(true)}
-                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all"
+                            disabled={isAnyActionPending}
+                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                         >
                             <DollarSign size={13} /> Issue Goodwill / Partial Refund
                         </button>
@@ -194,7 +197,7 @@ export function ServiceBookingDetailPage() {
                     {/* Re-broadcast */}
                     <button
                         onClick={() => rebroadcastMutation.mutate()}
-                        disabled={rebroadcastMutation.isPending}
+                        disabled={isAnyActionPending}
                         className="flex items-center gap-2 h-9 px-4 rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-all disabled:opacity-50"
                     >
                         {rebroadcastMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
@@ -220,7 +223,8 @@ export function ServiceBookingDetailPage() {
                         ) : (
                             <button
                                 onClick={() => setConfirmAction("complete")}
-                                className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all"
+                                disabled={isAnyActionPending}
+                                className="flex items-center gap-2 h-9 px-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                             >
                                 <CheckSquare size={13} /> Mark Completed
                             </button>
@@ -247,7 +251,8 @@ export function ServiceBookingDetailPage() {
                     ) : (
                         <button
                             onClick={() => setConfirmAction("cancel")}
-                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all ml-auto"
+                            disabled={isAnyActionPending}
+                            className="flex items-center gap-2 h-9 px-4 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all ml-auto disabled:opacity-50"
                         >
                             <XCircle size={13} />
                             Cancel Booking{booking?.paymentStatus === "COMPLETED" ? " + Refund" : ""}
