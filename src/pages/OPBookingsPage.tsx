@@ -246,7 +246,7 @@ export function OPBookingsPage() {
                     </div>
                     <div className="text-right shrink-0">
                         <p className={`text-2xl font-black ${bookingType === 'doctor' ? 'text-blue-600 dark:text-blue-400' : 'text-[var(--text-main)]'}`}>
-                            {doctorBookings.length}
+                            {bookingType === 'doctor' ? stats.all : '—'}
                         </p>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium">bookings</p>
                     </div>
@@ -273,7 +273,7 @@ export function OPBookingsPage() {
                     </div>
                     <div className="text-right shrink-0">
                         <p className={`text-2xl font-black ${bookingType === 'token' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-main)]'}`}>
-                            {tokenBookings.length}
+                            {bookingType === 'token' ? stats.all : '—'}
                         </p>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium">tokens</p>
                     </div>

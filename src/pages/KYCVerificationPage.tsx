@@ -31,6 +31,7 @@ export default function KYCVerificationPage() {
   } | null>(null);
   const [viewingDocsListFor, setViewingDocsListFor] = useState<Doctor | null>(null);
   const [rejectingDoctor, setRejectingDoctor] = useState<Doctor | null>(null);
+  const [approvingDoctor, setApprovingDoctor] = useState<Doctor | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const {
     data: kycData,
@@ -217,10 +218,11 @@ export default function KYCVerificationPage() {
                                         {/* Actions */}
                                         <td className="py-3.5 px-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => updateStatusMutation.mutate({
-                    id: doctor._id,
-                    status: 'Active'
-                  })} title="Approve" className="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/20">
+                                                <button
+                                                  onClick={() => setApprovingDoctor(doctor)}
+                                                  disabled={updateStatusMutation.isPending}
+                                                  title="Approve"
+                                                  className="w-8 h-8 flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed">
                                                     <CheckCircle size={16} />
                                                 </button>
                                                 <button onClick={() => {
@@ -321,6 +323,35 @@ export default function KYCVerificationPage() {
                         </div>
                     </div>
                 </div>}
+
+            {/* ── Approve Confirmation Modal ── */}
+            {approvingDoctor && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setApprovingDoctor(null)} />
+                    <div className="relative w-full max-w-sm bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                        <div className="px-6 py-5 border-b border-[var(--border-color)] bg-[var(--bg-main)]">
+                            <h3 className="text-base font-bold text-[var(--text-main)]">Approve KYC</h3>
+                            <p className="text-xs text-[var(--text-muted)] mt-1">This will activate the partner account and allow them to receive bookings.</p>
+                        </div>
+                        <div className="px-6 py-4">
+                            <p className="text-sm text-[var(--text-main)] font-semibold">{approvingDoctor.name}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">{approvingDoctor.mobileNumber}</p>
+                        </div>
+                        <div className="px-6 pb-6 flex gap-3">
+                            <button
+                                onClick={() => { updateStatusMutation.mutate({ id: approvingDoctor._id, status: 'Active' }); setApprovingDoctor(null); }}
+                                disabled={updateStatusMutation.isPending}
+                                className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            >
+                                {updateStatusMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Approve & Activate
+                            </button>
+                            <button onClick={() => setApprovingDoctor(null)} className="h-9 px-4 border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] rounded-xl hover:bg-[var(--bg-main)] transition-all">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Rejection Modal ── */}
             {rejectingDoctor && <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
