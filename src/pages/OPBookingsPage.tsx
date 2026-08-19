@@ -210,6 +210,22 @@ export function OPBookingsPage() {
         { label: "Cancelled", value: "CANCELLED", count: stats.cancelled || 0, color: "text-slate-500 dark:text-slate-400", icon: <AlertCircle size={14} /> },
     ];
 
+    const { data: doctorCount } = useQuery({
+        queryKey: ["admin_op_doctor_count"],
+        queryFn: async () => {
+            const res = await api.get(`/admin/bookings/services?opType=doctor&limit=1`);
+            return res.data.data.total || 0;
+        }
+    });
+
+    const { data: tokenCount } = useQuery({
+        queryKey: ["admin_op_token_count"],
+        queryFn: async () => {
+            const res = await api.get(`/admin/bookings/services?opType=token&limit=1`);
+            return res.data.data.total || 0;
+        }
+    });
+
     return (
         <div className="space-y-6 animate-in">
             {/* ── Page Header ── */}
@@ -257,7 +273,7 @@ export function OPBookingsPage() {
                     </div>
                     <div className="text-right shrink-0">
                         <p className={`text-2xl font-black ${bookingType === 'doctor' ? 'text-blue-600 dark:text-blue-400' : 'text-[var(--text-main)]'}`}>
-                            {bookingType === 'doctor' ? stats.all : '—'}
+                            {doctorCount ?? '—'}
                         </p>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium">bookings</p>
                     </div>
@@ -284,7 +300,7 @@ export function OPBookingsPage() {
                     </div>
                     <div className="text-right shrink-0">
                         <p className={`text-2xl font-black ${bookingType === 'token' ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-main)]'}`}>
-                            {bookingType === 'token' ? stats.all : '—'}
+                            {tokenCount ?? '—'}
                         </p>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium">tokens</p>
                     </div>
