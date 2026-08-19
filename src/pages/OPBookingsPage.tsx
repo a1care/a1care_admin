@@ -175,12 +175,14 @@ export function OPBookingsPage() {
     const getStatusLabel = (status: string): string => {
         const map: Record<string, string> = {
             PENDING: 'Pending',
-            BROADCASTED: 'Finding Partner',
-            ACCEPTED: 'Partner Assigned',
+            BROADCASTED: bookingType === 'doctor' ? 'Finding Doctor' : 'Finding Hospital',
+            ACCEPTED: 'Confirmed',
+            PARTNER_ASSIGNED: 'Confirmed',
             IN_PROGRESS: 'In Progress',
             COMPLETED: 'Completed',
             CANCELLED: 'Cancelled',
             RETURNED_TO_ADMIN: 'Needs Reassignment',
+            CHECKED_IN: 'Checked In',
             Pending: 'Pending',
             Confirmed: 'Confirmed',
             Completed: 'Completed',
@@ -421,16 +423,18 @@ export function OPBookingsPage() {
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border
                                                     ${booking.status?.toUpperCase() === 'PENDING' ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' : ''}
                                                     ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20' : ''}
-                                                    ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' : ''}
+                                                    ${['CONFIRMED', 'ACCEPTED', 'PARTNER_ASSIGNED'].includes(booking.status?.toUpperCase() || '') ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' : ''}
                                                     ${booking.status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : ''}
                                                     ${booking.status?.toUpperCase() === 'CANCELLED' ? 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20' : ''}
+                                                    ${booking.status?.toUpperCase() === 'CHECKED_IN' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20' : ''}
                                                 `}>
                                                     <span className={`w-1.5 h-1.5 rounded-full
                                                         ${booking.status?.toUpperCase() === 'PENDING' ? 'bg-orange-400' : ''}
                                                         ${booking.status?.toUpperCase() === 'RETURNED_TO_ADMIN' ? 'bg-rose-400' : ''}
-                                                        ${booking.status?.toUpperCase() === 'CONFIRMED' ? 'bg-blue-400' : ''}
+                                                        ${['CONFIRMED', 'ACCEPTED', 'PARTNER_ASSIGNED'].includes(booking.status?.toUpperCase() || '') ? 'bg-blue-400' : ''}
                                                         ${booking.status?.toUpperCase() === 'COMPLETED' ? 'bg-emerald-400' : ''}
                                                         ${booking.status?.toUpperCase() === 'CANCELLED' ? 'bg-slate-400' : ''}
+                                                        ${booking.status?.toUpperCase() === 'CHECKED_IN' ? 'bg-indigo-400' : ''}
                                                     `} />
                                                     {getStatusLabel(booking.status || '')}
                                                 </span>
