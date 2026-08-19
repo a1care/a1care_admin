@@ -132,7 +132,7 @@ export function OPBookingsPage() {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string, status: string }) => {
-            const endpoint = `/admin/bookings/doctors/${id}/status`;
+            const endpoint = `/admin/bookings/services/${id}/status`;
             const statusMap: Record<string, string> = {
                 CONFIRMED: "Confirmed",
                 COMPLETED: "Completed",
@@ -142,17 +142,17 @@ export function OPBookingsPage() {
             return res.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["admin_service_bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["admin_op_bookings"] });
         }
     });
 
     const verifyPinMutation = useMutation({
         mutationFn: async ({ id, pin }: { id: string, pin: string }) => {
-            const res = await api.post(`/service-bookings/verify-pin/${id}`, { pin });
+            const res = await api.post(`/admin/bookings/services/verify-pin/${id}`, { pin });
             return res.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["admin_service_bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["admin_op_bookings"] });
         },
         onError: (err: any) => {
             alert(err?.response?.data?.message || "Invalid PIN or Verification Failed");
@@ -453,48 +453,40 @@ export function OPBookingsPage() {
                                                         <Eye size={14} />
                                                     </button>
                                                     
-{bookingType === 'token' ? (
-                                                        booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") ? (
-                                                            <button
-                                                                onClick={() => handleVerifyPin(booking._id)}
-                                                                className="w-[76px] shrink-0 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
-                                                                title="Verify Arrival PIN"
-                                                            >
-                                                                Verify PIN
-                                                            </button>
-                                                        ) : (
-                                                            <div className="w-[76px] shrink-0" />
-                                                        )
-                                                    ) : null}
-
-                                                    {bookingType === 'token' && (
-                                                        <>
-                                                            <button
-                                                                disabled={!isPending}
-                                                                onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}
-                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
-                                                                    ${isPending 
-                                                                        ? "text-[var(--text-muted)] hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 border-[var(--border-color)] hover:border-amber-300" 
-                                                                        : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                                    }`}
-                                                                title="Confirm Appointment"
-                                                            >
-                                                                <Check size={14} />
-                                                            </button>
-                                                            <button
-                                                                disabled={!(isConfirmed || isPending)}
-                                                                onClick={() => handleUpdateStatus(booking._id, "COMPLETED")}
-                                                                className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
-                                                                    ${(isConfirmed || isPending) 
-                                                                        ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 border-[var(--border-color)] hover:border-green-300" 
-                                                                        : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
-                                                                    }`}
-                                                                title="Mark as Completed"
-                                                            >
-                                                                <CheckCheck size={14} />
-                                                            </button>
-                                                        </>
+                                                    {bookingType === 'token' && booking.fulfillmentMode === "HOSPITAL_VISIT" && (isConfirmed || booking.status?.toUpperCase() === "CONFIRMED") && (
+                                                        <button
+                                                            onClick={() => handleVerifyPin(booking._id)}
+                                                            className="w-[76px] shrink-0 h-8 rounded-lg flex items-center justify-center border text-[var(--text-muted)] hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 border-[var(--border-color)] hover:border-indigo-300 transition-all text-[11px] font-bold"
+                                                            title="Verify Arrival PIN"
+                                                        >
+                                                            Verify PIN
+                                                        </button>
                                                     )}
+
+                                                    <button
+                                                        disabled={!isPending}
+                                                        onClick={() => handleUpdateStatus(booking._id, "CONFIRMED")}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
+                                                            ${isPending 
+                                                                ? "text-[var(--text-muted)] hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 border-[var(--border-color)] hover:border-amber-300" 
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                            }`}
+                                                        title="Confirm Appointment"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                    <button
+                                                        disabled={!(isConfirmed || isPending)}
+                                                        onClick={() => handleUpdateStatus(booking._id, "COMPLETED")}
+                                                        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all 
+                                                            ${(isConfirmed || isPending) 
+                                                                ? "text-[var(--text-muted)] hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-500/10 dark:hover:text-green-400 border-[var(--border-color)] hover:border-green-300" 
+                                                                : "text-[var(--text-muted)] border-[var(--border-color)] cursor-not-allowed opacity-40"
+                                                            }`}
+                                                        title="Mark as Completed"
+                                                    >
+                                                        <CheckCheck size={14} />
+                                                    </button>
                                                     
                                                     <button
                                                         disabled={booking.status?.toUpperCase() === "CANCELLED" || booking.status?.toUpperCase() === "COMPLETED"}
