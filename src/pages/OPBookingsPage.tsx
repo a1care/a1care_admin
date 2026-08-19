@@ -163,12 +163,21 @@ export function OPBookingsPage() {
         updateStatusMutation.mutate({ id, status });
     };
 
+    const [pinModalBookingId, setPinModalBookingId] = useState<string | null>(null);
+    const [pinInput, setPinInput] = useState("");
+
     const handleVerifyPin = (id: string) => {
-        const pin = window.prompt("Enter the 4-digit check-in PIN provided by the patient:");
-        if (pin && pin.trim().length === 4) {
-            verifyPinMutation.mutate({ id, pin: pin.trim() });
-        } else if (pin !== null) {
-            alert("Please enter a valid 4-digit PIN.");
+        setPinInput("");
+        setPinModalBookingId(id);
+    };
+
+    const submitPin = () => {
+        if (!pinModalBookingId) return;
+        if (pinInput && pinInput.trim().length === 4) {
+            verifyPinMutation.mutate({ id: pinModalBookingId, pin: pinInput.trim() });
+            setPinModalBookingId(null);
+        } else {
+            toast.error("Please enter a valid 4-digit PIN.");
         }
     };
 
@@ -560,6 +569,54 @@ export function OPBookingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Verify PIN Modal */}
+            {pinModalBookingId && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6">
+                            <div className="flex gap-4">
+                                <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-indigo-100">
+                                    <CheckCircle2 className="w-6 h-6 text-indigo-600" />
+                                </div>
+                                <div className="flex-1 mt-1">
+                                    <h3 className="text-lg font-bold text-gray-900">Verify Check-In PIN</h3>
+                                    <p className="mt-2 text-sm text-gray-500">Enter the 4-digit check-in PIN provided by the patient:</p>
+                                    <input
+                                        type="text"
+                                        maxLength={4}
+                                        autoFocus
+                                        className="mt-4 w-full h-11 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center text-lg font-bold tracking-widest transition-all"
+                                        placeholder="0000"
+                                        value={pinInput}
+                                        onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') submitPin();
+                                            if (e.key === 'Escape') setPinModalBookingId(null);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100">
+                            <button
+                                onClick={() => setPinModalBookingId(null)}
+                                className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={submitPin}
+                                disabled={pinInput.length !== 4 || verifyPinMutation.isPending}
+                                className="px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {verifyPinMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : null}
+                                Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
