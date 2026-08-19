@@ -507,7 +507,7 @@ export function OPBookingsPage() {
                                                             const isConfirmed = await confirm({
                                                                 title: "Cancel Appointment",
                                                                 message: `Cancel this appointment for ${booking.patientId?.name || 'this patient'}?`,
-                                                                confirmText: "Cancel",
+                                                                confirmText: "Yes, Cancel",
                                                                 type: "danger"
                                                             });
                                                             if (!isConfirmed) return;
